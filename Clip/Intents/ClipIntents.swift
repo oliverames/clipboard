@@ -63,6 +63,9 @@ struct GetLatestClippingIntent: AppIntent
     static let title: LocalizedStringResource = "Get Latest Clipping"
     static let description = IntentDescription("Returns the most recent clipping saved in Clip.")
 
+    // Clipboard history is sensitive, so this never runs on a locked device.
+    static let authenticationPolicy: IntentAuthenticationPolicy = .requiresAuthentication
+
     func perform() async throws -> some ReturnsValue<String>
     {
         try await DatabaseManager.shared.prepareStore()
