@@ -97,7 +97,7 @@ private extension SceneDelegate
 {
     func open(_ context: UIOpenURLContext)
     {
-        guard context.url.scheme?.lowercased() == "clip" && context.url.host?.lowercased() == "settings" else { return }
+        guard context.url.scheme?.lowercased() == "clipboard" && context.url.host?.lowercased() == "settings" else { return }
         
         let openURL = URL(string: UIApplication.openSettingsURLString)!
         UIApplication.shared.open(openURL, options: [:], completionHandler: nil)

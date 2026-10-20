@@ -31,7 +31,7 @@
 			<string>Clipboard General</string>
 			<key>CFBundleURLSchemes</key>
 			<array>
-				<string>clippy</string>
+				<string>clipboard</string>
 			</array>
 		</dict>
 	</array>

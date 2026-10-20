@@ -174,8 +174,8 @@ private extension Keyboard
         else { return }
 
         // UIApplication.openSettingsURLString doesn't work from keyboard extension,
-        // so instead we open Clip which will then open Settings.
-        let openURL = URL(string: "clippy://settings")!
+        // so instead we open Clipboard which will then open Settings.
+        let openURL = URL(string: "clipboard://settings")!
 
         let tempApp = unsafeBitCast(application, to: RSTApplication.self)
         tempApp.open(openURL, options: [:], completionHandler: nil)
