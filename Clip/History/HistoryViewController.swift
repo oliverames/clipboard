@@ -145,8 +145,6 @@ class HistoryViewController: UITableViewController
         super.viewDidLayoutSubviews()
 
         // The outer display reserves its trailing edge for the status bar and toolbar, so rows stop short of it.
-        guard #available(iOS 27.1, *) else { return }
-
         let trailingRegionWidth = self.tableView.reservedRegions(kind: .occlusion, options: []).reduce(0.0) { (width, region) in
             guard region.isActive, region.frame.maxX >= self.tableView.bounds.maxX - 1 else { return width }
             return max(width, self.tableView.bounds.maxX - region.frame.minX)
