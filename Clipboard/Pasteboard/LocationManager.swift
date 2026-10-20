@@ -103,11 +103,16 @@ class LocationManager: NSObject, ObservableObject
         }
         
         self.locationManager.startUpdatingLocation()
+
+        // Significant-change monitoring lets iOS relaunch the app after it has been terminated,
+        // so background monitoring doesn't depend on the app still being in memory.
+        self.locationManager.startMonitoringSignificantLocationChanges()
     }
-    
+
     func stop()
     {
         self.locationManager.stopUpdatingLocation()
+        self.locationManager.stopMonitoringSignificantLocationChanges()
         self.status = nil
     }
 }

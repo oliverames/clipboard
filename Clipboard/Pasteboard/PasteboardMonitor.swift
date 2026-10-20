@@ -1,6 +1,6 @@
 //
 //  PasteboardMonitor.swift
-//  Clipboard
+//  Clip
 //
 //  Created by Riley Testut on 6/11/19.
 //  Copyright © 2019 Riley Testut. All rights reserved.
@@ -81,17 +81,18 @@ private extension PasteboardMonitor
 
             // Read the copy directly. iOS allows this once Paste from Other Apps is set to Allow.
             // Only a read that iOS refuses falls back to a notification the user swipes down to save.
-            guard DatabaseManager.shared.isStarted else
-            {
-                self.presentChangeNotification()
-                return
-            }
+            // The store loads asynchronously, so a copy that arrives during launch waits for it.
+            DatabaseManager.shared.prepare { (preparation) in
+                DispatchQueue.main.async {
+                    guard case .success = preparation else { return self.presentChangeNotification() }
 
-            DatabaseManager.shared.savePasteboard(location: ApplicationMonitor.shared.locationManager.location) { (result) in
-                switch result
-                {
-                case .success, .failure(PasteboardError.duplicateItem): break
-                case .failure: self.presentChangeNotification()
+                    DatabaseManager.shared.savePasteboard(location: ApplicationMonitor.shared.locationManager.location) { (result) in
+                        switch result
+                        {
+                        case .success, .failure(PasteboardError.duplicateItem): break
+                        case .failure: self.presentChangeNotification()
+                        }
+                    }
                 }
             }
         }
