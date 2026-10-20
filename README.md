@@ -1,91 +1,144 @@
-# Clip
-
-> Clip is a clipboard manager for iOS that can monitor your clipboard indefinitely in the background — no jailbreak required.
-
-[![Swift Version](https://img.shields.io/badge/swift-5.0-orange.svg)](https://swift.org/)
-[![License: Unlicense](https://img.shields.io/badge/license-Unlicense-blue.svg)](http://unlicense.org/)
-[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat-square)](http://makeapullrequest.com)
-
-Clip is a simple clipboard manager for iOS. Unlike other clipboard managers available in the App Store, Clip is able to monitor your clipboard indefinitely in the background. This is accomplished through a combination of hacks and workarounds, none of which would pass App Store review. For that reason, Clip is only available to download through [AltStore](https://github.com/rileytestut/AltStore) — my alternative app store for non-jailbroken devices — or by compiling the source code yourself.
-
-<p align="middle">
-<img title="Clip Main Screen" src="https://user-images.githubusercontent.com/705880/63391950-34286600-c37a-11e9-965f-832efe3da507.png" width="375"> 
+<p align="center">
+  <img src="Images/icon.png" width="128" height="128" alt="Clipboard app icon">
 </p>
 
-<p></p>
+<h1 align="center">Clipboard</h1>
+
+<p align="center">
+  <strong>A clipboard history for iOS that keeps watching while you work in other apps.</strong>
+</p>
+
+<p align="center">
+  <code>iOS 27.2+</code> &bull;
+  <code>History stays on device</code> &bull;
+  <code>16 Copy As transforms</code>
+</p>
+
+<p align="center">
+  <a href="UNLICENSE">
+    <img src="https://img.shields.io/badge/license-Unlicense-f5a542?style=flat-square" alt="License: Unlicense">
+  </a>
+  <a href="https://www.buymeacoffee.com/oliverames">
+    <img src="https://img.shields.io/badge/Buy_Me_a_Coffee-support-f5a542?style=flat-square&logo=buy-me-a-coffee&logoColor=white" alt="Buy Me a Coffee">
+  </a>
+</p>
+
+---
+
+Clipboard keeps a searchable history of what you copy: text, rich text, images, links, and code. It keeps watching the clipboard while you use other apps, so a copy you made a minute ago is still there. The history lives on your iPhone, and the layout accounts for the outer display of iPhone Duo.
+
+## Why this exists
+
+The iOS clipboard holds one item. Each new copy replaces the last, and iOS offers no public way for an app to keep a history in the background. Most clipboard managers work around this by asking you to open them first, so they miss the copies you made in the moment.
+
+Clipboard is built on [Clip](https://github.com/rileytestut/Clip), Riley Testut's clipboard manager. Clip keeps monitoring in the background by relying on undocumented system interfaces, so it can't pass App Review and it was never distributed through the App Store. This repository is my version, built for my own iPhone, with the features I use every day: favorites and pins, lists, search, code detection, transforms, and Shortcuts.
 
 ## Features
-- Runs silently in the background, monitoring your clipboard the whole time.
-- Save text, URLs, and images copied to the clipboard.
-- Copy, delete, and share clippings.
-- Customizable history limit.
 
-## Requirements
-- Xcode 11
-- iOS 13
-- Swift 5+
+### Capture
+- Saves text, rich text, images, links, and code copied in other apps.
+- Tags each clipping with where you copied it, when you allow Always location access.
+- Detects code snippets so you can filter for them.
+- Shows link previews, including the App Store icon for a site's app.
 
-## Project Overview
+### Organize
+- **Favorites and pins.** Mark clippings as favorites to find them in one place. Pinned clippings stay at the top of the history.
+- **Lists.** Group related clippings into named lists.
+- **Filters.** Show only text, rich text, images, links, or code.
+- **Search.** Fuzzy search finds clippings whose characters appear in order in your query, ignoring case and accents.
+- **Trash.** Deleted clippings move to Trash. Restore them, or empty Trash when you're done.
+- **Map.** See clippings that have a location on a map.
 
-All things considered, Clip is a very simple app. The core app target can be mentally divided up into UI and logic, while each additional target serves a specific role.
+### Use
+- **Copy As.** Copy a clipping after a transform: UPPERCASE, lowercase, Title Case, camelCase, snake_case, kebab-case, Pretty JSON, Minified JSON, URL Encode, URL Decode, Base64 Encode, Base64 Decode, Strip Markdown, Trim Whitespace, Sort Lines, and Remove Duplicate Lines.
+- **Keyboard.** A keyboard extension lists recent clippings. Pick one to copy it back to the clipboard, then paste it into any app.
+- **Shortcuts.** Save Clipboard saves the current clipboard. Get Latest Clipping returns the newest text clipping. The second action is off until you turn on Allow Shortcuts Access, and it requires an unlocked device.
+- **Settings.** Choose how many clippings to keep, and turn link previews on or off.
 
-### App UI
-The entire UI is implemented with just two view controllers:
+## How capture works
 
-**HistoryViewController**  
-The main screen of Clip. A relatively straightforward `UITableViewController` subclass that fetches recent clippings from Clip’s persistent store and displays them in a table view.
+Clipboard relies on three things to stay current.
 
-**SettingsViewController**  
-The settings screen for Clip. Another `UITableViewController` subclass that displays all Clip settings in a list, but is presented as a popover due to limited number of settings.
+1. **Always location access** keeps the app running in the background. Clipboard uses your location only to tag clippings.
+2. **A change notification.** When the clipboard changes, Clipboard posts a "Clipboard Changed" notification. Swipe down on it to save the copy.
+3. **A notification extension.** `ClipboardReader` reads the clipboard and saves the copy when you swipe down.
 
-### App Logic
-The app logic for Clip is relatively straightforward. Most is self-explanatory, but there are two classes that serve particularly important roles:
+Copies you make from within Clipboard don't post notifications.
 
-**PasteboardMonitor**  
-As you might have guessed from the name, this class is in charge of listening for changes to the clipboard. Since `UIPasteboardChangedNotification` is only received when the app is in the foreground, this class uses the private `Pasteboard.framework` to start sending system-wide Darwin notifications whenever the clipboard’s contents change. Once a change is detected, PasteboardMonitor presents a local notification that can be expanded by the user to save their clipboard to Clip.
+Each copy from another app currently needs a swipe to save. The iOS Simulator doesn't run background monitoring at all, so test capture on a physical device.
 
-**ApplicationMonitor**  
-This class manages the lifecycle of Clip. Specifically, it is in charge of playing a silent audio clip on loop so Clip can run indefinitely in the background, as well as presenting a local notification whenever Clip stops running (for whatever reason).
+## Setup
 
-### ClipKit
-ClipKit is a shared framework that includes common code between Clip, ClipboardReader, and ClipBoard. Notably, it contains all model + Core Data logic, so that Clip and each app extension can access the same persistent store with all clippings.
+Install Clipboard on your iPhone (see [Building from source](#building-from-source)), then open it and follow the onboarding steps:
 
-### ClipboardReader
-ClipboardReader is a Notification Content app extension used to read the clipboard while Clip is running in the background. When Clip detects a change to the clipboard, it will present a local notification. If this notification is expanded, ClipboardReader will be launched and save the contents of the clipboard to disk before dismissing the now-expanded notification.
+1. **Allow paste access.** Go to Settings, then Privacy & Security, then Paste from Other Apps, then Clipboard, and choose Allow. The option appears after Clipboard reads the clipboard once.
+2. **Keep monitoring in the background.** Go to Settings, then Clipboard, then Location, and choose Always.
+3. **Optional: Shortcuts access.** In Clipboard's settings, turn on Allow Shortcuts Access.
 
-<p align="middle">
-<img title="ClipboardReader" src="https://user-images.githubusercontent.com/705880/84835557-b4dedf80-afe8-11ea-94c5-52731b3ac15c.gif"><br>
-<em>ClipboardReader in action.</em>
+## Privacy
+
+- Clipboard history stays on your device, in an App Group container shared by the app and its extensions.
+- Clipboard has no accounts, no sync, and no analytics.
+- Location is used only to tag clippings. It is never sent off the device.
+- Link previews contact the page you copied. For App Store icons, Clipboard searches Apple's iTunes Search API for the site's brand name, such as "github", and downloads the icon. Turn off link previews in Settings to stop these requests.
+
+## Building from source
+
+**Requirements**
+
+- Xcode 27.2 or later
+- An iPhone running iOS 27.2 or later
+- An Apple developer team for code signing
+
+**Steps**
+
+```bash
+git clone --recurse-submodules https://github.com/oliverames/clippy.git
+cd clippy
+open Clip.xcodeproj
+```
+
+Then, in Xcode:
+
+1. Set your development team for the Clip, ClipBoard, ClipboardReader, and ClipKit targets.
+2. Replace the bundle identifier prefix `com.oliverames.clippy` with one you own. Replace `group.com.oliverames.clippy` in the `.entitlements` files and `Info.plist` files to match. All targets must share the same App Group.
+3. Run the Clip scheme on a physical iPhone.
+
+## Architecture
+
+| Target | Role |
+|--------|------|
+| `Clip` | The app: history, clipping detail, settings, onboarding, map, Shortcuts intents, and pasteboard monitoring |
+| `ClipBoard` | Keyboard extension that lists recent clippings |
+| `ClipboardReader` | Notification content extension that saves a copy when you swipe down |
+| `ClipKit` | Shared framework: the Core Data model, code detection, fuzzy search, transforms, link previews, and SwiftUI keyboard views |
+| `Dependencies/Roxas` | Utility framework, included as a Git submodule |
+
+The Core Data model has three entities. `PasteboardItem` holds each clipping, with its favorite, pin, and trash state. `PasteboardItemRepresentation` holds each format a clipping was copied in. `ClippingList` groups clippings into named lists.
+
+## Status
+
+Everything listed under Features is implemented.
+
+**Planned:** iCloud sync. It needs an iCloud container and a Core Data model that CloudKit can sync. Clipboard doesn't sync between devices yet.
+
+## Credits and license
+
+Clipboard is based on [Clip](https://github.com/rileytestut/Clip) by Riley Testut. Both projects are released under [The Unlicense](UNLICENSE), which places the work in the public domain.
+
+---
+
+<p align="center">
+  <a href="https://www.buymeacoffee.com/oliverames">
+    <img src="https://img.shields.io/badge/Buy_Me_a_Coffee-support-f5a542?style=for-the-badge&logo=buy-me-a-coffee&logoColor=white" alt="Buy Me a Coffee">
+  </a>
 </p>
 
-### ClipBoard
-ClipBoard is a Custom Keyboard app extension that provides quick access to your recent clippings when editing text. This feature is still being worked on, so it is only available in beta versions of Clip for now.
-
-### Roxas
-Roxas is my internal framework used across all my iOS projects, developed to simplify a variety of common tasks used in iOS development. For more info, check the [Roxas repo](https://github.com/rileytestut/roxas).
-
-## Compilation Instructions
-Clip is very straightforward to compile and run if you're already an iOS developer. To compile Clip:
-
-1. Clone the repository 
-	``` 
-	https://github.com/rileytestut/Clip.git
-	```
-2. Update submodules: 
-	```
-	cd Clip 
-	git submodule update --init --recursive
-	```
-3. Open `Clip.xcworkspace` and select the Clip project in the project navigator. On the `Signing & Capabilities` tab, change the team from `Yvette Testut` to your own account.
-4. Build + run app! 🎉
-
-## Licensing
-
-Unlike my other projects, Clip uses no 3rd party dependencies. This gives me complete freedom to choose the license I want, so I’m choosing to **release the complete Clip source code into the public domain**. You can view the complete “unlicense” [here](https://github.com/rileytestut/Clip/blob/master/UNLICENSE), but the gist is:
-
-> Anyone is free to copy, modify, publish, use, compile, sell, or distribute this software, either in source code form or as a compiled binary, for any purpose, commercial or non-commercial, and by any means.
-
-## Contact Me
-
-* Email: riley@rileytestut.com
-* Twitter: [@rileytestut](https://twitter.com/rileytestut)
+<p align="center">
+  <sub>
+    Built by <a href="https://ames.consulting">Oliver Ames</a> in Vermont
+    &bull; <a href="https://github.com/oliverames">GitHub</a>
+    &bull; <a href="https://linkedin.com/in/oliverames">LinkedIn</a>
+    &bull; <a href="https://bsky.app/profile/oliverames.bsky.social">Bluesky</a>
+  </sub>
+</p>
