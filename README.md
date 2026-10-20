@@ -104,7 +104,7 @@ sed -i '' 's/IPHONEOS_DEPLOYMENT_TARGET = 10.0;/IPHONEOS_DEPLOYMENT_TARGET = 16.
 
 Then, in Xcode:
 
-1. Set your development team for the Clip, ClipBoard, ClipboardReader, and ClipKit targets.
+1. Set your development team for the Clipboard, ClipboardKeyboard, ClipboardReader, and ClipboardKit targets.
 2. Replace the bundle identifier prefix `com.oliverames.clippy` with one you own. Replace `group.com.oliverames.clippy` in the `.entitlements` files and `Info.plist` files to match. All targets must share the same App Group.
 3. Run the Clip scheme on a physical iPhone.
 
@@ -112,10 +112,10 @@ Then, in Xcode:
 
 | Target | Role |
 |--------|------|
-| `Clip` | The app: history, clipping detail, settings, onboarding, map, Shortcuts intents, and pasteboard monitoring |
-| `ClipBoard` | Keyboard extension that lists recent clippings |
+| `Clipboard` | The app: history, clipping detail, settings, onboarding, map, Shortcuts intents, and pasteboard monitoring |
+| `ClipboardKeyboard` | Keyboard extension that lists recent clippings |
 | `ClipboardReader` | Notification content extension that saves a copy when you swipe down |
-| `ClipKit` | Shared framework: the Core Data model, code detection, fuzzy search, transforms, link previews, and SwiftUI keyboard views |
+| `ClipboardKit` | Shared framework: the Core Data model, code detection, fuzzy search, transforms, link previews, and SwiftUI keyboard views |
 | `Dependencies/Roxas` | Utility framework, included as a Git submodule |
 
 The Core Data model has three entities. `PasteboardItem` holds each clipping, with its favorite, pin, and trash state. `PasteboardItemRepresentation` holds each format a clipping was copied in. `ClippingList` groups clippings into named lists.

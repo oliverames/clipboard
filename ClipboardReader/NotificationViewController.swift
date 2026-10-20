@@ -11,7 +11,7 @@ import UserNotifications
 import UserNotificationsUI
 import CoreLocation
 
-import ClipKit
+import ClipboardKit
 import Roxas
 
 class NotificationViewController: UIViewController, UNNotificationContentExtension

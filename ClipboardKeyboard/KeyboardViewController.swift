@@ -1,0 +1,112 @@
+//
+//  KeyboardViewController.swift
+//  ClipboardKeyboard
+//
+//  Created by Riley Testut on 5/25/20.
+//  Copyright © 2020 Riley Testut. All rights reserved.
+//
+
+import UIKit
+import SwiftUI
+import Roxas
+
+import ClipboardKit
+
+class KeyboardViewController: UIInputViewController
+{
+    private var hostingViewController: UIHostingController<AnyView>!
+    private var heightConstraint: NSLayoutConstraint!
+    
+    override init(nibName nibNameOrNil: String?, bundle nibBundleOrNil: Bundle?)
+    {
+        super.init(nibName: nibNameOrNil, bundle: nibBundleOrNil)
+        
+        if DatabaseManager.shared.persistentContainer.persistentStoreCoordinator.persistentStores.isEmpty
+        {
+            if !self.hasFullAccess
+            {
+                // Use temporary in-memory store if we don't have full access.
+                let inMemoryStoreDescription = NSPersistentStoreDescription()
+                inMemoryStoreDescription.type = NSInMemoryStoreType
+                DatabaseManager.shared.persistentContainer.persistentStoreDescriptions = [inMemoryStoreDescription]
+            }
+            
+            DatabaseManager.shared.persistentContainer.shouldAddStoresAsynchronously = false
+            DatabaseManager.shared.prepare { (result) in
+                switch result
+                {
+                case .failure(let error): print("Failed to prepare database:", error)
+                case .success: break
+                }
+            }
+        }
+    }
+    
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+    
+    override func viewDidLoad()
+    {
+        super.viewDidLoad()
+        
+        self.inputView?.allowsSelfSizing = true
+        
+        let rootView = Keyboard(inputViewController: self)
+            .environment(\.managedObjectContext, DatabaseManager.shared.persistentContainer.viewContext)
+        
+        self.hostingViewController = UIHostingController(rootView: AnyView(rootView))
+        self.hostingViewController.view.backgroundColor = .clear
+        
+        self.addChild(self.hostingViewController)
+        self.inputView?.addSubview(self.hostingViewController.view, pinningEdgesWith: .zero)
+        self.hostingViewController.didMove(toParent: self)
+        
+        self.view.setNeedsUpdateConstraints()
+    }
+
+    private var keyboardHeight: CGFloat?
+    {
+        // Size against the host's scene rather than the main screen, which can be a different display on iPhone Duo.
+        // Returns nil until the view is in a window scene.
+        guard let sceneHeight = self.view.window?.windowScene?.coordinateSpace.bounds.height else { return nil }
+        return sceneHeight / 2
+    }
+    
+    override func viewWillAppear(_ animated: Bool)
+    {
+        super.viewWillAppear(animated)
+        
+        // The window scene isn't available until now, so create the height constraint if it was deferred.
+        self.view.setNeedsUpdateConstraints()
+    }
+
+    override func updateViewConstraints()
+    {
+        super.updateViewConstraints()
+                
+        if self.heightConstraint == nil, let keyboardHeight = self.keyboardHeight
+        {
+            for constraint in self.view.constraintsAffectingLayout(for: .vertical)
+            {
+                // UIKit embeds height constraint, even if allowsSelfSizing is true.
+                // Must set to non-required priority, or else it will conflict with
+                // our own self-sizing constraint (annoyingly).
+                constraint.priority = .defaultHigh
+            }
+            
+            self.heightConstraint = self.view.heightAnchor.constraint(equalToConstant: keyboardHeight)
+            self.heightConstraint.isActive = true
+        }
+    }
+    
+    override func viewWillLayoutSubviews()
+    {
+        if let heightConstraint = self.heightConstraint, let keyboardHeight = self.keyboardHeight
+        {
+            heightConstraint.constant = keyboardHeight
+        }
+        
+        super.viewWillLayoutSubviews()
+    }
+}
