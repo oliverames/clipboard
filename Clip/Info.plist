@@ -28,7 +28,7 @@
 			<key>CFBundleTypeRole</key>
 			<string>Editor</string>
 			<key>CFBundleURLName</key>
-			<string>Clip General</string>
+			<string>Clipboard General</string>
 			<key>CFBundleURLSchemes</key>
 			<array>
 				<string>clippy</string>

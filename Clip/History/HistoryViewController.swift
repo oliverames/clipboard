@@ -612,9 +612,13 @@ private extension HistoryViewController
 
     func reconfigureVisibleRows()
     {
-        guard let indexPaths = self.tableView.indexPathsForVisibleRows, !indexPaths.isEmpty else { return }
+        // The diffable data source owns the table, so rows must be reconfigured through its snapshot.
+        let objectIDs = (self.tableView.indexPathsForVisibleRows ?? []).compactMap { self.dataSource.itemIdentifier(for: $0) }
+        guard !objectIDs.isEmpty else { return }
 
-        self.tableView.reconfigureRows(at: indexPaths)
+        var snapshot = self.dataSource.snapshot()
+        snapshot.reconfigureItems(objectIDs)
+        self.dataSource.apply(snapshot, animatingDifferences: false)
     }
 
     func indexPath(for control: UIControl) -> IndexPath?

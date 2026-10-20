@@ -89,7 +89,7 @@ private extension PasteboardMonitor
             let content = UNMutableNotificationContent()
             content.categoryIdentifier = UNNotificationCategory.clipboardReaderIdentifier
             content.title = NSLocalizedString("Clipboard Changed", comment: "")
-            content.body = NSLocalizedString("Swipe down to save to Clip.", comment: "")
+            content.body = NSLocalizedString("Swipe down to save to Clipboard.", comment: "")
             
             if let location = ApplicationMonitor.shared.locationManager.location
             {

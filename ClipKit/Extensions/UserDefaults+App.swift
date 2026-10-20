@@ -31,6 +31,7 @@ public extension UserDefaults
     @NSManaged var maximumClippingSize: Int
     @NSManaged var showLocationIcon: Bool
     @NSManaged var generateLinkPreviews: Bool
+    @NSManaged var allowsShortcutsHistory: Bool
 }
 
 public extension UserDefaults

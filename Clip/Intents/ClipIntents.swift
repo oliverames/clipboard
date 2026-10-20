@@ -21,12 +21,14 @@ enum ClipIntentError: LocalizedError
 {
     case noClippings
     case latestClippingIsNotText
+    case shortcutsAccessDisabled
 
     var errorDescription: String? {
         switch self
         {
-        case .noClippings: return NSLocalizedString("There are no clippings in Clip yet.", comment: "")
-        case .latestClippingIsNotText: return NSLocalizedString("The latest clipping in Clip isn't text.", comment: "")
+        case .noClippings: return NSLocalizedString("There are no clippings in Clipboard yet.", comment: "")
+        case .latestClippingIsNotText: return NSLocalizedString("The latest clipping in Clipboard isn't text.", comment: "")
+        case .shortcutsAccessDisabled: return NSLocalizedString("Shortcuts access is off. Turn on Allow Shortcuts Access in Clipboard's settings.", comment: "")
         }
     }
 }
@@ -34,7 +36,7 @@ enum ClipIntentError: LocalizedError
 struct SaveClipboardIntent: AppIntent
 {
     static let title: LocalizedStringResource = "Save Clipboard"
-    static let description = IntentDescription("Saves the current clipboard contents to Clip.")
+    static let description = IntentDescription("Saves the current clipboard contents to Clipboard.")
 
     // Reading the clipboard requires the app to be in the foreground.
     static var supportedModes: IntentModes { .foreground }
@@ -51,23 +53,25 @@ struct SaveClipboardIntent: AppIntent
         }
         catch PasteboardError.duplicateItem
         {
-            return .result(dialog: "That clipboard item is already in Clip.")
+            return .result(dialog: "That clipboard item is already in Clipboard.")
         }
 
-        return .result(dialog: "Saved the clipboard to Clip.")
+        return .result(dialog: "Saved the clipboard to Clipboard.")
     }
 }
 
 struct GetLatestClippingIntent: AppIntent
 {
     static let title: LocalizedStringResource = "Get Latest Clipping"
-    static let description = IntentDescription("Returns the most recent clipping saved in Clip.")
+    static let description = IntentDescription("Returns the most recent clipping saved in Clipboard.")
 
     // Clipboard history is sensitive, so this never runs on a locked device.
     static let authenticationPolicy: IntentAuthenticationPolicy = .requiresAuthentication
 
     func perform() async throws -> some ReturnsValue<String>
     {
+        guard UserDefaults.shared.allowsShortcutsHistory else { throw ClipIntentError.shortcutsAccessDisabled }
+
         try await DatabaseManager.shared.prepareStore()
 
         let context = DatabaseManager.shared.persistentContainer.newBackgroundContext()

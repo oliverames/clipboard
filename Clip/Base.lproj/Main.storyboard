@@ -58,7 +58,7 @@
                             <outlet property="delegate" destination="fd0-Ck-KzX" id="7Z3-Si-ipA"/>
                         </connections>
                     </tableView>
-                    <navigationItem key="navigationItem" title="Clip" id="KPM-hY-RHG">
+                    <navigationItem key="navigationItem" title="Clipboard" id="KPM-hY-RHG">
                         <barButtonItem key="rightBarButtonItem" image="Settings" id="IaP-Ad-9rj">
                             <connections>
                                 <segue destination="beq-wr-z37" kind="popoverPresentation" identifier="showSettings" popoverAnchorBarButtonItem="IaP-Ad-9rj" id="fMU-im-zh7">
@@ -243,6 +243,46 @@
                                     </tableViewCell>
                                 </cells>
                             </tableViewSection>
+                            <tableViewSection id="3K4-UH-Szf" footerTitle="Lets Shortcuts read your latest clipping. The Get Latest Clipping action still requires an unlocked device.">
+                                <cells>
+                                    <tableViewCell clipsSubviews="YES" contentMode="scaleToFill" preservesSuperviewLayoutMargins="YES" selectionStyle="default" indentationWidth="10" id="bZy-sZ-VXe">
+                                        <rect key="frame" x="16" y="0.0" width="343" height="44.5"/>
+                                        <autoresizingMask key="autoresizingMask"/>
+                                        <tableViewCellContentView key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" preservesSuperviewLayoutMargins="YES" insetsLayoutMarginsFromSafeArea="NO" tableViewCell="bZy-sZ-VXe" id="Gu3-c3-15t">
+                                            <rect key="frame" x="0.0" y="0.0" width="343" height="44.5"/>
+                                            <autoresizingMask key="autoresizingMask"/>
+                                            <subviews>
+                                                <stackView opaque="NO" contentMode="scaleToFill" distribution="equalSpacing" alignment="center" translatesAutoresizingMaskIntoConstraints="NO" id="NVw-uf-ODY">
+                                                    <rect key="frame" x="16" y="0.0" width="311" height="44.5"/>
+                                                    <subviews>
+                                                        <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Allow Shortcuts Access" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="UsC-pJ-g69">
+                                                            <rect key="frame" x="0.0" y="12" width="200" height="20.5"/>
+                                                            <fontDescription key="fontDescription" type="system" pointSize="17"/>
+                                                            <nil key="textColor"/>
+                                                            <nil key="highlightedColor"/>
+                                                        </label>
+                                                        <switch opaque="NO" contentMode="scaleToFill" horizontalHuggingPriority="750" verticalHuggingPriority="750" contentHorizontalAlignment="center" contentVerticalAlignment="center" on="YES" translatesAutoresizingMaskIntoConstraints="NO" id="8WB-lf-v7n">
+                                                            <rect key="frame" x="262" y="7" width="51" height="31"/>
+                                                            <connections>
+                                                                <action selector="toggleShortcutsHistoryAccess:" destination="xUa-Vn-Yd7" eventType="primaryActionTriggered" id="PUr-g7-mVZ"/>
+                                                            </connections>
+                                                        </switch>
+                                                    </subviews>
+                                                    <constraints>
+                                                        <constraint firstAttribute="height" constant="44" id="GQF-Q9-BZD"/>
+                                                    </constraints>
+                                                </stackView>
+                                            </subviews>
+                                            <constraints>
+                                                <constraint firstAttribute="trailingMargin" secondItem="NVw-uf-ODY" secondAttribute="trailing" id="c0U-Du-ti0"/>
+                                                <constraint firstAttribute="bottom" secondItem="NVw-uf-ODY" secondAttribute="bottom" id="isz-e7-kq3"/>
+                                                <constraint firstItem="NVw-uf-ODY" firstAttribute="top" secondItem="Gu3-c3-15t" secondAttribute="top" id="uG9-Vx-MQb"/>
+                                                <constraint firstItem="NVw-uf-ODY" firstAttribute="leading" secondItem="Gu3-c3-15t" secondAttribute="leadingMargin" id="fce-KL-fDq"/>
+                                            </constraints>
+                                        </tableViewCellContentView>
+                                    </tableViewCell>
+                                </cells>
+                            </tableViewSection>
                         </sections>
                         <connections>
                             <outlet property="dataSource" destination="xUa-Vn-Yd7" id="yxE-Kd-hqj"/>
@@ -253,6 +293,7 @@
                     <connections>
                         <outlet property="showLocationIconSwitch" destination="L7B-Cw-is3" id="FJc-lY-5r9"/>
                         <outlet property="linkPreviewsSwitch" destination="Yq6-Hm-Dcr" id="Mj2-Rk-Zts"/>
+                        <outlet property="shortcutsHistorySwitch" destination="8WB-lf-v7n" id="Vw9-UH-Axw"/>
                     </connections>
                 </tableViewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="ohN-Gn-92v" userLabel="First Responder" sceneMemberID="firstResponder"/>

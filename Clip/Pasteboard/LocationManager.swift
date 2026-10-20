@@ -21,14 +21,14 @@ extension LocationManager
         var failureReason: String? {
             switch self
             {
-            case .requiresAlwaysAuthorization: return NSLocalizedString("Clip requires “Always” location permission.", comment: "")
+            case .requiresAlwaysAuthorization: return NSLocalizedString("Clipboard requires “Always” location permission.", comment: "")
             }
         }
         
         var recoverySuggestion: String? {
             switch self
             {
-            case .requiresAlwaysAuthorization: return NSLocalizedString("Please grant Clip “Always” location permission in Settings so it can run in the background indefinitely.", comment: "")
+            case .requiresAlwaysAuthorization: return NSLocalizedString("Please grant Clipboard “Always” location permission in Settings so it can run in the background indefinitely.", comment: "")
             }
         }
         
