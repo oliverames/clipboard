@@ -97,6 +97,10 @@ class HistoryViewController: UITableViewController
         self.defaultTitle = self.navigationItem.title
         self.settingsBarButtonItem = self.navigationItem.rightBarButtonItem
 
+        // The title is what the system shows in overflow menus when the bar runs out of room, as on iPhone Duo.
+        self.settingsBarButtonItem?.title = NSLocalizedString("Settings", comment: "")
+        self.settingsBarButtonItem?.visibilityPriority = .low
+
         self.tableView.rowHeight = UITableView.automaticDimension
         self.tableView.estimatedRowHeight = 72
 
@@ -129,12 +133,6 @@ class HistoryViewController: UITableViewController
             .sink { [weak self] _ in self?.reconfigureVisibleRows() }
             .store(in: &self.cancellables)
 
-        if let tabBar = self.navigationController?.tabBarController?.tabBar
-        {
-            let appearance = tabBar.standardAppearance
-            tabBar.scrollEdgeAppearance = appearance
-        }
-
         self.navigationController?.tabBarItem.image = UIImage(systemName: "list.bullet")
 
         self.startUpdating()
@@ -144,17 +142,8 @@ class HistoryViewController: UITableViewController
     {
         super.viewDidLayoutSubviews()
 
-        // The outer display reserves its trailing edge for the status bar and toolbar, so rows stop short of it.
-        let trailingRegionWidth = self.tableView.reservedRegions(kind: .occlusion, options: []).reduce(0.0) { (width, region) in
-            guard region.isActive, region.frame.maxX >= self.tableView.bounds.maxX - 1 else { return width }
-            return max(width, self.tableView.bounds.maxX - region.frame.minX)
-        }
-
-        let trailingInset = trailingRegionWidth > 0 ? trailingRegionWidth + 8 : 0
-        guard self.tableView.contentInset.right != trailingInset else { return }
-
-        self.tableView.contentInset.right = trailingInset
-        self.tableView.verticalScrollIndicatorInsets.right = trailingInset
+        // The outer display reserves a column along one edge for the status bar and toolbar, so rows stop short of it.
+        self.tableView.applyReservedRegionInsets()
     }
 
     override func viewDidAppear(_ animated: Bool)
@@ -755,8 +744,8 @@ private extension HistoryViewController
 {
     func updateNavigationItems()
     {
-        let filterButton = UIBarButtonItem(image: UIImage(systemName: "line.3.horizontal.decrease.circle"), menu: self.makeFilterMenu())
-        filterButton.accessibilityLabel = NSLocalizedString("Filter", comment: "")
+        // Bar buttons get their own glass background, so the symbols don't need an enclosing circle.
+        let filterButton = UIBarButtonItem(title: NSLocalizedString("Filter", comment: ""), image: UIImage(systemName: "line.3.horizontal.decrease"), target: nil, action: nil, menu: self.makeFilterMenu())
 
         self.navigationItem.rightBarButtonItems = [self.settingsBarButtonItem, filterButton].compactMap { $0 }
 
@@ -766,7 +755,8 @@ private extension HistoryViewController
             self.navigationItem.leftBarButtonItem = nil
 
         case .trash:
-            let emptyButton = UIBarButtonItem(title: NSLocalizedString("Empty", comment: ""), style: .plain, target: self, action: #selector(HistoryViewController.emptyTrashTapped(_:)))
+            // A symbol keeps the button in the vertical bar on iPhone Duo; the title still shows in overflow menus.
+            let emptyButton = UIBarButtonItem(title: NSLocalizedString("Empty", comment: ""), image: UIImage(systemName: "trash.slash"), target: self, action: #selector(HistoryViewController.emptyTrashTapped(_:)), menu: nil)
             self.navigationItem.leftBarButtonItem = emptyButton
 
         case .list:
@@ -779,7 +769,8 @@ private extension HistoryViewController
                 }
             ])
 
-            self.navigationItem.leftBarButtonItem = UIBarButtonItem(image: UIImage(systemName: "ellipsis.circle"), menu: listMenu)
+            // The ellipsis is reserved for the system overflow menu on iPhone Duo, so this menu gets its own symbol.
+            self.navigationItem.leftBarButtonItem = UIBarButtonItem(title: NSLocalizedString("List Options", comment: ""), image: UIImage(systemName: "list.bullet.rectangle"), target: nil, action: nil, menu: listMenu)
         }
     }
 

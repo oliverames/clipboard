@@ -65,18 +65,27 @@ class KeyboardViewController: UIInputViewController
         self.view.setNeedsUpdateConstraints()
     }
 
-    private var keyboardHeight: CGFloat
+    private var keyboardHeight: CGFloat?
     {
         // Size against the host's scene rather than the main screen, which can be a different display on iPhone Duo.
-        let sceneHeight = self.view.window?.windowScene?.coordinateSpace.bounds.height ?? UIScreen.main.bounds.height
+        // Returns nil until the view is in a window scene.
+        guard let sceneHeight = self.view.window?.windowScene?.coordinateSpace.bounds.height else { return nil }
         return sceneHeight / 2
+    }
+    
+    override func viewWillAppear(_ animated: Bool)
+    {
+        super.viewWillAppear(animated)
+        
+        // The window scene isn't available until now, so create the height constraint if it was deferred.
+        self.view.setNeedsUpdateConstraints()
     }
 
     override func updateViewConstraints()
     {
         super.updateViewConstraints()
                 
-        if self.heightConstraint == nil
+        if self.heightConstraint == nil, let keyboardHeight = self.keyboardHeight
         {
             for constraint in self.view.constraintsAffectingLayout(for: .vertical)
             {
@@ -86,16 +95,16 @@ class KeyboardViewController: UIInputViewController
                 constraint.priority = .defaultHigh
             }
             
-            self.heightConstraint = self.view.heightAnchor.constraint(equalToConstant: self.keyboardHeight)
+            self.heightConstraint = self.view.heightAnchor.constraint(equalToConstant: keyboardHeight)
             self.heightConstraint.isActive = true
         }
     }
     
     override func viewWillLayoutSubviews()
     {
-        if let heightConstraint = self.heightConstraint
+        if let heightConstraint = self.heightConstraint, let keyboardHeight = self.keyboardHeight
         {
-            heightConstraint.constant = self.keyboardHeight
+            heightConstraint.constant = keyboardHeight
         }
         
         super.viewWillLayoutSubviews()

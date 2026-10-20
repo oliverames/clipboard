@@ -42,7 +42,7 @@ struct SwitchKeyboardButton_Previews: PreviewProvider
                 .fixedSize()
             
             SwitchKeyboardButton(inputViewController: nil,
-                                 tintColor: .clipPink,
+                                 tintColor: .systemBlue,
                                  configuration: .init(textStyle: .title1))
                 .fixedSize()
         }

@@ -19,6 +19,7 @@
 		BF50E7D922C2BF010070E17B /* Bundle+AppGroups.swift in Sources */ = {isa = PBXBuildFile; fileRef = BF50E7D822C2BF010070E17B /* Bundle+AppGroups.swift */; };
 		BF770E6522BC7688002A40FE /* UIDevice+Vibration.swift in Sources */ = {isa = PBXBuildFile; fileRef = BF770E6122BC767A002A40FE /* UIDevice+Vibration.swift */; };
 		B49DD26259BD404EB999F748 /* PasteboardItem+CopyAs.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D26A154155F423CBDC33C24 /* PasteboardItem+CopyAs.swift */; };
+		6D2B8F3CAE404B71C9F2E5D8 /* UIScrollView+ReservedRegion.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5C1A7E2B9D3F4A60B8E1D4C7 /* UIScrollView+ReservedRegion.swift */; };
 		BF7B9EE122B81C980042C873 /* Int+Bytes.swift in Sources */ = {isa = PBXBuildFile; fileRef = BF7B9EE022B81C980042C873 /* Int+Bytes.swift */; };
 		BF7E6FE3247C4FCD0058F4D4 /* KeyboardViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = BF7E6FE2247C4FCD0058F4D4 /* KeyboardViewController.swift */; };
 		BF7E6FE7247C4FCD0058F4D4 /* ClipBoard.appex in Embed App Extensions */ = {isa = PBXBuildFile; fileRef = BF7E6FE0247C4FCD0058F4D4 /* ClipBoard.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
@@ -178,6 +179,7 @@
 		BF746541247C900100F66F3B /* ClipBoard.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = ClipBoard.entitlements; sourceTree = "<group>"; };
 		BF770E6122BC767A002A40FE /* UIDevice+Vibration.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "UIDevice+Vibration.swift"; sourceTree = "<group>"; };
 		3D26A154155F423CBDC33C24 /* PasteboardItem+CopyAs.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "PasteboardItem+CopyAs.swift"; sourceTree = "<group>"; };
+		5C1A7E2B9D3F4A60B8E1D4C7 /* UIScrollView+ReservedRegion.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "UIScrollView+ReservedRegion.swift"; sourceTree = "<group>"; };
 		BF7B9EE022B81C980042C873 /* Int+Bytes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Int+Bytes.swift"; sourceTree = "<group>"; };
 		BF7E6FE0247C4FCD0058F4D4 /* ClipBoard.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = ClipBoard.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		BF7E6FE2247C4FCD0058F4D4 /* KeyboardViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeyboardViewController.swift; sourceTree = "<group>"; };
@@ -267,6 +269,7 @@
 				BF0BDE5522B456A600E1419D /* PasteboardItem+ActivityItemSource.swift */,
 				BF770E6122BC767A002A40FE /* UIDevice+Vibration.swift */,
 				3D26A154155F423CBDC33C24 /* PasteboardItem+CopyAs.swift */,
+				5C1A7E2B9D3F4A60B8E1D4C7 /* UIScrollView+ReservedRegion.swift */,
 			);
 			path = Extensions;
 			sourceTree = "<group>";
@@ -774,6 +777,7 @@
 				D534428E2BAB202700E133EE /* ClippingsMapView.swift in Sources */,
 				BF770E6522BC7688002A40FE /* UIDevice+Vibration.swift in Sources */,
 				B49DD26259BD404EB999F748 /* PasteboardItem+CopyAs.swift in Sources */,
+				6D2B8F3CAE404B71C9F2E5D8 /* UIScrollView+ReservedRegion.swift in Sources */,
 				BFC1F39D22AF0D0E003AC21A /* AppDelegate.swift in Sources */,
 				BFEF44AE2398693300095A92 /* ForwardingNavigationController.swift in Sources */,
 				BF0BDE5622B456A600E1419D /* PasteboardItem+ActivityItemSource.swift in Sources */,

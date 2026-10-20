@@ -31,6 +31,9 @@ public struct Keyboard: View
     @Environment(\.horizontalSizeClass)
     private var horizontalSizeClass
 
+    @ScaledMetric(relativeTo: .title2)
+    private var switchKeyboardButtonSize = 44.0
+
     public init(inputViewController: UIInputViewController?,
                 needsInputModeSwitchKey: Bool? = nil,
                 hasFullAccess: Bool? = nil)
@@ -95,7 +98,7 @@ public struct Keyboard: View
                         Button(action: { self.copy(pasteboardItem) }) {
                             Image(systemName: "doc.on.doc")
                                 .font(.body)
-                                .frame(width: 44, height: 44)
+                                .frame(minWidth: 44, minHeight: 44)
                                 .contentShape(Rectangle())
                         }
                         .buttonStyle(.borderless)
@@ -104,22 +107,25 @@ public struct Keyboard: View
                 }
                 .listStyle(.plain)
                 .scrollContentBackground(.hidden)
+                // Only the scrolling list extends under the bottom edge. Horizontal safe area stays honored
+                // so row content (including the trailing Copy button) clears any reserved region on iPhone Duo.
+                .ignoresSafeArea(.container, edges: .bottom)
             }
 
             if self.needsInputModeSwitchKey
             {
-                let offset = (self.horizontalSizeClass == .regular) ? 16.0 : 8.0
+                let margin = (self.horizontalSizeClass == .regular) ? 16.0 : 8.0
 
+                // Floating control over scrolling content, so Liquid Glass applies. Placed with padding inside
+                // the safe area (not offset from the container edge) so it clears leading/bottom reserved regions.
                 SwitchKeyboardButton(inputViewController: self.inputViewController,
                                      configuration: .init(textStyle: .title2))
-                    .fixedSize()
-                    .padding(.horizontal, 4)
-                    .padding(.vertical, 8)
-                    .background(.regularMaterial, in: Circle())
-                    .offset(x: offset, y: -offset)
+                    .frame(width: self.switchKeyboardButtonSize, height: self.switchKeyboardButtonSize)
+                    .glassEffect(.regular, in: .circle)
+                    .padding(.leading, margin)
+                    .padding(.bottom, margin)
             }
         }
-        .edgesIgnoringSafeArea(.all)
     }
 }
 

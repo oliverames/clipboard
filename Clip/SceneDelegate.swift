@@ -14,13 +14,24 @@ import Roxas
 class SceneDelegate: UIResponder, UIWindowSceneDelegate
 {
     var window: UIWindow?
+    
+    private var saveFailureObserver: NSObjectProtocol?
 
     func scene(_ scene: UIScene, willConnectTo session: UISceneSession, options connectionOptions: UIScene.ConnectionOptions)
     {
         // Use this method to optionally configure and attach the UIWindow `window` to the provided UIWindowScene `scene`.
         // If using a storyboard, the `window` property will automatically be initialized and attached to the scene.
         // This delegate does not imply the connecting scene or session are new (see `application:configurationForConnectingSceneSession` instead).
-        guard let _ = (scene as? UIWindowScene) else { return }
+        guard let windowScene = (scene as? UIWindowScene) else { return }
+        
+        self.saveFailureObserver = NotificationCenter.default.addObserver(forName: .clipboardSaveFailed, object: nil, queue: .main) { [weak self, weak windowScene] (notification) in
+            guard let self, let windowScene, windowScene.activationState == .foregroundActive else { return }
+            guard let error = notification.userInfo?[NSUnderlyingErrorKey] as? Error else { return }
+            
+            let alertController = UIAlertController(title: NSLocalizedString("Failed to Save Clipboard", comment: ""), message: error.localizedDescription, preferredStyle: .alert)
+            alertController.addAction(.ok)
+            self.window?.rootViewController?.present(alertController, animated: true, completion: nil)
+        }
         
         if let context = connectionOptions.urlContexts.first
         {

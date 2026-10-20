@@ -16,6 +16,12 @@ class OnboardingViewController: UIViewController
 {
     var onFinish: (() -> Void)?
 
+    private let contentMargin: CGFloat = 24
+
+    private weak var scrollView: UIScrollView?
+    private var contentLeftConstraint: NSLayoutConstraint?
+    private var contentRightConstraint: NSLayoutConstraint?
+
     override func viewDidLoad()
     {
         super.viewDidLoad()
@@ -43,9 +49,8 @@ class OnboardingViewController: UIViewController
         stepsStack.axis = .vertical
         stepsStack.spacing = 24
 
-        var doneConfiguration = UIButton.Configuration.filled()
+        var doneConfiguration = UIButton.Configuration.prominentGlass()
         doneConfiguration.title = NSLocalizedString("Get Started", comment: "")
-        doneConfiguration.cornerStyle = .capsule
         let doneButton = UIButton(configuration: doneConfiguration, primaryAction: UIAction { [weak self] _ in
             self?.onFinish?()
         })
@@ -61,6 +66,11 @@ class OnboardingViewController: UIViewController
         scrollView.addSubview(contentStack)
         self.view.addSubview(scrollView)
 
+        // The frame layout guide ignores insets, so the side margins are constants that viewDidLayoutSubviews()
+        // widens to clear the safe area and any region the system reserves along a side.
+        let contentLeftConstraint = contentStack.leftAnchor.constraint(equalTo: scrollView.frameLayoutGuide.leftAnchor, constant: self.contentMargin)
+        let contentRightConstraint = contentStack.rightAnchor.constraint(equalTo: scrollView.frameLayoutGuide.rightAnchor, constant: -self.contentMargin)
+
         NSLayoutConstraint.activate([
             scrollView.topAnchor.constraint(equalTo: self.view.topAnchor),
             scrollView.bottomAnchor.constraint(equalTo: self.view.bottomAnchor),
@@ -69,9 +79,33 @@ class OnboardingViewController: UIViewController
 
             contentStack.topAnchor.constraint(equalTo: scrollView.contentLayoutGuide.topAnchor, constant: 40),
             contentStack.bottomAnchor.constraint(equalTo: scrollView.contentLayoutGuide.bottomAnchor, constant: -24),
-            contentStack.leadingAnchor.constraint(equalTo: scrollView.frameLayoutGuide.leadingAnchor, constant: 24),
-            contentStack.trailingAnchor.constraint(equalTo: scrollView.frameLayoutGuide.trailingAnchor, constant: -24)
+            contentLeftConstraint,
+            contentRightConstraint
         ])
+
+        self.scrollView = scrollView
+        self.contentLeftConstraint = contentLeftConstraint
+        self.contentRightConstraint = contentRightConstraint
+    }
+
+    override func viewDidLayoutSubviews()
+    {
+        super.viewDidLayoutSubviews()
+
+        guard let scrollView = self.scrollView else { return }
+
+        // Read at layout time, per physical edge: either side can carry a bar, and the two values are unrelated.
+        let clearance = scrollView.sideClearanceForFrameGuideContent()
+
+        if self.contentLeftConstraint?.constant != self.contentMargin + clearance.left
+        {
+            self.contentLeftConstraint?.constant = self.contentMargin + clearance.left
+        }
+
+        if self.contentRightConstraint?.constant != -(self.contentMargin + clearance.right)
+        {
+            self.contentRightConstraint?.constant = -(self.contentMargin + clearance.right)
+        }
     }
 }
 

@@ -32,9 +32,8 @@ struct ClippingSheet: View
                     }
                 }
         }
-        .presentationBackground(Material.regular)
+        // No custom presentationBackground: the system sheet adopts Liquid Glass (inset at partial detents).
         .presentationDetents([.fraction(0.33)])
-        .tint(.init(uiColor: .clipPink))
     }
 }
 

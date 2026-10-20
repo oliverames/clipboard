@@ -11,6 +11,12 @@ class ClippingDetailViewController: UIViewController
 {
     private let pasteboardItem: PasteboardItem
 
+    private let contentMargin: CGFloat = 20
+
+    private weak var scrollView: UIScrollView?
+    private var contentLeftConstraint: NSLayoutConstraint?
+    private var contentRightConstraint: NSLayoutConstraint?
+
     init(pasteboardItem: PasteboardItem)
     {
         self.pasteboardItem = pasteboardItem
@@ -30,16 +36,22 @@ class ClippingDetailViewController: UIViewController
         self.navigationItem.largeTitleDisplayMode = .never
 
         // Actions sit in the top bar, as in Pastebot's detail window, rather than in a bottom toolbar.
-        var barButtonItems = [
-            UIBarButtonItem(image: UIImage(systemName: "square.and.arrow.up"), style: .plain, target: self, action: #selector(ClippingDetailViewController.shareItem(_:)))
-        ]
+        // Each item has a title as well as a symbol: the symbol shows in the bar, and the title appears in the
+        // overflow menu when the bar runs out of room, as on iPhone Duo. Copy is the main action, so it overflows last.
+        let shareButton = UIBarButtonItem(title: NSLocalizedString("Share", comment: ""), image: UIImage(systemName: "square.and.arrow.up"), target: self, action: #selector(ClippingDetailViewController.shareItem(_:)), menu: nil)
+        let copyButton = UIBarButtonItem(title: NSLocalizedString("Copy", comment: ""), image: UIImage(systemName: "doc.on.doc"), target: self, action: #selector(ClippingDetailViewController.copyItem(_:)), menu: nil)
+        copyButton.visibilityPriority = .high
+
+        var barButtonItems = [shareButton]
 
         if let copyAsMenu = self.pasteboardItem.makeCopyAsMenu()
         {
-            barButtonItems.append(UIBarButtonItem(image: UIImage(systemName: "textformat.abc"), menu: copyAsMenu))
+            let copyAsButton = UIBarButtonItem(title: NSLocalizedString("Copy As", comment: ""), image: UIImage(systemName: "textformat.abc"), target: nil, action: nil, menu: copyAsMenu)
+            copyAsButton.visibilityPriority = .low
+            barButtonItems.append(copyAsButton)
         }
 
-        barButtonItems.append(UIBarButtonItem(image: UIImage(systemName: "doc.on.doc"), style: .plain, target: self, action: #selector(ClippingDetailViewController.copyItem(_:))))
+        barButtonItems.append(copyButton)
         self.navigationItem.rightBarButtonItems = barButtonItems
 
         let contentStack = UIStackView(arrangedSubviews: self.makeContentViews())
@@ -53,6 +65,11 @@ class ClippingDetailViewController: UIViewController
         scrollView.addSubview(contentStack)
         self.view.addSubview(scrollView)
 
+        // The frame layout guide ignores insets, so the side margins are constants that viewDidLayoutSubviews()
+        // widens to clear the safe area and any region the system reserves along a side.
+        let contentLeftConstraint = contentStack.leftAnchor.constraint(equalTo: scrollView.frameLayoutGuide.leftAnchor, constant: self.contentMargin)
+        let contentRightConstraint = contentStack.rightAnchor.constraint(equalTo: scrollView.frameLayoutGuide.rightAnchor, constant: -self.contentMargin)
+
         NSLayoutConstraint.activate([
             scrollView.topAnchor.constraint(equalTo: self.view.topAnchor),
             scrollView.bottomAnchor.constraint(equalTo: self.view.bottomAnchor),
@@ -61,9 +78,33 @@ class ClippingDetailViewController: UIViewController
 
             contentStack.topAnchor.constraint(equalTo: scrollView.contentLayoutGuide.topAnchor, constant: 16),
             contentStack.bottomAnchor.constraint(equalTo: scrollView.contentLayoutGuide.bottomAnchor, constant: -24),
-            contentStack.leadingAnchor.constraint(equalTo: scrollView.frameLayoutGuide.leadingAnchor, constant: 20),
-            contentStack.trailingAnchor.constraint(equalTo: scrollView.frameLayoutGuide.trailingAnchor, constant: -20)
+            contentLeftConstraint,
+            contentRightConstraint
         ])
+
+        self.scrollView = scrollView
+        self.contentLeftConstraint = contentLeftConstraint
+        self.contentRightConstraint = contentRightConstraint
+    }
+
+    override func viewDidLayoutSubviews()
+    {
+        super.viewDidLayoutSubviews()
+
+        guard let scrollView = self.scrollView else { return }
+
+        // Read at layout time, per physical edge: either side can carry a bar, and the two values are unrelated.
+        let clearance = scrollView.sideClearanceForFrameGuideContent()
+
+        if self.contentLeftConstraint?.constant != self.contentMargin + clearance.left
+        {
+            self.contentLeftConstraint?.constant = self.contentMargin + clearance.left
+        }
+
+        if self.contentRightConstraint?.constant != -(self.contentMargin + clearance.right)
+        {
+            self.contentRightConstraint?.constant = -(self.contentMargin + clearance.right)
+        }
     }
 }
 
@@ -160,9 +201,10 @@ private extension ClippingDetailViewController
     /// Image metadata sits in a glass capsule beneath the image, as Pastebot's image clippings do.
     func makeMetadataCapsule() -> UIView
     {
+        // The glass shapes itself from the corner configuration, so the view isn't clipped. It stays a capsule while
+        // the metadata is short and keeps a 20 point radius once the rows wrap.
         let effectView = UIVisualEffectView(effect: UIGlassEffect())
-        effectView.layer.cornerRadius = 20
-        effectView.clipsToBounds = true
+        effectView.cornerConfiguration = .capsule(maximumRadius: 20)
 
         let metadataView = self.makeMetadataView()
         metadataView.translatesAutoresizingMaskIntoConstraints = false
@@ -182,11 +224,24 @@ private extension ClippingDetailViewController
     /// Labels sit in a right-aligned column, and values follow them, as in Pastebot's metadata panel.
     func makeMetadataView() -> UIView
     {
+        // Every label column takes the width of the widest label, so the column follows Dynamic Type and the
+        // available width instead of a fixed number.
+        var firstTitleLabel: UILabel?
+
         let rows: [UIView] = self.makeDetails().map { detail in
             let titleLabel = self.makeLabel(detail.title + ":", font: self.scaledFont(.footnote, weight: .semibold), color: .secondaryLabel)
             titleLabel.textAlignment = .right
-            titleLabel.setContentHuggingPriority(.required, for: .horizontal)
-            titleLabel.widthAnchor.constraint(equalToConstant: 110).isActive = true
+            titleLabel.setContentHuggingPriority(.defaultHigh, for: .horizontal)
+            titleLabel.setContentCompressionResistancePriority(.required, for: .horizontal)
+
+            if let firstTitleLabel
+            {
+                titleLabel.widthAnchor.constraint(equalTo: firstTitleLabel.widthAnchor).isActive = true
+            }
+            else
+            {
+                firstTitleLabel = titleLabel
+            }
 
             let valueLabel = self.makeLabel(detail.value, font: .preferredFont(forTextStyle: .footnote), color: .secondaryLabel)
 

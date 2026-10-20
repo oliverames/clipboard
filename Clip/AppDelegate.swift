@@ -15,14 +15,10 @@ import Roxas
 @UIApplicationMain
 class AppDelegate: UIResponder, UIApplicationDelegate {
 
-    var window: UIWindow?
-
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool
     {
         // Override point for customization after application launch.
         print(RoxasVersionNumber)
-        
-        self.window?.tintColor = .clipPink
         
         UserDefaults.shared.registerAppDefaults()
         
@@ -39,30 +35,6 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         self.registerForNotifications()
         
         return true
-    }
-
-    func applicationWillResignActive(_ application: UIApplication) {
-        // Sent when the application is about to move from active to inactive state. This can occur for certain types of temporary interruptions (such as an incoming phone call or SMS message) or when the user quits the application and it begins the transition to the background state.
-        // Use this method to pause ongoing tasks, disable timers, and invalidate graphics rendering callbacks. Games should use this method to pause the game.
-    }
-
-    func applicationDidEnterBackground(_ application: UIApplication)
-    {
-        #if targetEnvironment(simulator)
-        // Audio extension hack to access pasteboard doesn't work in simulator, so for testing just start background task.
-        RSTBeginBackgroundTask("com.rileytestut.Clip.simulatorBackgroundTask")
-        #endif
-        
-        DatabaseManager.shared.purge()
-    }
-
-    func applicationWillEnterForeground(_ application: UIApplication)
-    {
-        DatabaseManager.shared.refresh()
-    }
-
-    func applicationDidBecomeActive(_ application: UIApplication) {
-        // Restart any tasks that were paused (or not yet started) while the application was inactive. If the application was previously in the background, optionally refresh the user interface.
     }
 
     func applicationWillTerminate(_ application: UIApplication) {
@@ -104,9 +76,8 @@ extension AppDelegate: UNUserNotificationCenterDelegate
                     
                 case .failure(let error):
                     DispatchQueue.main.async {
-                        let alertController = UIAlertController(title: NSLocalizedString("Failed to Save Clipboard", comment: ""), message: error.localizedDescription, preferredStyle: .alert)
-                        alertController.addAction(.ok)
-                        self.window?.rootViewController?.present(alertController, animated: true, completion: nil)
+                        // Scenes own the windows, so let the active scene present the alert.
+                        NotificationCenter.default.post(name: .clipboardSaveFailed, object: nil, userInfo: [NSUnderlyingErrorKey: error])
                     }
                 }
                 
@@ -116,4 +87,9 @@ extension AppDelegate: UNUserNotificationCenterDelegate
             }
         }
     }
+}
+
+extension Notification.Name
+{
+    static let clipboardSaveFailed = Notification.Name("com.rileytestut.Clip.clipboardSaveFailed")
 }
