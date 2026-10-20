@@ -59,13 +59,11 @@ Clipboard is built on [Clip](https://github.com/rileytestut/Clip), Riley Testut'
 
 Clipboard relies on three things to stay current.
 
-1. **Always location access** keeps the app running in the background. Clipboard uses your location only to tag clippings.
-2. **A change notification.** When the clipboard changes, Clipboard posts a "Clipboard Changed" notification. Swipe down on it to save the copy.
-3. **A notification extension.** `ClipboardReader` reads the clipboard and saves the copy when you swipe down.
+1. **Always location access** keeps Clipboard running in the background. Clipboard uses your location only to tag clippings.
+2. **A direct read.** When the clipboard changes, Clipboard reads the new copy and saves it. iOS allows this once Paste from Other Apps is set to Allow, and onboarding walks you through that setting.
+3. **A fallback notification.** If iOS refuses the read, Clipboard posts a "Clipboard Changed" notification instead. Swipe down on it, and the `ClipboardReader` extension reads the copy and saves it.
 
-Copies you make from within Clipboard don't post notifications.
-
-Each copy from another app currently needs a swipe to save. The iOS Simulator doesn't run background monitoring at all, so test capture on a physical device.
+Copies you make from within Clipboard are ignored. The iOS Simulator doesn't run background monitoring, so test capture on a physical device.
 
 ## Setup
 
@@ -118,7 +116,7 @@ The Core Data model has three entities. `PasteboardItem` holds each clipping, wi
 
 ## Status
 
-Everything listed under Features is implemented.
+Everything listed under Features is implemented. Direct background reads are new and need testing on a device. Copies that iOS refuses fall back to the notification.
 
 **Planned:** iCloud sync. It needs an iCloud container and a Core Data model that CloudKit can sync. Clipboard doesn't sync between devices yet.
 
