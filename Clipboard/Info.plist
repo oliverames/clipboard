@@ -4,7 +4,7 @@
 <dict>
 	<key>ALTAppGroups</key>
 	<array>
-		<string>group.com.oliverames.clippy</string>
+		<string>group.com.oliverames.clipboard</string>
 	</array>
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
@@ -105,7 +105,7 @@
 			<key>UTTypeIconFiles</key>
 			<array/>
 			<key>UTTypeIdentifier</key>
-			<string>com.oliverames.clippy.Clipping</string>
+			<string>com.oliverames.clipboard.Clipping</string>
 		</dict>
 	</array>
 </dict>

@@ -105,7 +105,7 @@ sed -i '' 's/IPHONEOS_DEPLOYMENT_TARGET = 10.0;/IPHONEOS_DEPLOYMENT_TARGET = 16.
 Then, in Xcode:
 
 1. Set your development team for the Clipboard, ClipboardKeyboard, ClipboardReader, and ClipboardKit targets.
-2. Replace the bundle identifier prefix `com.oliverames.clippy` with one you own. Replace `group.com.oliverames.clippy` in the `.entitlements` files and `Info.plist` files to match. All targets must share the same App Group.
+2. Replace the bundle identifier prefix `com.oliverames.clipboard` with one you own. Replace `group.com.oliverames.clipboard` in the `.entitlements` files and `Info.plist` files to match. All targets must share the same App Group.
 3. Run the Clipboard scheme on a physical iPhone.
 
 ## Architecture
