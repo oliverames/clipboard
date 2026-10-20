@@ -162,6 +162,7 @@ class HistoryViewController: UITableViewController
         super.viewDidAppear(animated)
 
         self.becomeFirstResponder()
+        self.presentOnboardingIfNeeded()
     }
 
     override func viewWillDisappear(_ animated: Bool)
@@ -1230,5 +1231,22 @@ extension HistoryViewController: UIPopoverPresentationControllerDelegate
     func adaptivePresentationStyle(for controller: UIPresentationController, traitCollection: UITraitCollection) -> UIModalPresentationStyle
     {
         return .none
+    }
+}
+
+private extension HistoryViewController
+{
+    func presentOnboardingIfNeeded()
+    {
+        guard !UserDefaults.shared.hasCompletedOnboarding, self.presentedViewController == nil else { return }
+
+        let onboardingViewController = OnboardingViewController()
+        onboardingViewController.isModalInPresentation = true
+        onboardingViewController.onFinish = { [weak self] in
+            UserDefaults.shared.hasCompletedOnboarding = true
+            self?.dismiss(animated: true)
+        }
+
+        self.present(onboardingViewController, animated: true)
     }
 }

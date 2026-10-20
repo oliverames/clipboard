@@ -32,6 +32,7 @@ public extension UserDefaults
     @NSManaged var showLocationIcon: Bool
     @NSManaged var generateLinkPreviews: Bool
     @NSManaged var allowsShortcutsHistory: Bool
+    @NSManaged var hasCompletedOnboarding: Bool
 }
 
 public extension UserDefaults
