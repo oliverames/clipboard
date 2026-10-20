@@ -143,7 +143,10 @@ class HistoryViewController: UITableViewController
         super.viewDidLayoutSubviews()
 
         // The outer display reserves a column along one edge for the status bar and toolbar, so rows stop short of it.
-        self.tableView.applyReservedRegionInsets()
+        // Separators follow the rows, so they stop at the same edges.
+        let reservedInsets = self.tableView.applyReservedRegionInsets()
+        self.tableView.separatorInset.left = 72 + reservedInsets.left
+        self.tableView.separatorInset.right = reservedInsets.right
     }
 
     override func viewDidAppear(_ animated: Bool)
