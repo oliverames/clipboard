@@ -96,6 +96,12 @@ cd clippy
 open Clip.xcodeproj
 ```
 
+The Roxas submodule still targets iOS 10.0, which Xcode 27.2 rejects. Before you build, raise its deployment target to 16.0:
+
+```bash
+sed -i '' 's/IPHONEOS_DEPLOYMENT_TARGET = 10.0;/IPHONEOS_DEPLOYMENT_TARGET = 16.0;/' Dependencies/Roxas/Roxas.xcodeproj/project.pbxproj
+```
+
 Then, in Xcode:
 
 1. Set your development team for the Clip, ClipBoard, ClipboardReader, and ClipKit targets.
