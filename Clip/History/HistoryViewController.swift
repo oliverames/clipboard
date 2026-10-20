@@ -140,6 +140,25 @@ class HistoryViewController: UITableViewController
         self.startUpdating()
     }
 
+    override func viewDidLayoutSubviews()
+    {
+        super.viewDidLayoutSubviews()
+
+        // The outer display reserves its trailing edge for the status bar and toolbar, so rows stop short of it.
+        guard #available(iOS 27.1, *) else { return }
+
+        let trailingRegionWidth = self.tableView.reservedRegions(kind: .occlusion, options: []).reduce(0.0) { (width, region) in
+            guard region.isActive, region.frame.maxX >= self.tableView.bounds.maxX - 1 else { return width }
+            return max(width, self.tableView.bounds.maxX - region.frame.minX)
+        }
+
+        let trailingInset = trailingRegionWidth > 0 ? trailingRegionWidth + 8 : 0
+        guard self.tableView.contentInset.right != trailingInset else { return }
+
+        self.tableView.contentInset.right = trailingInset
+        self.tableView.verticalScrollIndicatorInsets.right = trailingInset
+    }
+
     override func viewDidAppear(_ animated: Bool)
     {
         super.viewDidAppear(animated)
@@ -512,10 +531,6 @@ private extension HistoryViewController
         {
             accessoryViews.append(badge)
         }
-
-        let copyButton = self.makeAccessoryButton(systemImageName: "doc.on.doc")
-        copyButton.addTarget(self, action: #selector(HistoryViewController.copyButtonTapped(_:)), for: .primaryActionTriggered)
-        accessoryViews.append(copyButton)
 
         let stackView = UIStackView(arrangedSubviews: accessoryViews)
         stackView.spacing = 8
@@ -1070,13 +1085,6 @@ private extension HistoryViewController
     {
         guard let objectID = Optional(item.objectID) else { return nil }
         return self.dataSource.indexPath(for: objectID)
-    }
-
-    @objc func copyButtonTapped(_ sender: UIButton)
-    {
-        guard let indexPath = self.indexPath(for: sender), let item = self.item(at: indexPath) else { return }
-
-        UIPasteboard.general.copy(item)
     }
 
     @objc func locationButtonTapped(_ sender: UIButton)
