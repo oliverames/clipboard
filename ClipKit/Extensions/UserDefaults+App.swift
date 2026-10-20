@@ -30,6 +30,7 @@ public extension UserDefaults
     @NSManaged var historyLimit: HistoryLimit
     @NSManaged var maximumClippingSize: Int
     @NSManaged var showLocationIcon: Bool
+    @NSManaged var generateLinkPreviews: Bool
 }
 
 public extension UserDefaults
@@ -39,7 +40,8 @@ public extension UserDefaults
         self.register(defaults: [
             #keyPath(UserDefaults.historyLimit): HistoryLimit._25.rawValue,
             #keyPath(UserDefaults.maximumClippingSize): 10 * .bytesPerMegabyte,
-            #keyPath(UserDefaults.showLocationIcon): true
+            #keyPath(UserDefaults.showLocationIcon): true,
+            #keyPath(UserDefaults.generateLinkPreviews): true
         ])
     }
 }

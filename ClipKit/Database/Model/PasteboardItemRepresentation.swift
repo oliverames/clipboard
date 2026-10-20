@@ -28,6 +28,16 @@ extension PasteboardItemRepresentation
             case .image: return NSLocalizedString("Image", comment: "")
             }
         }
+
+        public var symbolName: String {
+            switch self
+            {
+            case .text: return "text.alignleft"
+            case .attributedText: return "textformat"
+            case .url: return "link"
+            case .image: return "photo"
+            }
+        }
     }
 }
 

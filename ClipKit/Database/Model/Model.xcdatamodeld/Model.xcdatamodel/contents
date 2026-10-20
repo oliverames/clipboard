@@ -1,10 +1,19 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <model type="com.apple.IDECoreDataModeler.DataModel" documentVersion="1.0" lastSavedToolsVersion="22757" systemVersion="23E5211a" minimumToolsVersion="Automatic" sourceLanguage="Swift" userDefinedModelVersionIdentifier="">
+    <entity name="ClippingList" representedClassName="ClippingList" syncable="YES">
+        <attribute name="date" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
+        <attribute name="name" attributeType="String" defaultValueString=""/>
+        <relationship name="items" optional="YES" toMany="YES" deletionRule="Nullify" destinationEntity="PasteboardItem" inverseName="lists" inverseEntity="PasteboardItem"/>
+    </entity>
     <entity name="PasteboardItem" representedClassName="PasteboardItem" syncable="YES">
         <attribute name="date" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
+        <attribute name="isFavorite" attributeType="Boolean" defaultValueString="NO" usesScalarValueType="YES"/>
         <attribute name="isMarkedForDeletion" attributeType="Boolean" defaultValueString="NO" usesScalarValueType="YES"/>
+        <attribute name="isPinned" attributeType="Boolean" defaultValueString="NO" usesScalarValueType="YES"/>
         <attribute name="latitude" optional="YES" attributeType="Double" defaultValueString="0.0" usesScalarValueType="NO"/>
         <attribute name="longitude" optional="YES" attributeType="Double" defaultValueString="0.0" usesScalarValueType="NO"/>
+        <attribute name="trashedDate" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
+        <relationship name="lists" optional="YES" toMany="YES" deletionRule="Nullify" destinationEntity="ClippingList" inverseName="items" inverseEntity="ClippingList"/>
         <relationship name="preferredRepresentation" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="PasteboardItemRepresentation" inverseName="preferringItem" inverseEntity="PasteboardItemRepresentation"/>
         <relationship name="representations" toMany="YES" deletionRule="Cascade" ordered="YES" destinationEntity="PasteboardItemRepresentation" inverseName="item" inverseEntity="PasteboardItemRepresentation"/>
     </entity>

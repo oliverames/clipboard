@@ -31,7 +31,7 @@
                 <navigationController automaticallyAdjustsScrollViewInsets="NO" id="Z9q-vE-dSj" customClass="ForwardingNavigationController" customModule="Clip" customModuleProvider="target" sceneMemberID="viewController">
                     <tabBarItem key="tabBarItem" title="List" id="PKr-yJ-H3B"/>
                     <toolbarItems/>
-                    <navigationBar key="navigationBar" contentMode="scaleToFill" insetsLayoutMarginsFromSafeArea="NO" barStyle="black" translucent="NO" largeTitles="YES" id="mZf-DU-Jdd">
+                    <navigationBar key="navigationBar" contentMode="scaleToFill" insetsLayoutMarginsFromSafeArea="NO" largeTitles="YES" id="mZf-DU-Jdd">
                         <rect key="frame" x="0.0" y="20" width="375" height="96"/>
                         <autoresizingMask key="autoresizingMask"/>
                     </navigationBar>
@@ -48,10 +48,10 @@
         <scene sceneID="05K-82-Num">
             <objects>
                 <tableViewController id="fd0-Ck-KzX" customClass="HistoryViewController" customModule="Clip" customModuleProvider="target" sceneMemberID="viewController">
-                    <tableView key="view" clipsSubviews="YES" contentMode="scaleToFill" alwaysBounceVertical="YES" indicatorStyle="white" dataMode="prototypes" style="plain" separatorStyle="none" rowHeight="-1" estimatedRowHeight="-1" sectionHeaderHeight="28" sectionFooterHeight="28" id="y1F-1W-Tvt">
+                    <tableView key="view" clipsSubviews="YES" contentMode="scaleToFill" alwaysBounceVertical="YES" dataMode="prototypes" style="plain" rowHeight="-1" estimatedRowHeight="-1" sectionHeaderHeight="28" sectionFooterHeight="28" id="y1F-1W-Tvt">
                         <rect key="frame" x="0.0" y="0.0" width="375" height="551"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
-                        <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                        <color key="backgroundColor" systemColor="systemBackgroundColor"/>
                         <sections/>
                         <connections>
                             <outlet property="dataSource" destination="fd0-Ck-KzX" id="ggy-BL-GCf"/>
@@ -60,7 +60,6 @@
                     </tableView>
                     <navigationItem key="navigationItem" title="Clip" id="KPM-hY-RHG">
                         <barButtonItem key="rightBarButtonItem" image="Settings" id="IaP-Ad-9rj">
-                            <color key="tintColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
                             <connections>
                                 <segue destination="beq-wr-z37" kind="popoverPresentation" identifier="showSettings" popoverAnchorBarButtonItem="IaP-Ad-9rj" id="fMU-im-zh7">
                                     <popoverArrowDirection key="popoverArrowDirection" up="YES" down="YES" left="YES" right="YES"/>
@@ -204,6 +203,46 @@
                                     </tableViewCell>
                                 </cells>
                             </tableViewSection>
+                            <tableViewSection id="Vq3-Kc-Ldn" footerTitle="Download web content for previews; may activate one-time or analytics-sensitive links.">
+                                <cells>
+                                    <tableViewCell clipsSubviews="YES" contentMode="scaleToFill" preservesSuperviewLayoutMargins="YES" selectionStyle="default" indentationWidth="10" id="Ro8-Gp-Yzw">
+                                        <rect key="frame" x="16" y="0.0" width="343" height="44.5"/>
+                                        <autoresizingMask key="autoresizingMask"/>
+                                        <tableViewCellContentView key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" preservesSuperviewLayoutMargins="YES" insetsLayoutMarginsFromSafeArea="NO" tableViewCell="Ro8-Gp-Yzw" id="Hc3-Ww-Ttu">
+                                            <rect key="frame" x="0.0" y="0.0" width="343" height="44.5"/>
+                                            <autoresizingMask key="autoresizingMask"/>
+                                            <subviews>
+                                                <stackView opaque="NO" contentMode="scaleToFill" distribution="equalSpacing" alignment="center" translatesAutoresizingMaskIntoConstraints="NO" id="Ls2-Vn-Bqe">
+                                                    <rect key="frame" x="16" y="0.0" width="311" height="44.5"/>
+                                                    <subviews>
+                                                        <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Generate Link Previews" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="Kz4-Tb-Pvn">
+                                                            <rect key="frame" x="0.0" y="12" width="200" height="20.5"/>
+                                                            <fontDescription key="fontDescription" type="system" pointSize="17"/>
+                                                            <nil key="textColor"/>
+                                                            <nil key="highlightedColor"/>
+                                                        </label>
+                                                        <switch opaque="NO" contentMode="scaleToFill" horizontalHuggingPriority="750" verticalHuggingPriority="750" contentHorizontalAlignment="center" contentVerticalAlignment="center" on="YES" translatesAutoresizingMaskIntoConstraints="NO" id="Yq6-Hm-Dcr">
+                                                            <rect key="frame" x="262" y="7" width="51" height="31"/>
+                                                            <connections>
+                                                                <action selector="toggleGenerateLinkPreviews:" destination="xUa-Vn-Yd7" eventType="primaryActionTriggered" id="Wf1-Rc-Ngt"/>
+                                                            </connections>
+                                                        </switch>
+                                                    </subviews>
+                                                    <constraints>
+                                                        <constraint firstAttribute="height" constant="44" id="Dn9-Ke-Uzr"/>
+                                                    </constraints>
+                                                </stackView>
+                                            </subviews>
+                                            <constraints>
+                                                <constraint firstAttribute="trailingMargin" secondItem="Ls2-Vn-Bqe" secondAttribute="trailing" id="Pt5-Ax-Lhq"/>
+                                                <constraint firstAttribute="bottom" secondItem="Ls2-Vn-Bqe" secondAttribute="bottom" id="Qc7-Ur-Ymz"/>
+                                                <constraint firstItem="Ls2-Vn-Bqe" firstAttribute="top" secondItem="Hc3-Ww-Ttu" secondAttribute="top" id="Ru8-Kt-Fjn"/>
+                                                <constraint firstItem="Ls2-Vn-Bqe" firstAttribute="leading" secondItem="Hc3-Ww-Ttu" secondAttribute="leadingMargin" id="Sv9-Lm-Gvo"/>
+                                            </constraints>
+                                        </tableViewCellContentView>
+                                    </tableViewCell>
+                                </cells>
+                            </tableViewSection>
                         </sections>
                         <connections>
                             <outlet property="dataSource" destination="xUa-Vn-Yd7" id="yxE-Kd-hqj"/>
@@ -213,6 +252,7 @@
                     <navigationItem key="navigationItem" title="Settings" id="HV4-i9-lJF"/>
                     <connections>
                         <outlet property="showLocationIconSwitch" destination="L7B-Cw-is3" id="FJc-lY-5r9"/>
+                        <outlet property="linkPreviewsSwitch" destination="Yq6-Hm-Dcr" id="Mj2-Rk-Zts"/>
                     </connections>
                 </tableViewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="ohN-Gn-92v" userLabel="First Responder" sceneMemberID="firstResponder"/>

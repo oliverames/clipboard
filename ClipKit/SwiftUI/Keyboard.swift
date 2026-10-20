@@ -24,13 +24,13 @@ public struct Keyboard: View
     private let inputViewController: UIInputViewController?
     private let needsInputModeSwitchKey: Bool
     private let hasFullAccess: Bool
-    
+
     @FetchRequest(fetchRequest: PasteboardItem.historyFetchRequest())
     private var pasteboardItems: FetchedResults<PasteboardItem>
-    
+
     @Environment(\.horizontalSizeClass)
     private var horizontalSizeClass
-    
+
     public init(inputViewController: UIInputViewController?,
                 needsInputModeSwitchKey: Bool? = nil,
                 hasFullAccess: Bool? = nil)
@@ -39,104 +39,87 @@ public struct Keyboard: View
         self.needsInputModeSwitchKey = needsInputModeSwitchKey ?? inputViewController?.needsInputModeSwitchKey ?? false
         self.hasFullAccess = hasFullAccess ?? inputViewController?.hasFullAccess ?? true
     }
-        
+
     public var body: some View {
         ZStack(alignment: .bottomLeading) {
-            
             if !self.hasFullAccess
             {
-                VStack(spacing: 32) {
-                    VStack(spacing: 16) {
+                VStack(spacing: 24) {
+                    VStack(spacing: 8) {
                         Text("Full Access Disabled")
-                            .font(.title)
+                            .font(.title3.weight(.semibold))
+
                         Text("Allow Full Access for this keyboard in Settings to access saved clippings.")
-                            .font(.body)
+                            .font(.callout)
+                            .foregroundStyle(.secondary)
+                            .multilineTextAlignment(.center)
                     }
-                    
+
                     Button(action: self.openSettings) {
                         Text("Open Settings")
-                            .font(Font(UIFont.preferredFont(forTextStyle: .title3)))
-                            .foregroundColor(Color(.clipPink))
                     }
-                    
+                    .buttonStyle(.borderedProminent)
+
                     Button(action: self.pasteUUID) {
                         Text("Paste Random UUID")
-                            .font(Font(UIFont.preferredFont(forTextStyle: .title3)))
-                            .foregroundColor(Color(.clipPink))
                     }
+                    .buttonStyle(.bordered)
                 }
-                .frame(minWidth: 0, maxWidth: .infinity, minHeight: 0, maxHeight: .infinity)
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .padding()
             }
             else if self.pasteboardItems.isEmpty
             {
-                VStack(spacing: 16) {
+                VStack(spacing: 8) {
                     Text("No Clippings")
-                        .font(.title)
+                        .font(.title3.weight(.semibold))
+
                     Text("Items that you've copied to the clipboard will appear here.")
-                        .font(.body)
+                        .font(.callout)
+                        .foregroundStyle(.secondary)
+                        .multilineTextAlignment(.center)
                 }
-                .frame(minWidth: 0, maxWidth: .infinity, minHeight: 0, maxHeight: .infinity)
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .padding()
             }
             else
             {
-                let list = List(self.pasteboardItems, id: \.objectID) { (pasteboardItem) in
-                    Button(action: { self.paste(pasteboardItem) }) {
-                        ClippingCell(pasteboardItem: pasteboardItem)
+                List(self.pasteboardItems, id: \.objectID) { (pasteboardItem) in
+                    HStack(spacing: 8) {
+                        Button(action: { self.paste(pasteboardItem) }) {
+                            ClippingCell(pasteboardItem: pasteboardItem)
+                                .contentShape(Rectangle())
+                        }
+                        .buttonStyle(.plain)
+
+                        Button(action: { self.copy(pasteboardItem) }) {
+                            Image(systemName: "doc.on.doc")
+                                .font(.body)
+                                .frame(width: 44, height: 44)
+                                .contentShape(Rectangle())
+                        }
+                        .buttonStyle(.borderless)
+                        .accessibilityLabel("Copy")
                     }
-                    .buttonStyle(.plain)
-                    .foregroundStyle(.primary)
-                    .listRowBackground(Color.clear)
-                    .listRowSeparator(.hidden)
-                    .listRowInsets(makeInsets())
                 }
-                .padding(.top, 8) // iPadOS sometimes places List too close to toolbar, so add padding.
-                
-                if #available(iOS 16.4, *)
-                {
-                    list
-                        .scrollContentBackground(.hidden)
-                        .scrollBounceBehavior(.always, axes: .vertical)
-                }
-                else
-                {
-                    list
-                }
+                .listStyle(.plain)
+                .scrollContentBackground(.hidden)
             }
-            
+
             if self.needsInputModeSwitchKey
             {
                 let offset = (self.horizontalSizeClass == .regular) ? 16.0 : 8.0
-                
+
                 SwitchKeyboardButton(inputViewController: self.inputViewController,
-                                     tintColor: .clipPink,
                                      configuration: .init(textStyle: .title2))
                     .fixedSize()
                     .padding(.horizontal, 4)
                     .padding(.vertical, 8)
-                    .background(Blur())
-                    .blurStyle(.extraLight)
-                    .clipShape(Circle())
+                    .background(.regularMaterial, in: Circle())
                     .offset(x: offset, y: -offset)
             }
         }
         .edgesIgnoringSafeArea(.all)
-        .onAppear {
-            UITableView.appearance().backgroundColor = .clear
-            UITableView.appearance().separatorStyle = .none
-            UITableView.appearance().contentInset = UIEdgeInsets(top: 8, left: 0, bottom: 8, right: 0)
-            
-            UITableViewCell.appearance().backgroundColor = .clear
-        }
-    }
-    
-    private func makeInsets() -> EdgeInsets
-    {
-        var insets = EdgeInsets()
-        insets.top = 8
-        insets.bottom = 8
-        return insets
     }
 }
 
@@ -144,32 +127,37 @@ private extension Keyboard
 {
     func paste(_ pasteboardItem: PasteboardItem)
     {
-        guard let text = pasteboardItem.preferredRepresentation?.stringValue else { return }
-        
-        let center = CFNotificationCenterGetDarwinNotifyCenter()
-        CFNotificationCenterPostNotification(center, .ignoreNextPasteboardChange, nil, nil, true)
-        
-        UIPasteboard.general.copy(pasteboardItem)
-        
+        guard let text = pasteboardItem.contentText else { return }
+
+        self.copy(pasteboardItem)
+
         self.paste(text)
     }
-    
+
+    func copy(_ pasteboardItem: PasteboardItem)
+    {
+        let center = CFNotificationCenterGetDarwinNotifyCenter()
+        CFNotificationCenterPostNotification(center, .ignoreNextPasteboardChange, nil, nil, true)
+
+        UIPasteboard.general.copy(pasteboardItem)
+    }
+
     func pasteUUID()
     {
         let uuid = UUID().uuidString
         self.paste(uuid)
     }
-    
+
     func paste(_ text: String)
     {
         self.inputViewController?.textDocumentProxy.insertText(text)
         self.inputViewController?.inputView?.playInputClick()
-        
+
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
             self.inputViewController?.advanceToNextInputMode()
         }
     }
-    
+
     func openSettings()
     {
         // NSExtensionContext.openURL() can only be called from Today extensions.
@@ -178,11 +166,11 @@ private extension Keyboard
         guard
             let application = (UIApplication.self as AnyObject).value(forKey: "sharedApplication") as? UIApplication
         else { return }
-        
+
         // UIApplication.openSettingsURLString doesn't work from keyboard extension,
         // so instead we open Clip which will then open Settings.
-        let openURL = URL(string: "clip://settings")!
-        
+        let openURL = URL(string: "clippy://settings")!
+
         let tempApp = unsafeBitCast(application, to: RSTApplication.self)
         tempApp.open(openURL, options: [:], completionHandler: nil)
     }
@@ -193,19 +181,18 @@ struct Keyboard_Previews: PreviewProvider
     static var previews: some View
     {
         Preview.prepare()
-        
+
         let context = DatabaseManager.shared.persistentContainer.viewContext
         let date = Date().addingTimeInterval(-1 * 60 * 60)
-        
+
         _ = PasteboardItem.make(item: "Hello SwiftUI!" as NSString, date: date, context: context)
         _ = PasteboardItem.make(item: NSURL(string: "https://rileytestut.com")!, date: date, context: context)
         _ = PasteboardItem.make(item: "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum." as NSString, date: date, context: context)
-                
+
         return Group {
             Keyboard(inputViewController: nil, needsInputModeSwitchKey: true)
             Keyboard(inputViewController: nil, needsInputModeSwitchKey: true, hasFullAccess: false)
         }
-        .background(Color(.lightGray))
         .environment(\.managedObjectContext, context)
         .previewLayout(.fixed(width: 375, height: 500))
     }

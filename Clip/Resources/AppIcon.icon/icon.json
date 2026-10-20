@@ -1,0 +1,62 @@
+{
+  "fill": {
+    "automatic-gradient": "extended-srgb:0.46000,0.47000,0.50000,1.00000"
+  },
+  "groups": [
+    {
+      "layers": [
+        {
+          "image-name": "clipboard-front.png",
+          "name": "clipboard-front",
+          "glass": true,
+          "position": {
+            "scale": 1.0,
+            "translation-in-points": [
+              0,
+              0
+            ]
+          }
+        }
+      ],
+      "shadow": {
+        "kind": "neutral",
+        "opacity": 0.6
+      },
+      "translucency": {
+        "enabled": true,
+        "value": 0.6
+      },
+      "specular": true,
+      "lighting": "individual"
+    },
+    {
+      "layers": [
+        {
+          "image-name": "clipboard-back.png",
+          "name": "clipboard-back",
+          "glass": true,
+          "position": {
+            "scale": 1.0,
+            "translation-in-points": [
+              0,
+              0
+            ]
+          }
+        }
+      ],
+      "shadow": {
+        "kind": "neutral",
+        "opacity": 0.3
+      },
+      "translucency": {
+        "enabled": true,
+        "value": 0.85
+      },
+      "specular": true,
+      "lighting": "individual"
+    }
+  ],
+  "supported-platforms": {
+    "squares": "shared"
+  }
+}

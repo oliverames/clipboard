@@ -16,6 +16,7 @@ extension SettingsViewController
     {
         case historyLimit
         case location
+        case linkPreviews
     }
     
     static let settingsDidChangeNotification: Notification.Name = Notification.Name("SettingsDidChangeNotification")
@@ -24,12 +25,14 @@ extension SettingsViewController
 class SettingsViewController: UITableViewController
 {
     @IBOutlet private var showLocationIconSwitch: UISwitch!
-    
+    @IBOutlet private var linkPreviewsSwitch: UISwitch!
+
     override func viewDidLoad()
     {
         super.viewDidLoad()
-        
+
         self.showLocationIconSwitch.isOn = UserDefaults.shared.showLocationIcon
+        self.linkPreviewsSwitch.isOn = UserDefaults.shared.generateLinkPreviews
     }
 }
 
@@ -38,8 +41,13 @@ private extension SettingsViewController
     @IBAction func toggleShowLocationIcon(_ sender: UISwitch)
     {
         UserDefaults.shared.showLocationIcon = sender.isOn
-        
+
         NotificationCenter.default.post(name: SettingsViewController.settingsDidChangeNotification, object: nil)
+    }
+
+    @IBAction func toggleGenerateLinkPreviews(_ sender: UISwitch)
+    {
+        UserDefaults.shared.generateLinkPreviews = sender.isOn
     }
 }
 
@@ -55,7 +63,7 @@ extension SettingsViewController
             let limit = HistoryLimit.allCases[indexPath.row]
             cell.accessoryType = (limit == UserDefaults.shared.historyLimit) ? .checkmark : .none
             
-        case .location: break
+        case .location, .linkPreviews: break
         }
         
         return cell

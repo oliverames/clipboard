@@ -38,10 +38,12 @@ private class PersistentContainer: RSTPersistentContainer
 {
     override class func defaultDirectoryURL() -> URL
     {
-        guard let appGroup = Bundle.main.appGroups.first else { return super.defaultDirectoryURL() }
-        
-        let sharedDirectoryURL = FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: appGroup)!
-        
+        // Unsigned builds have no App Group entitlement, so there is no shared container to use.
+        guard
+            let appGroup = Bundle.main.appGroups.first,
+            let sharedDirectoryURL = FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: appGroup)
+        else { return super.defaultDirectoryURL() }
+
         let databaseDirectoryURL = sharedDirectoryURL.appendingPathComponent("Database")
         try? FileManager.default.createDirectory(at: databaseDirectoryURL, withIntermediateDirectories: true, attributes: nil)
         
@@ -172,11 +174,14 @@ public class DatabaseManager
             
             do
             {
-                let fetchRequest = PasteboardItem.historyFetchRequest() as! NSFetchRequest<NSManagedObjectID>
-                fetchRequest.resultType = .managedObjectIDResultType
-                
-                let objectIDs = try context.fetch(fetchRequest)
-                
+                let historyFetchRequest = PasteboardItem.historyFetchRequest() as! NSFetchRequest<NSManagedObjectID>
+                historyFetchRequest.resultType = .managedObjectIDResultType
+
+                let protectedFetchRequest = PasteboardItem.protectedFetchRequest() as! NSFetchRequest<NSManagedObjectID>
+                protectedFetchRequest.resultType = .managedObjectIDResultType
+
+                let objectIDs = try context.fetch(historyFetchRequest) + context.fetch(protectedFetchRequest)
+
                 let deletionFetchRequest = PasteboardItem.fetchRequest() as NSFetchRequest<NSFetchRequestResult>
                 deletionFetchRequest.predicate = NSPredicate(format: "NOT (SELF IN %@)", objectIDs)
                 
@@ -227,7 +232,7 @@ public extension DatabaseManager
                     print(pasteboardItem)
                     
                     let fetchRequest = PasteboardItem.fetchRequest() as NSFetchRequest<PasteboardItem>
-                    fetchRequest.predicate = NSPredicate(format: "%K == NO", #keyPath(PasteboardItem.isMarkedForDeletion))
+                    fetchRequest.predicate = NSPredicate(format: "%K == NO AND trashedDate == nil", #keyPath(PasteboardItem.isMarkedForDeletion))
                     fetchRequest.sortDescriptors = [NSSortDescriptor(keyPath: \PasteboardItem.date, ascending: false)]
                     fetchRequest.relationshipKeyPathsForPrefetching = ["representations"]
                     fetchRequest.includesPendingChanges = false

@@ -29,7 +29,10 @@ public class PasteboardItem: NSManagedObject, Identifiable
     /* Properties */
     @NSManaged public private(set) var date: Date
     @NSManaged public var isMarkedForDeletion: Bool
-    
+    @NSManaged public var isFavorite: Bool
+    @NSManaged public var isPinned: Bool
+    @NSManaged public var trashedDate: Date?
+
     public var location: CLLocation? {
         get {
             guard let latitude, let longitude else { return nil }
@@ -52,7 +55,12 @@ public class PasteboardItem: NSManagedObject, Identifiable
     @NSManaged @objc(representations) private var _representations: NSOrderedSet
     
     @NSManaged public var preferredRepresentation: PasteboardItemRepresentation?
-    
+
+    @nonobjc public var lists: Set<ClippingList> {
+        return self._lists as? Set<ClippingList> ?? []
+    }
+    @NSManaged @objc(lists) private var _lists: NSSet?
+
     private override init(entity: NSEntityDescription, insertInto context: NSManagedObjectContext?)
     {
         super.init(entity: entity, insertInto: context)
@@ -91,12 +99,29 @@ public extension PasteboardItem
         return NSFetchRequest<PasteboardItem>(entityName: "PasteboardItem")
     }
     
+    /// Recent clippings outside the Trash, with pinned clippings first.
     class func historyFetchRequest() -> NSFetchRequest<PasteboardItem>
     {
         let fetchRequest = PasteboardItem.fetchRequest() as NSFetchRequest<PasteboardItem>
-        fetchRequest.predicate = NSPredicate(format: "%K == NO", #keyPath(PasteboardItem.isMarkedForDeletion))
-        fetchRequest.sortDescriptors = [NSSortDescriptor(keyPath: \PasteboardItem.date, ascending: false)]
+        fetchRequest.predicate = NSPredicate(format: "%K == NO AND trashedDate == nil", #keyPath(PasteboardItem.isMarkedForDeletion))
+        fetchRequest.sortDescriptors = [NSSortDescriptor(keyPath: \PasteboardItem.isPinned, ascending: false), NSSortDescriptor(keyPath: \PasteboardItem.date, ascending: false)]
         fetchRequest.fetchLimit = UserDefaults.shared.historyLimit.rawValue
+        return fetchRequest
+    }
+
+    /// Clippings the history limit never purges: favorites, trashed items, and items in a list.
+    class func protectedFetchRequest() -> NSFetchRequest<PasteboardItem>
+    {
+        let fetchRequest = PasteboardItem.fetchRequest() as NSFetchRequest<PasteboardItem>
+        fetchRequest.predicate = NSPredicate(format: "%K == NO AND (isFavorite == YES OR trashedDate != nil OR lists.@count > 0)", #keyPath(PasteboardItem.isMarkedForDeletion))
+        return fetchRequest
+    }
+
+    class func trashFetchRequest() -> NSFetchRequest<PasteboardItem>
+    {
+        let fetchRequest = PasteboardItem.fetchRequest() as NSFetchRequest<PasteboardItem>
+        fetchRequest.predicate = NSPredicate(format: "%K == NO AND trashedDate != nil", #keyPath(PasteboardItem.isMarkedForDeletion))
+        fetchRequest.sortDescriptors = [NSSortDescriptor(keyPath: \PasteboardItem.trashedDate, ascending: false)]
         return fetchRequest
     }
 }

@@ -17,19 +17,17 @@
 		BF235BC1247D8B5300CCFCB0 /* UIPasteboard+PasteboardItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = BF235BC0247D8B5300CCFCB0 /* UIPasteboard+PasteboardItem.swift */; };
 		BF50E7D922C2BF010070E17B /* Bundle+AppGroups.swift in Sources */ = {isa = PBXBuildFile; fileRef = BF50E7D822C2BF010070E17B /* Bundle+AppGroups.swift */; };
 		BF770E6522BC7688002A40FE /* UIDevice+Vibration.swift in Sources */ = {isa = PBXBuildFile; fileRef = BF770E6122BC767A002A40FE /* UIDevice+Vibration.swift */; };
+		B49DD26259BD404EB999F748 /* PasteboardItem+CopyAs.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D26A154155F423CBDC33C24 /* PasteboardItem+CopyAs.swift */; };
 		BF7B9EE122B81C980042C873 /* Int+Bytes.swift in Sources */ = {isa = PBXBuildFile; fileRef = BF7B9EE022B81C980042C873 /* Int+Bytes.swift */; };
 		BF7E6FE3247C4FCD0058F4D4 /* KeyboardViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = BF7E6FE2247C4FCD0058F4D4 /* KeyboardViewController.swift */; };
 		BF7E6FE7247C4FCD0058F4D4 /* ClipBoard.appex in Embed App Extensions */ = {isa = PBXBuildFile; fileRef = BF7E6FE0247C4FCD0058F4D4 /* ClipBoard.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		BF8F76F3254CC0E0005AF18B /* SceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = BF8F76F2254CC0E0005AF18B /* SceneDelegate.swift */; };
 		BFA2DF60247DD21F00E31E4D /* Keyboard.swift in Sources */ = {isa = PBXBuildFile; fileRef = BF7E6FF0247C50540058F4D4 /* Keyboard.swift */; };
 		BFA2DF61247DD23800E31E4D /* ClippingCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = BF7E6FF2247C518D0058F4D4 /* ClippingCell.swift */; };
-		BFA2DF62247DD23C00E31E4D /* Blur.swift in Sources */ = {isa = PBXBuildFile; fileRef = BF0AB807247C5D1F0090B43B /* Blur.swift */; };
 		BFA2DF65247DD2B200E31E4D /* Colors.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = BFA2DF64247DD2B200E31E4D /* Colors.xcassets */; };
 		BFA2DF69247DD31500E31E4D /* UIColor+Clip.swift in Sources */ = {isa = PBXBuildFile; fileRef = BFA2DF68247DD31500E31E4D /* UIColor+Clip.swift */; };
 		BFA2DF6B247DE47900E31E4D /* Preview.swift in Sources */ = {isa = PBXBuildFile; fileRef = BFA2DF6A247DE47900E31E4D /* Preview.swift */; };
 		BFA714BA22C53F1700EE7236 /* ApplicationMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = BFA714B922C53F1700EE7236 /* ApplicationMonitor.swift */; };
-		BFAC49D322B2EDA80011E7C4 /* ClippingTableViewCell.xib in Resources */ = {isa = PBXBuildFile; fileRef = BFAC49D222B2EDA80011E7C4 /* ClippingTableViewCell.xib */; };
-		BFAC49D522B2EDB20011E7C4 /* ClippingTableViewCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = BFAC49D422B2EDB20011E7C4 /* ClippingTableViewCell.swift */; };
 		BFAC49E022B40EC90011E7C4 /* AudioToolbox.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = BFAC49DF22B40EC90011E7C4 /* AudioToolbox.framework */; };
 		BFAD2C4A257AD4D600FF9532 /* PublishedPipeline.swift in Sources */ = {isa = PBXBuildFile; fileRef = BFAD2C49257AD4D600FF9532 /* PublishedPipeline.swift */; };
 		BFAD46C92490588800451D6F /* UIInputView+Click.swift in Sources */ = {isa = PBXBuildFile; fileRef = BFAD46C82490588800451D6F /* UIInputView+Click.swift */; };
@@ -43,12 +41,17 @@
 		BFC1F39F22AF0D0E003AC21A /* HistoryViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = BFC1F39E22AF0D0E003AC21A /* HistoryViewController.swift */; };
 		BFC1F3A222AF0D0E003AC21A /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = BFC1F3A022AF0D0E003AC21A /* Main.storyboard */; };
 		BFC1F3A422AF0D0F003AC21A /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = BFC1F3A322AF0D0F003AC21A /* Assets.xcassets */; };
+		206C0B410FCB4553B6F2EB71 /* AppIcon.icon in Resources */ = {isa = PBXBuildFile; fileRef = 0DAB2DA872814B358DC46A6F /* AppIcon.icon */; };
 		BFC1F3A722AF0D0F003AC21A /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = BFC1F3A522AF0D0F003AC21A /* LaunchScreen.storyboard */; };
 		BFC9E65422B1A22700974663 /* ClipKit.h in Headers */ = {isa = PBXBuildFile; fileRef = BFC9E65222B1A22700974663 /* ClipKit.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		BFC9E65722B1A22700974663 /* ClipKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = BFC9E65022B1A22700974663 /* ClipKit.framework */; platformFilter = ios; };
 		BFC9E65822B1A22700974663 /* ClipKit.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = BFC9E65022B1A22700974663 /* ClipKit.framework */; platformFilter = ios; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		BFC9E66222B1B03900974663 /* DatabaseManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = BF1D5D4622B0869C0062F474 /* DatabaseManager.swift */; };
+		26D2C5B3A061409EBFBFB014 /* CodeDetector.swift in Sources */ = {isa = PBXBuildFile; fileRef = 83B9C4CC03874A2EAE646D46 /* CodeDetector.swift */; };
+		0E5AC0DBA185414B8638C53F /* FuzzyMatcher.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA5FD35F721B4F21AA53772A /* FuzzyMatcher.swift */; };
+		F421D2E806BF401687EAC324 /* ClippingTransform.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4EC55C8F48AB4F9893C54B90 /* ClippingTransform.swift */; };
 		BFC9E66322B1B03C00974663 /* PasteboardItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = BF1D5D4A22B094DB0062F474 /* PasteboardItem.swift */; };
+		C1A55E0100000000000000A1 /* ClippingList.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1A55E0100000000000000A2 /* ClippingList.swift */; };
 		BFC9E66422B1B03C00974663 /* PasteboardItemRepresentation.swift in Sources */ = {isa = PBXBuildFile; fileRef = BF1D5D4822B088F40062F474 /* PasteboardItemRepresentation.swift */; };
 		BFC9E66522B1B04000974663 /* Model.xcdatamodeld in Sources */ = {isa = PBXBuildFile; fileRef = BF1D5D4322B0867C0062F474 /* Model.xcdatamodeld */; };
 		BFC9E66622B1B1E600974663 /* Roxas.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = BF1D5C7522B029DC0062F474 /* Roxas.framework */; };
@@ -60,6 +63,9 @@
 		D534428E2BAB202700E133EE /* ClippingsMapView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D534428D2BAB202700E133EE /* ClippingsMapView.swift */; };
 		D5D375152BAB330200213D84 /* ClippingSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = D5D375142BAB330200213D84 /* ClippingSheet.swift */; };
 		D5D375192BAB4DF800213D84 /* UNNotification+Keys.swift in Sources */ = {isa = PBXBuildFile; fileRef = D5D375182BAB4DF800213D84 /* UNNotification+Keys.swift */; };
+		4759DDA5D0700B3E5AA0CC63 /* ClipIntents.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6B89B7FCC129DFBDADB003A /* ClipIntents.swift */; };
+		34E2B9FD67760CE285438556 /* LinkPreviewStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8990390C5F80FBACF1B8F29C /* LinkPreviewStore.swift */; };
+		66F0BC5BEC0EE57370CE1096 /* ClippingDetailViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4EB4BF6F75276895023EF239 /* ClippingDetailViewController.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -149,7 +155,6 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
-		BF0AB807247C5D1F0090B43B /* Blur.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Blur.swift; sourceTree = "<group>"; };
 		BF0BDE5022B4414A00E1419D /* UTI.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UTI.swift; sourceTree = "<group>"; };
 		BF0BDE5522B456A600E1419D /* PasteboardItem+ActivityItemSource.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "PasteboardItem+ActivityItemSource.swift"; sourceTree = "<group>"; };
 		BF0BDE5722B4757100E1419D /* UserDefaults+App.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "UserDefaults+App.swift"; sourceTree = "<group>"; };
@@ -159,13 +164,18 @@
 		BF1D5D4422B0867C0062F474 /* Model.xcdatamodel */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcdatamodel; path = Model.xcdatamodel; sourceTree = "<group>"; };
 		BF1D5D4622B0869C0062F474 /* DatabaseManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DatabaseManager.swift; sourceTree = "<group>"; };
 		BF1D5D4822B088F40062F474 /* PasteboardItemRepresentation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PasteboardItemRepresentation.swift; sourceTree = "<group>"; };
+		83B9C4CC03874A2EAE646D46 /* CodeDetector.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CodeDetector.swift; sourceTree = "<group>"; };
+		FA5FD35F721B4F21AA53772A /* FuzzyMatcher.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FuzzyMatcher.swift; sourceTree = "<group>"; };
+		4EC55C8F48AB4F9893C54B90 /* ClippingTransform.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClippingTransform.swift; sourceTree = "<group>"; };
 		BF1D5D4A22B094DB0062F474 /* PasteboardItem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PasteboardItem.swift; sourceTree = "<group>"; };
+		C1A55E0100000000000000A2 /* ClippingList.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClippingList.swift; sourceTree = "<group>"; };
 		BF235BC0247D8B5300CCFCB0 /* UIPasteboard+PasteboardItem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "UIPasteboard+PasteboardItem.swift"; sourceTree = "<group>"; };
 		BF50E7D822C2BF010070E17B /* Bundle+AppGroups.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Bundle+AppGroups.swift"; sourceTree = "<group>"; };
 		BF69A53F2395D44600CF838A /* UserNotifications.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = UserNotifications.framework; path = System/Library/Frameworks/UserNotifications.framework; sourceTree = SDKROOT; };
 		BF69A5412395D44700CF838A /* UserNotificationsUI.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = UserNotificationsUI.framework; path = System/Library/Frameworks/UserNotificationsUI.framework; sourceTree = SDKROOT; };
 		BF746541247C900100F66F3B /* ClipBoard.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = ClipBoard.entitlements; sourceTree = "<group>"; };
 		BF770E6122BC767A002A40FE /* UIDevice+Vibration.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "UIDevice+Vibration.swift"; sourceTree = "<group>"; };
+		3D26A154155F423CBDC33C24 /* PasteboardItem+CopyAs.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "PasteboardItem+CopyAs.swift"; sourceTree = "<group>"; };
 		BF7B9EE022B81C980042C873 /* Int+Bytes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Int+Bytes.swift"; sourceTree = "<group>"; };
 		BF7E6FE0247C4FCD0058F4D4 /* ClipBoard.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = ClipBoard.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		BF7E6FE2247C4FCD0058F4D4 /* KeyboardViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeyboardViewController.swift; sourceTree = "<group>"; };
@@ -177,8 +187,6 @@
 		BFA2DF68247DD31500E31E4D /* UIColor+Clip.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "UIColor+Clip.swift"; sourceTree = "<group>"; };
 		BFA2DF6A247DE47900E31E4D /* Preview.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Preview.swift; sourceTree = "<group>"; };
 		BFA714B922C53F1700EE7236 /* ApplicationMonitor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ApplicationMonitor.swift; sourceTree = "<group>"; };
-		BFAC49D222B2EDA80011E7C4 /* ClippingTableViewCell.xib */ = {isa = PBXFileReference; lastKnownFileType = file.xib; path = ClippingTableViewCell.xib; sourceTree = "<group>"; };
-		BFAC49D422B2EDB20011E7C4 /* ClippingTableViewCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClippingTableViewCell.swift; sourceTree = "<group>"; };
 		BFAC49DF22B40EC90011E7C4 /* AudioToolbox.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AudioToolbox.framework; path = System/Library/Frameworks/AudioToolbox.framework; sourceTree = SDKROOT; };
 		BFAD2C49257AD4D600FF9532 /* PublishedPipeline.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PublishedPipeline.swift; sourceTree = "<group>"; };
 		BFAD46C82490588800451D6F /* UIInputView+Click.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "UIInputView+Click.swift"; sourceTree = "<group>"; };
@@ -193,6 +201,7 @@
 		BFC1F39E22AF0D0E003AC21A /* HistoryViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HistoryViewController.swift; sourceTree = "<group>"; };
 		BFC1F3A122AF0D0E003AC21A /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/Main.storyboard; sourceTree = "<group>"; };
 		BFC1F3A322AF0D0F003AC21A /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		0DAB2DA872814B358DC46A6F /* AppIcon.icon */ = {isa = PBXFileReference; lastKnownFileType = folder.iconcomposer.icon; path = AppIcon.icon; sourceTree = "<group>"; };
 		BFC1F3A622AF0D0F003AC21A /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		BFC1F3A822AF0D0F003AC21A /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		BFC9E62C22B18D5900974663 /* Clip.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Clip.entitlements; sourceTree = "<group>"; };
@@ -207,6 +216,9 @@
 		D534428D2BAB202700E133EE /* ClippingsMapView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClippingsMapView.swift; sourceTree = "<group>"; };
 		D5D375142BAB330200213D84 /* ClippingSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClippingSheet.swift; sourceTree = "<group>"; };
 		D5D375182BAB4DF800213D84 /* UNNotification+Keys.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "UNNotification+Keys.swift"; sourceTree = "<group>"; };
+		A6B89B7FCC129DFBDADB003A /* ClipIntents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClipIntents.swift; sourceTree = "<group>"; };
+		8990390C5F80FBACF1B8F29C /* LinkPreviewStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LinkPreviewStore.swift; sourceTree = "<group>"; };
+		4EB4BF6F75276895023EF239 /* ClippingDetailViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClippingDetailViewController.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -252,6 +264,7 @@
 			children = (
 				BF0BDE5522B456A600E1419D /* PasteboardItem+ActivityItemSource.swift */,
 				BF770E6122BC767A002A40FE /* UIDevice+Vibration.swift */,
+				3D26A154155F423CBDC33C24 /* PasteboardItem+CopyAs.swift */,
 			);
 			path = Extensions;
 			sourceTree = "<group>";
@@ -286,6 +299,7 @@
 			isa = PBXGroup;
 			children = (
 				BFC1F3A322AF0D0F003AC21A /* Assets.xcassets */,
+				0DAB2DA872814B358DC46A6F /* AppIcon.icon */,
 			);
 			path = Resources;
 			sourceTree = "<group>";
@@ -335,7 +349,6 @@
 				BF7E6FF0247C50540058F4D4 /* Keyboard.swift */,
 				BF7E6FF2247C518D0058F4D4 /* ClippingCell.swift */,
 				BFAD46CA249058DE00451D6F /* SwitchKeyboardButton.swift */,
-				BF0AB807247C5D1F0090B43B /* Blur.swift */,
 			);
 			path = SwiftUI;
 			sourceTree = "<group>";
@@ -351,9 +364,8 @@
 		BFAC49D722B2EF170011E7C4 /* History */ = {
 			isa = PBXGroup;
 			children = (
+				4EB4BF6F75276895023EF239 /* ClippingDetailViewController.swift */,
 				BFC1F39E22AF0D0E003AC21A /* HistoryViewController.swift */,
-				BFAC49D422B2EDB20011E7C4 /* ClippingTableViewCell.swift */,
-				BFAC49D222B2EDA80011E7C4 /* ClippingTableViewCell.xib */,
 			);
 			path = History;
 			sourceTree = "<group>";
@@ -404,6 +416,7 @@
 		BFC1F39B22AF0D0E003AC21A /* Clip */ = {
 			isa = PBXGroup;
 			children = (
+				9EAF18FAE132E196CF26DC00 /* Intents */,
 				BFC9E62C22B18D5900974663 /* Clip.entitlements */,
 				BFC1F39C22AF0D0E003AC21A /* AppDelegate.swift */,
 				BF8F76F2254CC0E0005AF18B /* SceneDelegate.swift */,
@@ -425,6 +438,8 @@
 		BFC9E65122B1A22700974663 /* ClipKit */ = {
 			isa = PBXGroup;
 			children = (
+				7953F23D9D39EDBC188FE984 /* LinkPreview */,
+				347FAA81788A4336B5AFEA2A /* Logic */,
 				BFC9E65222B1A22700974663 /* ClipKit.h */,
 				BF0BDE5022B4414A00E1419D /* UTI.swift */,
 				BF7E6FEF247C50480058F4D4 /* SwiftUI */,
@@ -466,6 +481,7 @@
 			children = (
 				BF1D5D4322B0867C0062F474 /* Model.xcdatamodeld */,
 				BF1D5D4A22B094DB0062F474 /* PasteboardItem.swift */,
+				C1A55E0100000000000000A2 /* ClippingList.swift */,
 				BF1D5D4822B088F40062F474 /* PasteboardItemRepresentation.swift */,
 			);
 			path = Model;
@@ -487,6 +503,32 @@
 				D5D375142BAB330200213D84 /* ClippingSheet.swift */,
 			);
 			path = "Map View";
+			sourceTree = "<group>";
+		};
+		9EAF18FAE132E196CF26DC00 /* Intents */ = {
+			isa = PBXGroup;
+			children = (
+				A6B89B7FCC129DFBDADB003A /* ClipIntents.swift */,
+			);
+			path = Intents;
+			sourceTree = "<group>";
+		};
+		7953F23D9D39EDBC188FE984 /* LinkPreview */ = {
+			isa = PBXGroup;
+			children = (
+				8990390C5F80FBACF1B8F29C /* LinkPreviewStore.swift */,
+			);
+			path = LinkPreview;
+			sourceTree = "<group>";
+		};
+		347FAA81788A4336B5AFEA2A /* Logic */ = {
+			isa = PBXGroup;
+			children = (
+				83B9C4CC03874A2EAE646D46 /* CodeDetector.swift */,
+				FA5FD35F721B4F21AA53772A /* FuzzyMatcher.swift */,
+				4EC55C8F48AB4F9893C54B90 /* ClippingTransform.swift */,
+			);
+			path = Logic;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -680,8 +722,8 @@
 			buildActionMask = 2147483647;
 			files = (
 				BFC1F3A722AF0D0F003AC21A /* LaunchScreen.storyboard in Resources */,
-				BFAC49D322B2EDA80011E7C4 /* ClippingTableViewCell.xib in Resources */,
 				BFC1F3A422AF0D0F003AC21A /* Assets.xcassets in Resources */,
+				206C0B410FCB4553B6F2EB71 /* AppIcon.icon in Resources */,
 				BFC1F3A222AF0D0E003AC21A /* Main.storyboard in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -721,15 +763,17 @@
 				BFA714BA22C53F1700EE7236 /* ApplicationMonitor.swift in Sources */,
 				BFDB5B1E22EF7B5000F74113 /* GradientView.swift in Sources */,
 				BFC1F39F22AF0D0E003AC21A /* HistoryViewController.swift in Sources */,
+				66F0BC5BEC0EE57370CE1096 /* ClippingDetailViewController.swift in Sources */,
+				4759DDA5D0700B3E5AA0CC63 /* ClipIntents.swift in Sources */,
 				BFF9E4932555F4F40052B1B2 /* LocationManager.swift in Sources */,
 				D5D375152BAB330200213D84 /* ClippingSheet.swift in Sources */,
 				BF8F76F3254CC0E0005AF18B /* SceneDelegate.swift in Sources */,
 				D534428E2BAB202700E133EE /* ClippingsMapView.swift in Sources */,
 				BF770E6522BC7688002A40FE /* UIDevice+Vibration.swift in Sources */,
+				B49DD26259BD404EB999F748 /* PasteboardItem+CopyAs.swift in Sources */,
 				BFC1F39D22AF0D0E003AC21A /* AppDelegate.swift in Sources */,
 				BFEF44AE2398693300095A92 /* ForwardingNavigationController.swift in Sources */,
 				BF0BDE5622B456A600E1419D /* PasteboardItem+ActivityItemSource.swift in Sources */,
-				BFAC49D522B2EDB20011E7C4 /* ClippingTableViewCell.swift in Sources */,
 				BFAD2C4A257AD4D600FF9532 /* PublishedPipeline.swift in Sources */,
 				BF0BDE5A22B4771300E1419D /* SettingsViewController.swift in Sources */,
 			);
@@ -752,11 +796,15 @@
 				BFAD46CB249058DE00451D6F /* SwitchKeyboardButton.swift in Sources */,
 				BFC9E67222B2C4C500974663 /* Result+Conveniences.swift in Sources */,
 				BFA2DF6B247DE47900E31E4D /* Preview.swift in Sources */,
-				BFA2DF62247DD23C00E31E4D /* Blur.swift in Sources */,
 				BF7B9EE122B81C980042C873 /* Int+Bytes.swift in Sources */,
 				BFC9E66322B1B03C00974663 /* PasteboardItem.swift in Sources */,
+				26D2C5B3A061409EBFBFB014 /* CodeDetector.swift in Sources */,
+				0E5AC0DBA185414B8638C53F /* FuzzyMatcher.swift in Sources */,
+				F421D2E806BF401687EAC324 /* ClippingTransform.swift in Sources */,
+				C1A55E0100000000000000A1 /* ClippingList.swift in Sources */,
 				D5D375192BAB4DF800213D84 /* UNNotification+Keys.swift in Sources */,
 				BFA2DF60247DD21F00E31E4D /* Keyboard.swift in Sources */,
+				34E2B9FD67760CE285438556 /* LinkPreviewStore.swift in Sources */,
 				BF50E7D922C2BF010070E17B /* Bundle+AppGroups.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -826,15 +874,15 @@
 			buildSettings = {
 				CODE_SIGN_ENTITLEMENTS = ClipBoard/ClipBoard.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				DEVELOPMENT_TEAM = 6XVY5G3U44;
+				DEVELOPMENT_TEAM = 84M4ZF255G;
 				INFOPLIST_FILE = ClipBoard/Info.plist;
-				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 27.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 					"@executable_path/../../Frameworks",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = com.rileytestut.Clip.ClipBoard;
+				PRODUCT_BUNDLE_IDENTIFIER = com.oliverames.clippy.ClipBoard;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;
 				SWIFT_VERSION = 5.0;
@@ -847,15 +895,15 @@
 			buildSettings = {
 				CODE_SIGN_ENTITLEMENTS = ClipBoard/ClipBoard.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				DEVELOPMENT_TEAM = 6XVY5G3U44;
+				DEVELOPMENT_TEAM = 84M4ZF255G;
 				INFOPLIST_FILE = ClipBoard/Info.plist;
-				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 27.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 					"@executable_path/../../Frameworks",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = com.rileytestut.Clip.ClipBoard;
+				PRODUCT_BUNDLE_IDENTIFIER = com.oliverames.clippy.ClipBoard;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;
 				SWIFT_VERSION = 5.0;
@@ -868,15 +916,15 @@
 			buildSettings = {
 				CODE_SIGN_ENTITLEMENTS = ClipboardReader/ClipboardReader.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				DEVELOPMENT_TEAM = 6XVY5G3U44;
+				DEVELOPMENT_TEAM = 84M4ZF255G;
 				INFOPLIST_FILE = ClipboardReader/Info.plist;
-				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 27.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 					"@executable_path/../../Frameworks",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = com.rileytestut.Clip.ClipboardReader;
+				PRODUCT_BUNDLE_IDENTIFIER = com.oliverames.clippy.ClipboardReader;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;
 				SWIFT_VERSION = 5.0;
@@ -889,15 +937,15 @@
 			buildSettings = {
 				CODE_SIGN_ENTITLEMENTS = ClipboardReader/ClipboardReader.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				DEVELOPMENT_TEAM = 6XVY5G3U44;
+				DEVELOPMENT_TEAM = 84M4ZF255G;
 				INFOPLIST_FILE = ClipboardReader/Info.plist;
-				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 27.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 					"@executable_path/../../Frameworks",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = com.rileytestut.Clip.ClipboardReader;
+				PRODUCT_BUNDLE_IDENTIFIER = com.oliverames.clippy.ClipboardReader;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;
 				SWIFT_VERSION = 5.0;
@@ -957,7 +1005,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 13.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 27.0;
 				MARKETING_VERSION = 1.2;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
@@ -1014,7 +1062,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 13.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 27.0;
 				MARKETING_VERSION = 1.2;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
@@ -1033,14 +1081,14 @@
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_ENTITLEMENTS = Clip/Clip.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				DEVELOPMENT_TEAM = 6XVY5G3U44;
+				DEVELOPMENT_TEAM = 84M4ZF255G;
 				INFOPLIST_FILE = Clip/Info.plist;
-				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 27.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = com.rileytestut.Clip;
+				PRODUCT_BUNDLE_IDENTIFIER = com.oliverames.clippy;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
 				SUPPORTS_MACCATALYST = NO;
@@ -1058,14 +1106,14 @@
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_ENTITLEMENTS = Clip/Clip.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				DEVELOPMENT_TEAM = 6XVY5G3U44;
+				DEVELOPMENT_TEAM = 84M4ZF255G;
 				INFOPLIST_FILE = Clip/Info.plist;
-				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 27.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = com.rileytestut.Clip;
+				PRODUCT_BUNDLE_IDENTIFIER = com.oliverames.clippy;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
 				SUPPORTS_MACCATALYST = NO;
@@ -1082,19 +1130,19 @@
 				CODE_SIGN_IDENTITY = "";
 				CODE_SIGN_STYLE = Automatic;
 				DEFINES_MODULE = YES;
-				DEVELOPMENT_TEAM = 6XVY5G3U44;
+				DEVELOPMENT_TEAM = 84M4ZF255G;
 				DYLIB_COMPATIBILITY_VERSION = 1;
 				DYLIB_CURRENT_VERSION = 1;
 				DYLIB_INSTALL_NAME_BASE = "@rpath";
 				INFOPLIST_FILE = ClipKit/Info.plist;
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
-				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 27.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 					"@loader_path/Frameworks",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = com.rileytestut.ClipKit;
+				PRODUCT_BUNDLE_IDENTIFIER = com.oliverames.clippy.ClipKit;
 				PRODUCT_NAME = "$(TARGET_NAME:c99extidentifier)";
 				SKIP_INSTALL = YES;
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
@@ -1113,19 +1161,19 @@
 				CODE_SIGN_IDENTITY = "";
 				CODE_SIGN_STYLE = Automatic;
 				DEFINES_MODULE = YES;
-				DEVELOPMENT_TEAM = 6XVY5G3U44;
+				DEVELOPMENT_TEAM = 84M4ZF255G;
 				DYLIB_COMPATIBILITY_VERSION = 1;
 				DYLIB_CURRENT_VERSION = 1;
 				DYLIB_INSTALL_NAME_BASE = "@rpath";
 				INFOPLIST_FILE = ClipKit/Info.plist;
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
-				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 27.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 					"@loader_path/Frameworks",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = com.rileytestut.ClipKit;
+				PRODUCT_BUNDLE_IDENTIFIER = com.oliverames.clippy.ClipKit;
 				PRODUCT_NAME = "$(TARGET_NAME:c99extidentifier)";
 				SKIP_INSTALL = YES;
 				SWIFT_VERSION = 5.0;

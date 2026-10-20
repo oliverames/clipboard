@@ -65,6 +65,13 @@ class KeyboardViewController: UIInputViewController
         self.view.setNeedsUpdateConstraints()
     }
 
+    private var keyboardHeight: CGFloat
+    {
+        // Size against the host's scene rather than the main screen, which can be a different display on iPhone Duo.
+        let sceneHeight = self.view.window?.windowScene?.coordinateSpace.bounds.height ?? UIScreen.main.bounds.height
+        return sceneHeight / 2
+    }
+
     override func updateViewConstraints()
     {
         super.updateViewConstraints()
@@ -79,7 +86,7 @@ class KeyboardViewController: UIInputViewController
                 constraint.priority = .defaultHigh
             }
             
-            self.heightConstraint = self.view.heightAnchor.constraint(equalToConstant: UIScreen.main.bounds.height / 2)
+            self.heightConstraint = self.view.heightAnchor.constraint(equalToConstant: self.keyboardHeight)
             self.heightConstraint.isActive = true
         }
     }
@@ -88,7 +95,7 @@ class KeyboardViewController: UIInputViewController
     {
         if let heightConstraint = self.heightConstraint
         {
-            heightConstraint.constant = UIScreen.main.bounds.height / 2
+            heightConstraint.constant = self.keyboardHeight
         }
         
         super.viewWillLayoutSubviews()

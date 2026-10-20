@@ -4,12 +4,12 @@
 <dict>
 	<key>ALTAppGroups</key>
 	<array>
-		<string>group.com.rileytestut.Clip</string>
+		<string>group.com.oliverames.clippy</string>
 	</array>
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
 	<key>CFBundleDisplayName</key>
-	<string>Clip</string>
+	<string>Clipboard</string>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>
@@ -31,7 +31,7 @@
 			<string>Clip General</string>
 			<key>CFBundleURLSchemes</key>
 			<array>
-				<string>clip</string>
+				<string>clippy</string>
 			</array>
 		</dict>
 	</array>
@@ -40,11 +40,11 @@
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
 	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
-	<string>Clip requires “Always” location permission to automatically tag clippings with your location. Your location data never leaves this device.</string>
+	<string>Clipboard requires “Always” location permission to automatically tag clippings with your location. Your location data never leaves this device.</string>
 	<key>NSLocationDefaultAccuracyReduced</key>
 	<true/>
 	<key>NSLocationWhenInUseUsageDescription</key>
-	<string>Clip requires location permissions to automatically tag clippings with your location. Your location data never leaves this device.</string>
+	<string>Clipboard requires location permissions to automatically tag clippings with your location. Your location data never leaves this device.</string>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>
@@ -78,8 +78,6 @@
 	<array>
 		<string>armv7</string>
 	</array>
-	<key>UIStatusBarStyle</key>
-	<string>UIStatusBarStyleLightContent</string>
 	<key>UISupportedInterfaceOrientations</key>
 	<array>
 		<string>UIInterfaceOrientationPortrait</string>
@@ -93,8 +91,6 @@
 		<string>UIInterfaceOrientationLandscapeLeft</string>
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
-	<key>UIUserInterfaceStyle</key>
-	<string>Light</string>
 	<key>UTExportedTypeDeclarations</key>
 	<array>
 		<dict>
@@ -107,7 +103,7 @@
 			<key>UTTypeIconFiles</key>
 			<array/>
 			<key>UTTypeIdentifier</key>
-			<string>com.rileytestut.Clip.Clipping</string>
+			<string>com.oliverames.clippy.Clipping</string>
 		</dict>
 	</array>
 </dict>
