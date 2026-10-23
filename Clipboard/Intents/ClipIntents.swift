@@ -65,8 +65,9 @@ struct GetLatestClippingIntent: AppIntent
     static let title: LocalizedStringResource = "Get Latest Clipping"
     static let description = IntentDescription("Returns the most recent clipping saved in Clipboard.")
 
-    // Clipboard history is sensitive, so this never runs on a locked device.
-    static let authenticationPolicy: IntentAuthenticationPolicy = .requiresAuthentication
+    // Clipboard history is sensitive, so this never runs on a locked device, even when an
+    // unlocked Apple Watch or another remote device makes the request.
+    static let authenticationPolicy: IntentAuthenticationPolicy = .requiresLocalDeviceAuthentication
 
     func perform() async throws -> some ReturnsValue<String>
     {
