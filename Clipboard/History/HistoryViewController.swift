@@ -183,16 +183,6 @@ class HistoryViewController: UITableViewController
 
 private extension HistoryViewController
 {
-    func subscribe()
-    {
-        //TODO: Uncomment once we can tell user to enable location for background execution.
-        //ApplicationMonitor.shared.locationManager.$status
-        //    .receive(on: RunLoop.main)
-        //    .compactMap { $0?.error }
-        //    .sink { self.present($0) }
-        //    .store(in: &self.cancellables)
-    }
-
     func makeDataSource() -> UITableViewDiffableDataSource<Int, NSManagedObjectID>
     {
         let dataSource = UITableViewDiffableDataSource<Int, NSManagedObjectID>(tableView: self.tableView) { [weak self] (tableView, indexPath, objectID) -> UITableViewCell? in
