@@ -100,7 +100,7 @@ Long-press a home screen, tap **Edit**, then **Add Widget**, and pick **Clipboar
 
 - Clipboard history stays on your device, in an App Group container shared by the app and its extensions.
 - Clipboard has no accounts, no sync, and no analytics.
-- Location is used only to tag clippings. To show the town a clipping was copied in, Clipboard sends that clipping's coordinates to Apple Maps once and keeps the name on the device. The map screen loads Apple Maps tiles for the area around your tagged clippings.
+- Location is used only to tag clippings. To show the town a clipping was copied in, Clipboard sends that clipping's coordinates to Apple Maps once and stores the name with the clipping, so it's deleted when the clipping is. The map screen loads Apple Maps tiles for the area around your tagged clippings.
 - Link previews contact the page you copied. For App Store icons, Clipboard searches Apple's iTunes Search API for the site's brand name, such as "github", and downloads the icon. Turn off link previews in Settings to stop these requests.
 
 ## Building from source

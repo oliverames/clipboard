@@ -193,6 +193,7 @@
 		D1A2B3C4D5E6F708192A3B4E /* PasteboardDaemonReader.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = PasteboardDaemonReader.m; sourceTree = "<group>"; };
 		D1A2B3C4D5E6F708192A3B4F /* Clipboard-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "Clipboard-Bridging-Header.h"; sourceTree = "<group>"; };
 		BF1D5D4422B0867C0062F474 /* Model.xcdatamodel */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcdatamodel; path = Model.xcdatamodel; sourceTree = "<group>"; };
+		C1A2D0000000000000000002 /* Model 2.xcdatamodel */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcdatamodel; path = "Model 2.xcdatamodel"; sourceTree = "<group>"; };
 		BF1D5D4622B0869C0062F474 /* DatabaseManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DatabaseManager.swift; sourceTree = "<group>"; };
 		BF1D5D4822B088F40062F474 /* PasteboardItemRepresentation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PasteboardItemRepresentation.swift; sourceTree = "<group>"; };
 		83B9C4CC03874A2EAE646D46 /* CodeDetector.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CodeDetector.swift; sourceTree = "<group>"; };
@@ -1411,8 +1412,9 @@
 			isa = XCVersionGroup;
 			children = (
 				BF1D5D4422B0867C0062F474 /* Model.xcdatamodel */,
+				C1A2D0000000000000000002 /* Model 2.xcdatamodel */,
 			);
-			currentVersion = BF1D5D4422B0867C0062F474 /* Model.xcdatamodel */;
+			currentVersion = C1A2D0000000000000000002 /* Model 2.xcdatamodel */;
 			path = Model.xcdatamodeld;
 			sourceTree = "<group>";
 			versionGroupType = wrapper.xcdatamodel;

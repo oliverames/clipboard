@@ -38,6 +38,13 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         DatabaseManager.shared.prepare() { result in
             printError(from: result, title: "Database Error:")
 
+            if case .success = result
+            {
+                DispatchQueue.main.async {
+                    PlaceNames.migrateLegacyCache(in: DatabaseManager.shared.persistentContainer.viewContext)
+                }
+            }
+
             #if DEBUG
             DemoClippings.seedIfRequested()
             #endif

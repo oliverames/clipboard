@@ -33,6 +33,9 @@ public class PasteboardItem: NSManagedObject, Identifiable
     @NSManaged public var isPinned: Bool
     @NSManaged public var trashedDate: Date?
 
+    /// The town this clipping was copied in, looked up once from its location and deleted with the clipping.
+    @NSManaged public var placeName: String?
+
     public var location: CLLocation? {
         get {
             guard let latitude, let longitude else { return nil }

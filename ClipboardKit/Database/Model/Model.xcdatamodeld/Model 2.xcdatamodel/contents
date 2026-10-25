@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<model type="com.apple.IDECoreDataModeler.DataModel" documentVersion="1.0" lastSavedToolsVersion="22757" systemVersion="23E5211a" minimumToolsVersion="Automatic" sourceLanguage="Swift" userDefinedModelVersionIdentifier="">
+    <entity name="ClippingList" representedClassName="ClippingList" syncable="YES">
+        <attribute name="date" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
+        <attribute name="name" attributeType="String" defaultValueString=""/>
+        <relationship name="items" optional="YES" toMany="YES" deletionRule="Nullify" destinationEntity="PasteboardItem" inverseName="lists" inverseEntity="PasteboardItem"/>
+    </entity>
+    <entity name="PasteboardItem" representedClassName="PasteboardItem" syncable="YES">
+        <attribute name="date" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
+        <attribute name="isFavorite" attributeType="Boolean" defaultValueString="NO" usesScalarValueType="YES"/>
+        <attribute name="isMarkedForDeletion" attributeType="Boolean" defaultValueString="NO" usesScalarValueType="YES"/>
+        <attribute name="isPinned" attributeType="Boolean" defaultValueString="NO" usesScalarValueType="YES"/>
+        <attribute name="latitude" optional="YES" attributeType="Double" usesScalarValueType="NO"/>
+        <attribute name="longitude" optional="YES" attributeType="Double" usesScalarValueType="NO"/>
+        <attribute name="placeName" optional="YES" attributeType="String"/>
+        <attribute name="trashedDate" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
+        <relationship name="lists" optional="YES" toMany="YES" deletionRule="Nullify" destinationEntity="ClippingList" inverseName="items" inverseEntity="ClippingList"/>
+        <relationship name="preferredRepresentation" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="PasteboardItemRepresentation" inverseName="preferringItem" inverseEntity="PasteboardItemRepresentation"/>
+        <relationship name="representations" toMany="YES" deletionRule="Cascade" ordered="YES" destinationEntity="PasteboardItemRepresentation" inverseName="item" inverseEntity="PasteboardItemRepresentation"/>
+    </entity>
+    <entity name="PasteboardItemRepresentation" representedClassName="PasteboardItemRepresentation" syncable="YES">
+        <attribute name="data" optional="YES" attributeType="Binary" allowsExternalBinaryDataStorage="YES"/>
+        <attribute name="string" optional="YES" attributeType="String"/>
+        <attribute name="type" attributeType="Integer 16" defaultValueString="0" usesScalarValueType="YES"/>
+        <attribute name="url" optional="YES" attributeType="URI"/>
+        <attribute name="uti" optional="YES" attributeType="String"/>
+        <relationship name="item" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="PasteboardItem" inverseName="representations" inverseEntity="PasteboardItem"/>
+        <relationship name="preferringItem" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="PasteboardItem" inverseName="preferredRepresentation" inverseEntity="PasteboardItem"/>
+    </entity>
+</model>
