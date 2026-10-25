@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		6F8AFD8CAD13DBEA9921B013 /* DiagnosticsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4615E9E0511DE82DE1535DAD /* DiagnosticsView.swift */; };
 		78BB6840A2255515D3A40C06 /* CaptureLedger.swift in Sources */ = {isa = PBXBuildFile; fileRef = A87694482FE90DB2AD392F02 /* CaptureLedger.swift */; };
 		3DC5D6A7D47918EED7C1EB8F /* CaptureLedgerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C3F8A8D7723EDFF5E39984C6 /* CaptureLedgerTests.swift */; };
 		A74074A1E5268DFBA7E2C657 /* ChangeCountGateTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A32CAFB052E6B0464DCB6806 /* ChangeCountGateTests.swift */; };
@@ -169,6 +170,7 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		4615E9E0511DE82DE1535DAD /* DiagnosticsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DiagnosticsView.swift; sourceTree = "<group>"; };
 		A87694482FE90DB2AD392F02 /* CaptureLedger.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CaptureLedger.swift; sourceTree = "<group>"; };
 		C3F8A8D7723EDFF5E39984C6 /* CaptureLedgerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CaptureLedgerTests.swift; sourceTree = "<group>"; };
 		A32CAFB052E6B0464DCB6806 /* ChangeCountGateTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChangeCountGateTests.swift; sourceTree = "<group>"; };
@@ -314,6 +316,7 @@
 			isa = PBXGroup;
 			children = (
 				BF0BDE5922B4771300E1419D /* SettingsViewController.swift */,
+				4615E9E0511DE82DE1535DAD /* DiagnosticsView.swift */,
 				D84331CB48764702A0787DB7 /* OnboardingViewController.swift */,
 			);
 			path = Settings;
@@ -839,6 +842,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				6F8AFD8CAD13DBEA9921B013 /* DiagnosticsView.swift in Sources */,
 				BF1D5C7F22B02BF30062F474 /* PasteboardMonitor.swift in Sources */,
 				D1A2B3C4D5E6F708192A3B4C /* PasteboardDaemonReader.m in Sources */,
 				BFA714BA22C53F1700EE7236 /* ApplicationMonitor.swift in Sources */,

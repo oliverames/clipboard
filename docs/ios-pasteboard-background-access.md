@@ -449,3 +449,13 @@ The addresses used above are for the iOS 27.2 simulator runtime
 (`24B91014` / `24B114`); they will differ slightly between builds, but the
 Objective-C selectors, the entitlement names and the CFString constants are the
 things to look for.
+
+Toolchain note (October 2026): Homebrew now ships Ghidra 12.2, which `rea-agents`
+rejects (it wants 12.1.x) and which arrives without a prebuilt native decompiler, so
+the `rea … function` recipe above no longer runs as-is. The entitlement and
+AMFI findings in this doc were produced by driving Ghidra 12.2 headless directly for
+disassembly, references, symbols and data-table decoding (and by building Ghidra's
+`ghidra_opt` decompiler from source for the C pseudo-code), plus `nm`, `otool` and
+`strings`. The AMFI tables live in the **device** runtime, not the simulator: pull
+`AppleMobileFileIntegrity` and the `Pasteboard` client from
+`~/Library/Developer/Xcode/iOS DeviceSupport/<device> <build>/.processed_dyld_shared_cache_arm64e`.
