@@ -225,7 +225,14 @@ static NSArray<NSArray<NSString *> *> *PasteboardDaemonReaderTypeGroups(void)
                 itemSnapshots = [snapshots copy];
             }
 
-            NSLog(@"Pasteboard daemon read %lu item(s): %@", (unsigned long)itemSnapshots.count, itemSnapshots);
+            // Log only the type identifiers; the data is the user's clipboard content.
+            NSMutableArray<NSArray<NSString *> *> *itemTypes = [NSMutableArray arrayWithCapacity:itemSnapshots.count];
+            for (NSDictionary<NSString *, NSData *> *itemSnapshot in itemSnapshots)
+            {
+                [itemTypes addObject:itemSnapshot.allKeys];
+            }
+
+            NSLog(@"Pasteboard daemon read %lu item(s); types: %@", (unsigned long)itemSnapshots.count, itemTypes);
             finish(itemSnapshots, nil);
         });
     }];

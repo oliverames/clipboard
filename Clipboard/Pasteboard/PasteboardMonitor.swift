@@ -122,7 +122,7 @@ extension PasteboardMonitor
         Diagnostics.shared.log("UIPasteboard read start; state=\(UIApplication.shared.applicationState.rawValue)")
         
         let pasteboard = UIPasteboard.general
-        Diagnostics.shared.log("UIPasteboard raw: changeCount=\(pasteboard.changeCount) types=\(pasteboard.types) items=\(pasteboard.items.count) string=\(pasteboard.string ?? "nil")")
+        Diagnostics.shared.log("UIPasteboard raw: changeCount=\(pasteboard.changeCount) types=\(pasteboard.types) items=\(pasteboard.items.count) stringLength=\(pasteboard.string?.count ?? 0)")
         
         DatabaseManager.shared.savePasteboard(location: ApplicationMonitor.shared.locationManager.location) { (result) in
             switch result
