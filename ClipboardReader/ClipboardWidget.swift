@@ -116,9 +116,16 @@ struct ClipboardWidgetView: View
             self.smallBody
 
             VStack(alignment: .leading, spacing: 6) {
-                Label("Saving copies", systemImage: "checkmark.circle.fill")
-                    .font(.subheadline.weight(.semibold))
-                    .widgetAccentable()
+                Label {
+                    Text("Saving copies")
+                } icon: {
+                    Image(systemName: "checkmark.circle.fill")
+                        .foregroundStyle(self.renderingMode == .fullColor ? .green : .primary)
+                }
+                .font(.subheadline.weight(.semibold))
+                .lineLimit(2)
+                .minimumScaleFactor(0.8)
+                .widgetAccentable()
 
                 Text("Copies you make while Clipboard is closed are saved to your history.")
                     .font(.caption)
@@ -127,7 +134,8 @@ struct ClipboardWidgetView: View
 
                 Spacer(minLength: 0)
 
-                Text("Updated \(self.entry.date, style: .relative) ago")
+                // A clock time stays correct between timeline reloads; a relative age would tick every second.
+                Text("Updated \(self.entry.date, style: .time)")
                     .font(.caption2)
                     .foregroundStyle(.tertiary)
                     .lineLimit(1)
@@ -135,18 +143,6 @@ struct ClipboardWidgetView: View
             .frame(maxWidth: .infinity, alignment: .leading)
         }
     }
-}
-
-#Preview("Small", as: .systemSmall) {
-    ClipboardWidget()
-} timeline: {
-    ClipboardEntry(date: .now, count: 24)
-}
-
-#Preview("Medium", as: .systemMedium) {
-    ClipboardWidget()
-} timeline: {
-    ClipboardEntry(date: .now.addingTimeInterval(-300), count: 24)
 }
 
 @main

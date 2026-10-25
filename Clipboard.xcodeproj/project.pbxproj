@@ -43,6 +43,7 @@
 		BFC176FD2399BC4F0058AC51 /* UserNotifications.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = BF69A53F2395D44600CF838A /* UserNotifications.framework */; };
 		BFC176FE2399BC4F0058AC51 /* UserNotificationsUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = BF69A5412395D44700CF838A /* UserNotificationsUI.framework */; };
 		D1A2B3C4D5E6F708192A3B601 /* ClipboardWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = D1A2B3C4D5E6F708192A3B602 /* ClipboardWidget.swift */; };
+		A7DD84BA4EF3B63AE520FAE5 /* ClipboardWidgetPreviews.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6FA289D7946A913A3D97ED75 /* ClipboardWidgetPreviews.swift */; };
 		BFC177052399BC4F0058AC51 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		BFC177082399BC4F0058AC51 /* ClipboardReader.appex in Embed App Extensions */ = {isa = PBXBuildFile; fileRef = BFC176FC2399BC4F0058AC51 /* ClipboardReader.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		BFC1F39D22AF0D0E003AC21A /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = BFC1F39C22AF0D0E003AC21A /* AppDelegate.swift */; };
@@ -225,6 +226,7 @@
 		BFAD46CA249058DE00451D6F /* SwitchKeyboardButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SwitchKeyboardButton.swift; sourceTree = "<group>"; };
 		BFC176FC2399BC4F0058AC51 /* ClipboardReader.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = ClipboardReader.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		D1A2B3C4D5E6F708192A3B602 /* ClipboardWidget.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClipboardWidget.swift; sourceTree = "<group>"; };
+		6FA289D7946A913A3D97ED75 /* ClipboardWidgetPreviews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClipboardWidgetPreviews.swift; sourceTree = "<group>"; };
 		BFC177052399BC4F0058AC51 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		BFC1770C2399BCF90058AC51 /* ClipboardReader.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = ClipboardReader.entitlements; sourceTree = "<group>"; };
 		BFC1F39922AF0D0E003AC21A /* Clipboard.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Clipboard.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -446,6 +448,7 @@
 			children = (
 				BFC1770C2399BCF90058AC51 /* ClipboardReader.entitlements */,
 				D1A2B3C4D5E6F708192A3B602 /* ClipboardWidget.swift */,
+				6FA289D7946A913A3D97ED75 /* ClipboardWidgetPreviews.swift */,
 				BFC177052399BC4F0058AC51 /* Info.plist */,
 			);
 			path = ClipboardReader;
@@ -854,6 +857,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				D1A2B3C4D5E6F708192A3B601 /* ClipboardWidget.swift in Sources */,
+				A7DD84BA4EF3B63AE520FAE5 /* ClipboardWidgetPreviews.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
