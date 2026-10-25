@@ -12,6 +12,8 @@ import CoreData
 import CoreLocation
 import Contacts
 
+import SwiftUI
+
 import ClipboardKit
 import Roxas
 
@@ -155,6 +157,10 @@ class HistoryViewController: UITableViewController
 
         self.becomeFirstResponder()
         self.presentOnboardingIfNeeded()
+
+        #if DEBUG
+        self.showDemoScreenIfRequested()
+        #endif
     }
 
     override func viewWillDisappear(_ animated: Bool)
@@ -1234,3 +1240,69 @@ private extension HistoryViewController
         self.present(onboardingViewController, animated: true)
     }
 }
+
+#if DEBUG
+// MARK: - Demo screens
+
+private extension HistoryViewController
+{
+    /// Opens the screen named by the -ClipboardDemoScreen launch argument, for simulator screenshots.
+    /// Values: favorites, trash, list, filter-code, search, detail-text, detail-image, detail-link, settings, keyboard.
+    func showDemoScreenIfRequested()
+    {
+        guard let screen = UserDefaults.standard.string(forKey: "ClipboardDemoScreen"), !self.hasShownDemoScreen else { return }
+        self.hasShownDemoScreen = true
+
+        // Give the seeded clippings a moment to arrive from the background context.
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+            self.showDemoScreen(screen)
+        }
+    }
+
+    var hasShownDemoScreen: Bool {
+        get { objc_getAssociatedObject(self, &demoScreenKey) as? Bool ?? false }
+        set { objc_setAssociatedObject(self, &demoScreenKey, newValue, .OBJC_ASSOCIATION_RETAIN_NONATOMIC) }
+    }
+
+    func showDemoScreen(_ screen: String)
+    {
+        let items = self.fetchedResultsController.fetchedObjects ?? []
+
+        func showDetail(where predicate: (PasteboardItem) -> Bool)
+        {
+            guard let item = items.first(where: predicate) else { return }
+            self.navigationController?.pushViewController(ClippingDetailViewController(pasteboardItem: item), animated: false)
+        }
+
+        switch screen
+        {
+        case "favorites": self.select(collection: .favorites)
+        case "trash": self.select(collection: .trash)
+        case "list":
+            if let list = self.fetchLists().first(where: { $0.name == "Snippets" }) { self.select(collection: .list(list.objectID)) }
+        case "filter-code":
+            self.contentFilter = .code
+            self.applySnapshot(animated: false)
+            self.updateNavigationItems()
+        case "search":
+            self.navigationItem.searchController?.isActive = true
+            self.navigationItem.searchController?.searchBar.text = "brown"
+        case "detail-text": showDetail { $0.contentText?.hasPrefix("Here's") == true }
+        case "detail-image": showDetail { $0.preferredRepresentation?.type == .image }
+        case "detail-link": showDetail { $0.linkURL != nil }
+        case "detail-code": showDetail { $0.contentText?.hasPrefix("func") == true }
+        case "map": self.tabBarController?.selectedIndex = 1
+        case "settings": self.performSegue(withIdentifier: "showSettings", sender: self.settingsBarButtonItem)
+        case "keyboard":
+            let keyboard = Keyboard(inputViewController: nil, needsInputModeSwitchKey: true)
+                .environment(\.managedObjectContext, DatabaseManager.shared.persistentContainer.viewContext)
+            let hostingController = UIHostingController(rootView: keyboard)
+            hostingController.sheetPresentationController?.detents = [.medium()]
+            self.present(hostingController, animated: false)
+        default: break
+        }
+    }
+}
+
+private var demoScreenKey = 0
+#endif

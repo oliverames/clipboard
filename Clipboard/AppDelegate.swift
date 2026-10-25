@@ -31,7 +31,17 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
             print(title, error)
         }
         
-        DatabaseManager.shared.prepare() { printError(from: $0, title: "Database Error:") }
+        #if DEBUG
+        DemoClippings.skipOnboardingIfRequested()
+        #endif
+
+        DatabaseManager.shared.prepare() { result in
+            printError(from: result, title: "Database Error:")
+
+            #if DEBUG
+            DemoClippings.seedIfRequested()
+            #endif
+        }
         
         ApplicationMonitor.shared.start()
         
@@ -83,6 +93,11 @@ extension AppDelegate: UNUserNotificationCenterDelegate
         // launch puts a system alert on screen, which is distracting for no reason.
         UNUserNotificationCenter.current().getNotificationSettings { (settings) in
             guard settings.authorizationStatus == .notDetermined else { return }
+
+            #if DEBUG
+            // Demo runs are for screenshots, so keep the permission alert off the screen.
+            guard !DemoClippings.isRequested else { return }
+            #endif
             
             UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .badge, .sound]) { (success, error) in
             }

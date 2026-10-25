@@ -46,6 +46,7 @@
 		BFC177082399BC4F0058AC51 /* ClipboardReader.appex in Embed App Extensions */ = {isa = PBXBuildFile; fileRef = BFC176FC2399BC4F0058AC51 /* ClipboardReader.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		BFC1F39D22AF0D0E003AC21A /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = BFC1F39C22AF0D0E003AC21A /* AppDelegate.swift */; };
 		BFC1F39F22AF0D0E003AC21A /* HistoryViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = BFC1F39E22AF0D0E003AC21A /* HistoryViewController.swift */; };
+		FE3D0E4E8567A67E142FE4F8 /* DemoClippings.swift in Sources */ = {isa = PBXBuildFile; fileRef = 966DC915B26815B583ECC79B /* DemoClippings.swift */; };
 		BFC1F3A222AF0D0E003AC21A /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = BFC1F3A022AF0D0E003AC21A /* Main.storyboard */; };
 		BFC1F3A422AF0D0F003AC21A /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = BFC1F3A322AF0D0F003AC21A /* Assets.xcassets */; };
 		206C0B410FCB4553B6F2EB71 /* AppIcon.icon in Resources */ = {isa = PBXBuildFile; fileRef = 0DAB2DA872814B358DC46A6F /* AppIcon.icon */; };
@@ -222,6 +223,7 @@
 		BFC1F39922AF0D0E003AC21A /* Clipboard.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Clipboard.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		BFC1F39C22AF0D0E003AC21A /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		BFC1F39E22AF0D0E003AC21A /* HistoryViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HistoryViewController.swift; sourceTree = "<group>"; };
+		966DC915B26815B583ECC79B /* DemoClippings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DemoClippings.swift; sourceTree = "<group>"; };
 		BFC1F3A122AF0D0E003AC21A /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/Main.storyboard; sourceTree = "<group>"; };
 		BFC1F3A322AF0D0F003AC21A /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		0DAB2DA872814B358DC46A6F /* AppIcon.icon */ = {isa = PBXFileReference; lastKnownFileType = folder.iconcomposer.icon; path = AppIcon.icon; sourceTree = "<group>"; };
@@ -413,6 +415,7 @@
 			children = (
 				4EB4BF6F75276895023EF239 /* ClippingDetailViewController.swift */,
 				BFC1F39E22AF0D0E003AC21A /* HistoryViewController.swift */,
+				966DC915B26815B583ECC79B /* DemoClippings.swift */,
 			);
 			path = History;
 			sourceTree = "<group>";
@@ -848,6 +851,7 @@
 				BFA714BA22C53F1700EE7236 /* ApplicationMonitor.swift in Sources */,
 				BFDB5B1E22EF7B5000F74113 /* GradientView.swift in Sources */,
 				BFC1F39F22AF0D0E003AC21A /* HistoryViewController.swift in Sources */,
+				FE3D0E4E8567A67E142FE4F8 /* DemoClippings.swift in Sources */,
 				66F0BC5BEC0EE57370CE1096 /* ClippingDetailViewController.swift in Sources */,
 				4759DDA5D0700B3E5AA0CC63 /* ClipIntents.swift in Sources */,
 				BFF9E4932555F4F40052B1B2 /* LocationManager.swift in Sources */,
