@@ -71,6 +71,7 @@
 		BFEF44AE2398693300095A92 /* ForwardingNavigationController.swift in Sources */ = {isa = PBXBuildFile; fileRef = BFEF44AB2398693300095A92 /* ForwardingNavigationController.swift */; };
 		E928A5DD595D5B76DAB08BD0 /* ReservedRegionHostingController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 94A4F19F830E721034BA7139 /* ReservedRegionHostingController.swift */; };
 		4A3CCA9F76E9E15155042434 /* Feedback.swift in Sources */ = {isa = PBXBuildFile; fileRef = BFBD9A9EAEE7117C11B2F729 /* Feedback.swift */; };
+		3D7F534AF7E8EF5C79DCC4F8 /* PlaceNames.swift in Sources */ = {isa = PBXBuildFile; fileRef = D7CC9D7BDAC5FAFD0924DBD4 /* PlaceNames.swift */; };
 		BFF9E4932555F4F40052B1B2 /* LocationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = BFF9E4922555F4F40052B1B2 /* LocationManager.swift */; };
 		D534428E2BAB202700E133EE /* ClippingsMapView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D534428D2BAB202700E133EE /* ClippingsMapView.swift */; };
 		D5D375152BAB330200213D84 /* ClippingSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = D5D375142BAB330200213D84 /* ClippingSheet.swift */; };
@@ -245,6 +246,7 @@
 		BFEF44AB2398693300095A92 /* ForwardingNavigationController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ForwardingNavigationController.swift; sourceTree = "<group>"; };
 		94A4F19F830E721034BA7139 /* ReservedRegionHostingController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReservedRegionHostingController.swift; sourceTree = "<group>"; };
 		BFBD9A9EAEE7117C11B2F729 /* Feedback.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Feedback.swift; sourceTree = "<group>"; };
+		D7CC9D7BDAC5FAFD0924DBD4 /* PlaceNames.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlaceNames.swift; sourceTree = "<group>"; };
 		BFF9E4922555F4F40052B1B2 /* LocationManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocationManager.swift; sourceTree = "<group>"; };
 		D534428D2BAB202700E133EE /* ClippingsMapView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClippingsMapView.swift; sourceTree = "<group>"; };
 		D5D375142BAB330200213D84 /* ClippingSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClippingSheet.swift; sourceTree = "<group>"; };
@@ -554,6 +556,7 @@
 				BFEF44AB2398693300095A92 /* ForwardingNavigationController.swift */,
 				94A4F19F830E721034BA7139 /* ReservedRegionHostingController.swift */,
 				BFBD9A9EAEE7117C11B2F729 /* Feedback.swift */,
+				D7CC9D7BDAC5FAFD0924DBD4 /* PlaceNames.swift */,
 			);
 			path = Components;
 			sourceTree = "<group>";
@@ -878,6 +881,7 @@
 				BFEF44AE2398693300095A92 /* ForwardingNavigationController.swift in Sources */,
 				E928A5DD595D5B76DAB08BD0 /* ReservedRegionHostingController.swift in Sources */,
 				4A3CCA9F76E9E15155042434 /* Feedback.swift in Sources */,
+				3D7F534AF7E8EF5C79DCC4F8 /* PlaceNames.swift in Sources */,
 				BF0BDE5622B456A600E1419D /* PasteboardItem+ActivityItemSource.swift in Sources */,
 				BFAD2C4A257AD4D600FF9532 /* PublishedPipeline.swift in Sources */,
 				BF0BDE5A22B4771300E1419D /* SettingsViewController.swift in Sources */,

@@ -87,7 +87,7 @@ struct SettingsView: View
                 } header: {
                     Text("Capture")
                 } footer: {
-                    Text("Always location access keeps Clipboard watching the clipboard in the background. Your location only tags clippings and never leaves this iPhone.")
+                    Text("Always location access keeps Clipboard watching the clipboard in the background, and tags each clipping with where you copied it. To show a town name, Clipboard sends a tagged clipping's coordinates to Apple Maps once, then keeps the name on this iPhone.")
                 }
 
                 Section {

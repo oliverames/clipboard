@@ -11,7 +11,6 @@ import SwiftUI
 import Combine
 import CoreData
 import CoreLocation
-import Contacts
 
 import ClipboardKit
 import Roxas
@@ -720,49 +719,20 @@ private extension HistoryViewController
         self.present(activityViewController, animated: true, completion: nil)
     }
 
-    func showLocation(_ location: CLLocation)
+    func showLocation(of item: PasteboardItem)
     {
-        let geocoder = CLGeocoder()
-        geocoder.reverseGeocodeLocation(location) { (placemarks, error) in
-            DispatchQueue.main.async {
-                let title: String
-                let message: String?
+        guard let location = item.location else { return }
 
-                if let placemarks, let placemark = placemarks.first,
-                   let postalAddress = placemark.postalAddress?.mutableCopy() as? CNMutablePostalAddress
-                {
-                    // The location isn't precise, so don't pretend that it is by showing street address.
-                    postalAddress.street = ""
-                    postalAddress.subLocality = ""
+        Task {
+            // The town name is looked up from Apple Maps once per clipping, then kept on this device.
+            let name = await PlaceNames.name(for: item)
+            let coordinates = String(format: "%.3f, %.3f", location.coordinate.latitude, location.coordinate.longitude)
 
-                    let formatter = CNPostalAddressFormatter()
-
-                    if let sublocality = placemark.subLocality
-                    {
-                        title = sublocality + "\n" + formatter.string(from: postalAddress)
-                    }
-                    else
-                    {
-                        title = formatter.string(from: postalAddress)
-                    }
-
-                    message = NSLocalizedString("Copied near this place.", comment: "")
-                }
-                else if let error
-                {
-                    title = NSLocalizedString("Couldn't Look Up Location", comment: "")
-                    message = error.localizedDescription + "\n\n" + "\(location.coordinate.latitude), \(location.coordinate.longitude)"
-                }
-                else
-                {
-                    title = "\(location.coordinate.latitude), \(location.coordinate.longitude)"
-                    message = nil
-                }
-
-                let alertController = UIAlertController(title: title, message: message, preferredStyle: .alert)
-                alertController.addAction(.ok)
-                self.present(alertController, animated: true)
-            }
+            let alertController = UIAlertController(title: name ?? coordinates,
+                                                    message: name == nil ? NSLocalizedString("Couldn't find a place name for this location.", comment: "") : NSLocalizedString("Copied near this place.", comment: ""),
+                                                    preferredStyle: .alert)
+            alertController.addAction(.ok)
+            self.present(alertController, animated: true)
         }
     }
 
@@ -1179,10 +1149,10 @@ private extension HistoryViewController
             })
         }
 
-        if let location = item.location
+        if item.location != nil
         {
             organizeActions.append(UIAction(title: NSLocalizedString("Show Location", comment: ""), image: UIImage(systemName: "location")) { [weak self] _ in
-                self?.showLocation(location)
+                self?.showLocation(of: item)
             })
         }
 

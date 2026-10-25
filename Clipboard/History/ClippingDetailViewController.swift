@@ -410,11 +410,13 @@ struct ClippingDetailView: View
 
     private func lookUpPlace() async
     {
-        guard let location = self.item.location, self.placeName == nil else { return }
+        guard self.item.location != nil else { return }
 
-        // The location isn't precise, so name the town rather than a street address.
-        guard let placemark = try? await CLGeocoder().reverseGeocodeLocation(location).first else { return }
-        self.placeName = [placemark.locality, placemark.administrativeArea].compactMap { $0 }.joined(separator: ", ")
+        // A saved name shows at once; otherwise Apple Maps is asked once for this clipping and the answer is kept.
+        self.placeName = PlaceNames.cachedName(for: self.item)
+        guard self.placeName == nil else { return }
+
+        self.placeName = await PlaceNames.name(for: self.item)
     }
 }
 
