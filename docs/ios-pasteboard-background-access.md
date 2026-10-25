@@ -369,15 +369,18 @@ Apple's statements, for the record:
   for no location events (archived Location Awareness guide).
 
 What the app does about this: it keeps the significant-change + continuous-update
-session it always had, and **adds region monitoring** (`CLMonitor`, a small geofence
-around the current location, re-centred as you move) as a second relaunch path, since
-region monitoring is the one mechanism with any chance against a force-quit and the
-best coverage after a reboot. This is strictly additive and isolated from the proven
-path. **Whether it actually relaunches after a force-quit on iOS 27.2 is unverified
-and is on the device checklist.** The honest statement to the user is: every copy is
-captured while the app is suspended or after the system kills it for memory; a
-force-quit is the hard wall that every third-party clipboard manager hits, and only
-the Apple-only entitlement (which AMFI blocks for us) would beat it cleanly.
+session it always had. Adding **region monitoring** (`CLMonitor`, a small geofence
+around the current location, re-centred as you move) is the natural next step — it is
+the one mechanism with any chance against a force-quit and the best coverage after a
+reboot — but it is **not shipped yet**: on iOS 27.2 `CLMonitor.init` raises an
+uncatchable Objective-C assertion in this build context and aborts the app at launch,
+so it was pulled out rather than regress the whole app, and its force-quit benefit is
+unverified on iOS 27 regardless. It needs to be prototyped and confirmed on a device
+(no debugger attached) before it goes back in; that is on the device checklist. The
+honest statement to the user is: every copy is captured while the app is suspended or
+after the system kills it for memory; a force-quit is the hard wall that every
+third-party clipboard manager hits, and only the Apple-only entitlement (which AMFI
+blocks for us) would beat it cleanly.
 
 ## Private routes evaluated (no notification)
 
