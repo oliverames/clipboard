@@ -1,58 +1,194 @@
 {
-  "fill": {
-    "automatic-gradient": "extended-srgb:0.46000,0.47000,0.50000,1.00000"
-  },
+  "fill-specializations": [
+    {
+      "value": {
+        "linear-gradient": [
+          "display-p3:0.99000,0.72000,0.26000,1.00000",
+          "display-p3:0.93000,0.42000,0.13000,1.00000"
+        ],
+        "orientation": {
+          "start": {
+            "x": 0.5,
+            "y": 0
+          },
+          "stop": {
+            "x": 0.5,
+            "y": 0.7
+          }
+        }
+      }
+    },
+    {
+      "appearance": "dark",
+      "value": {
+        "linear-gradient": [
+          "display-p3:0.17000,0.15000,0.14000,1.00000",
+          "display-p3:0.06000,0.06000,0.06000,1.00000"
+        ],
+        "orientation": {
+          "start": {
+            "x": 0.5,
+            "y": 0
+          },
+          "stop": {
+            "x": 0.5,
+            "y": 0.7
+          }
+        }
+      }
+    }
+  ],
   "groups": [
     {
+      "name": "Clasp and Lines",
       "layers": [
         {
-          "image-name": "clipboard-front.png",
-          "name": "clipboard-front",
+          "image-name": "5-clasp.svg",
+          "name": "Clasp",
           "glass": true,
           "position": {
-            "scale": 1.0,
+            "scale": 1,
             "translation-in-points": [
               0,
               0
             ]
-          }
+          },
+          "fill-specializations": [
+            {
+              "appearance": "dark",
+              "value": {
+                "solid": "display-p3:0.93000,0.93000,0.95000,1.00000"
+              }
+            }
+          ]
+        },
+        {
+          "image-name": "4-lines.svg",
+          "name": "Lines",
+          "glass": true,
+          "position": {
+            "scale": 1,
+            "translation-in-points": [
+              0,
+              0
+            ]
+          },
+          "fill-specializations": [
+            {
+              "appearance": "tinted",
+              "value": {
+                "solid": "display-p3:0.25000,0.25000,0.25000,1.00000"
+              }
+            },
+            {
+              "appearance": "dark",
+              "value": {
+                "solid": "display-p3:1.00000,0.62000,0.20000,1.00000"
+              }
+            }
+          ]
         }
       ],
       "shadow": {
-        "kind": "neutral",
-        "opacity": 0.6
-      },
-      "translucency": {
-        "enabled": true,
-        "value": 0.6
+        "kind": "layer-color",
+        "opacity": 0.5
       },
       "specular": true,
+      "translucency": {
+        "enabled": false,
+        "value": 0.3
+      },
       "lighting": "individual"
     },
     {
+      "name": "Clipping",
       "layers": [
         {
-          "image-name": "clipboard-back.png",
-          "name": "clipboard-back",
+          "image-name": "3-front-card.svg",
+          "name": "Front Card",
           "glass": true,
           "position": {
-            "scale": 1.0,
+            "scale": 1,
             "translation-in-points": [
               0,
               0
             ]
-          }
+          },
+          "fill-specializations": [
+            {
+              "appearance": "dark",
+              "value": {
+                "solid": "display-p3:0.30000,0.30000,0.32000,1.00000"
+              }
+            }
+          ]
         }
       ],
       "shadow": {
         "kind": "neutral",
-        "opacity": 0.3
-      },
-      "translucency": {
-        "enabled": true,
-        "value": 0.85
+        "opacity": 0.55
       },
       "specular": true,
+      "translucency": {
+        "enabled": true,
+        "value": 0.15
+      }
+    },
+    {
+      "name": "History",
+      "layers": [
+        {
+          "image-name": "2-middle-card.svg",
+          "name": "Middle Card",
+          "glass": true,
+          "position": {
+            "scale": 1,
+            "translation-in-points": [
+              0,
+              0
+            ]
+          },
+          "opacity": 0.85,
+          "fill-specializations": [
+            {
+              "appearance": "dark",
+              "value": {
+                "solid": "display-p3:0.22000,0.22000,0.24000,1.00000"
+              }
+            }
+          ]
+        },
+        {
+          "image-name": "1-back-card.svg",
+          "name": "Back Card",
+          "glass": true,
+          "position": {
+            "scale": 1,
+            "translation-in-points": [
+              0,
+              0
+            ]
+          },
+          "opacity": 0.65,
+          "fill-specializations": [
+            {
+              "appearance": "dark",
+              "value": {
+                "solid": "display-p3:0.16000,0.16000,0.18000,1.00000"
+              }
+            }
+          ]
+        }
+      ],
+      "shadow": {
+        "kind": "neutral",
+        "opacity": 0.35
+      },
+      "specular": true,
+      "translucency": {
+        "enabled": true,
+        "value": 0.45
+      },
       "lighting": "individual"
     }
   ],
