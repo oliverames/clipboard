@@ -86,6 +86,93 @@ public class PasteboardItemRepresentation: NSManagedObject
         self.url = url
     }
     
+    /// Builds representations from a snapshot read directly from the pasteboard daemon.
+    ///
+    /// The daemon can return more types than we display, so this mirrors the limited set of
+    /// representations loaded from `NSItemProvider` and picks at most one type per category.
+    public static func representations(for snapshot: [String: Data], in context: NSManagedObjectContext, completionHandler: @escaping ([PasteboardItemRepresentation]) -> Void)
+    {
+        context.perform {
+            var representations = [PasteboardItemRepresentation]()
+            var usedTypeIdentifiers = Set<String>()
+
+            func firstEntry(conformingTo typeIdentifiers: [CFString], where isAccepted: ((String) -> Bool)? = nil) -> (String, Data)?
+            {
+                for candidate in typeIdentifiers
+                {
+                    for (typeIdentifier, data) in snapshot where !usedTypeIdentifiers.contains(typeIdentifier)
+                    {
+                        guard UTTypeConformsTo(typeIdentifier as CFString, candidate) else { continue }
+                        guard isAccepted?(typeIdentifier) ?? true else { continue }
+                        return (typeIdentifier, data)
+                    }
+                }
+                return nil
+            }
+
+            let supportedTextUTIs = [kUTTypeUTF8PlainText, kUTTypePlainText, kUTTypeText]
+            if let (uti, data) = firstEntry(conformingTo: supportedTextUTIs, where: { (uti) in
+                // public.text also covers rich text, which is handled below.
+                return !UTTypeConformsTo(uti as CFString, kUTTypeRTF)
+                    && !UTTypeConformsTo(uti as CFString, kUTTypeHTML)
+                    && !UTTypeConformsTo(uti as CFString, kUTTypeRTFD)
+                    && !UTTypeConformsTo(uti as CFString, kUTTypeFlatRTFD)
+            })
+            {
+                if let text = String(data: data, encoding: .utf8) ?? String(data: data, encoding: .utf16)
+                {
+                    usedTypeIdentifiers.insert(uti)
+                    representations.append(PasteboardItemRepresentation(uti: uti, text: text, context: context))
+                }
+            }
+
+            let supportedAttributedTextUTIs = [kUTTypeRTF, kUTTypeHTML, kUTTypeFlatRTFD, kUTTypeRTFD]
+            if let (uti, data) = firstEntry(conformingTo: supportedAttributedTextUTIs)
+            {
+                usedTypeIdentifiers.insert(uti)
+                representations.append(PasteboardItemRepresentation(uti: uti, data: data, type: .attributedText, context: context))
+            }
+
+            let supportedImageUTIs = [kUTTypePNG, kUTTypeJPEG, kUTTypeImage]
+            if let (uti, data) = firstEntry(conformingTo: supportedImageUTIs), data.count <= UserDefaults.shared.maximumClippingSize
+            {
+                usedTypeIdentifiers.insert(uti)
+                representations.append(PasteboardItemRepresentation(uti: uti, data: data, type: .image, context: context))
+            }
+
+            let supportedURLUTIs = [kUTTypeFileURL, kUTTypeURL]
+            if let (uti, data) = firstEntry(conformingTo: supportedURLUTIs), let url = Self.url(from: data)
+            {
+                usedTypeIdentifiers.insert(uti)
+                representations.append(PasteboardItemRepresentation(uti: uti, url: url, context: context))
+            }
+
+            completionHandler(representations)
+        }
+    }
+
+    private static func url(from data: Data) -> URL?
+    {
+        let textEncodings: [String.Encoding] = [.utf8, .utf16]
+        for encoding in textEncodings
+        {
+            guard let string = String(data: data, encoding: encoding) else { continue }
+
+            let trimmedString = string.trimmingCharacters(in: .whitespacesAndNewlines)
+            if let url = URL(string: trimmedString)
+            {
+                return url
+            }
+        }
+
+        if let url = try? NSKeyedUnarchiver.unarchivedObject(ofClass: NSURL.self, from: data)
+        {
+            return url as URL
+        }
+
+        return URL(dataRepresentation: data, relativeTo: nil)
+    }
+
     public static func representations(for itemProvider: NSItemProvider, in context: NSManagedObjectContext, completionHandler: @escaping ([PasteboardItemRepresentation]) -> Void)
     {
         var representations = [PasteboardItemRepresentation]()

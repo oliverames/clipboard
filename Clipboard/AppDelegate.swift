@@ -8,6 +8,7 @@
 
 import UIKit
 import UserNotifications
+import AVFoundation
 
 import ClipboardKit
 import Roxas
@@ -19,6 +20,8 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     {
         // Override point for customization after application launch.
         print(RoxasVersionNumber)
+        
+        Diagnostics.shared.log("App launched; state=\(UIApplication.shared.applicationState.rawValue)")
         
         UserDefaults.shared.registerAppDefaults()
         
@@ -34,9 +37,24 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         
         self.registerForNotifications()
         
+        #if DEBUG
+        // Lets a simulator or device run exercise the private reader without
+        // going through a notification or URL prompt:
+        //   simctl launch --env CLIPBOARD_DAEMON_SELFTEST=1 ...
+        if ProcessInfo.processInfo.environment["CLIPBOARD_DAEMON_SELFTEST"] == "1"
+        {
+            NSLog("Pasteboard daemon reader available: %d", PasteboardDaemonReader.isAvailable())
+            
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
+                NSLog("Running pasteboard daemon self-test.")
+                ApplicationMonitor.shared.pasteboardMonitor.savePasteboardUsingDaemonReader()
+            }
+        }
+        #endif
+        
         return true
     }
-
+    
     func applicationWillTerminate(_ application: UIApplication) {
         // Called when the application is about to terminate. Save data if appropriate. See also applicationDidEnterBackground:.
     }
@@ -50,7 +68,14 @@ extension AppDelegate: UNUserNotificationCenterDelegate
         UNUserNotificationCenter.current().setNotificationCategories([category])
         
         UNUserNotificationCenter.current().delegate = self
-        UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .badge, .sound]) { (success, error) in
+        
+        // Only ask for permission when it hasn't been decided yet. Asking again on every
+        // launch puts a system alert on screen, which is distracting for no reason.
+        UNUserNotificationCenter.current().getNotificationSettings { (settings) in
+            guard settings.authorizationStatus == .notDetermined else { return }
+            
+            UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .badge, .sound]) { (success, error) in
+            }
         }
     }
     

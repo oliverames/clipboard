@@ -39,7 +39,7 @@ Clipboard is built on [Clip](https://github.com/rileytestut/Clip), Riley Testut'
 - Saves text, rich text, images, links, and code copied in other apps.
 - Tags each clipping with where you copied it, when you allow Always location access.
 - Detects code snippets so you can filter for them.
-- Shows link previews, including the App Store icon for a site's app.
+- Shows link previews, including the App Store icon for a site's app. Previews are cached on disk, so they're only fetched once.
 
 ### Organize
 - **Favorites and pins.** Mark clippings as favorites to find them in one place. Pinned clippings stay at the top of the history.
@@ -60,10 +60,18 @@ Clipboard is built on [Clip](https://github.com/rileytestut/Clip), Riley Testut'
 Clipboard relies on three things to stay current.
 
 1. **Always location access** keeps Clipboard running in the background. Clipboard uses your location only to tag clippings.
-2. **A direct read.** When the clipboard changes, Clipboard reads the new copy and saves it. iOS allows this once Paste from Other Apps is set to Allow, and onboarding walks you through that setting.
-3. **A fallback notification.** If iOS refuses the read, Clipboard posts a "Clipboard Changed" notification instead. Swipe down on it, and the `ClipboardReader` extension reads the copy and saves it.
+2. **A direct read.** When the clipboard changes while Clipboard is open, it reads the new copy through the private `Pasteboard.framework` interface and saves it. Opening the app also pulls down whatever is in the clipboard at that moment.
+3. **A widget extension.** iOS won't hand the general clipboard to an app that's in the background, so Clipboard asks a widget extension to read it. The system starts the widget's process on demand, so the copy saves on its own, with no notification and nothing to tap.
 
 Copies you make from within Clipboard are ignored. The iOS Simulator doesn't run background monitoring, so test capture on a physical device.
+
+### Why a widget is required
+
+iOS withholds the general clipboard from apps in the background, and there is no public way around it. The rule is enforced by the pasteboard daemon: it reads the client's code signature and grants background access only to clients carrying the private entitlement `com.apple.Pasteboard.background-access`, to Apple-signed clients, and to app extensions, which it recognises through Launch Services.
+
+An app extension qualifies, and a widget is the one the system will start on demand without a notification being involved. `WidgetCenter.reloadTimelines` makes the system launch the widget's process, which reads the clipboard and writes the clipping to the shared store.
+
+The entitlement itself can't be used here: Xcode refuses to build it, and the phone rejects an app whose signature contains an entitlement its provisioning profile doesn't cover. Neither does a configuration profile, a silent audio session, nor claiming to own the clipboard's data. The full write-up, with the decompiled decision logic and everything that was ruled out, is in [docs/ios-pasteboard-background-access.md](docs/ios-pasteboard-background-access.md).
 
 ## Setup
 
@@ -72,6 +80,16 @@ Install Clipboard on your iPhone (see [Building from source](#building-from-sour
 1. **Allow paste access.** Go to Settings, then Privacy & Security, then Paste from Other Apps, then Clipboard, and choose Allow. The option appears after Clipboard reads the clipboard once.
 2. **Keep monitoring in the background.** Go to Settings, then Clipboard, then Location, and choose Always.
 3. **Optional: Shortcuts access.** In Clipboard's settings, turn on Allow Shortcuts Access.
+
+### Adding the widget
+
+Background capture runs in a widget extension, because that is the only kind of process
+iOS will start on demand and hand the general clipboard to. The system starts it
+whether or not the widget is on a home screen, but WidgetKit refreshes a widget that
+is actually on a home screen far more eagerly, and it shows your clipping count while
+it's there.
+
+Long-press a home screen, tap **Edit**, then **Add Widget**, and pick **Clipboard**.
 
 ## Privacy
 
@@ -114,7 +132,7 @@ Then, in Xcode:
 |--------|------|
 | `Clipboard` | The app: history, clipping detail, settings, onboarding, map, Shortcuts intents, and pasteboard monitoring |
 | `ClipboardKeyboard` | Keyboard extension that lists recent clippings |
-| `ClipboardReader` | Notification content extension that saves a copy when you swipe down |
+| `ClipboardReader` | Notification service extension that saves a copy taken while the app is in the background |
 | `ClipboardKit` | Shared framework: the Core Data model, code detection, fuzzy search, transforms, link previews, and SwiftUI keyboard views |
 | `Dependencies/Roxas` | Utility framework, included as a Git submodule |
 
@@ -122,7 +140,7 @@ The Core Data model has three entities. `PasteboardItem` holds each clipping, wi
 
 ## Status
 
-Everything listed under Features is implemented. Direct background reads are new and need testing on a device. Copies that iOS refuses fall back to the notification.
+Everything listed under Features is implemented. Background capture is handled by the notification service extension, and foreground capture by a direct read through the private `Pasteboard.framework` interface. Both are verified on a physical iPhone.
 
 **Planned:** iCloud sync. It needs an iCloud container and a Core Data model that CloudKit can sync. Clipboard doesn't sync between devices yet.
 

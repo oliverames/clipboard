@@ -118,6 +118,29 @@ public class DatabaseManager
         }
     }
     
+    /// Whether a clipping was saved after the given date.
+    ///
+    /// The app and the notification service extension share this store, so the app can
+    /// tell whether the extension managed to save a copy.
+    public func hasItemSaved(after date: Date, completionHandler: @escaping (Bool) -> Void)
+    {
+        self.persistentContainer.performBackgroundTask { (context) in
+            let fetchRequest = PasteboardItem.fetchRequest() as NSFetchRequest<PasteboardItem>
+            fetchRequest.predicate = NSPredicate(format: "date > %@", date as NSDate)
+            fetchRequest.fetchLimit = 1
+
+            do
+            {
+                let count = try context.count(for: fetchRequest)
+                completionHandler(count > 0)
+            }
+            catch
+            {
+                completionHandler(false)
+            }
+        }
+    }
+
     public func refresh()
     {
         DatabaseManager.shared.persistentContainer.performBackgroundTask { (context) in
@@ -223,55 +246,89 @@ public extension DatabaseManager
             guard !itemProvider.registeredTypeIdentifiers.contains(UTI.clipping) else { throw PasteboardError.duplicateItem } // Ignore copies that we made from the app.
             
             let context = DatabaseManager.shared.persistentContainer.newBackgroundContext()
-            PasteboardItemRepresentation.representations(for: itemProvider, in: context) { (representations) in
-                do
-                {
-                    guard let pasteboardItem = PasteboardItem(representations: representations, context: context) else { throw PasteboardError.noItem }
-                    pasteboardItem.location = location
-                    
-                    print(pasteboardItem)
-                    
-                    let fetchRequest = PasteboardItem.fetchRequest() as NSFetchRequest<PasteboardItem>
-                    fetchRequest.predicate = NSPredicate(format: "%K == NO AND trashedDate == nil", #keyPath(PasteboardItem.isMarkedForDeletion))
-                    fetchRequest.sortDescriptors = [NSSortDescriptor(keyPath: \PasteboardItem.date, ascending: false)]
-                    fetchRequest.relationshipKeyPathsForPrefetching = ["representations"]
-                    fetchRequest.includesPendingChanges = false
-                    fetchRequest.fetchLimit = 1
-                    
-                    if let previousItem = try context.fetch(fetchRequest).first
-                    {
-                        let representations = pasteboardItem.representations.reduce(into: [:], { ($0[$1.type] = $1.value as? NSObject) })
-                        let previousRepresentations = previousItem.representations.reduce(into: [:], { ($0[$1.type] = $1.value as? NSObject) })
-
-                        guard representations != previousRepresentations else {
-                            throw PasteboardError.duplicateItem
-                        }
-                    }
-                    
-                    guard let _ = pasteboardItem.preferredRepresentation else { throw PasteboardError.unsupportedItem }
-                    
-                    context.transactionAuthor = Bundle.main.bundleIdentifier
-                    try context.save()
-                    
-                    let center = CFNotificationCenterGetDarwinNotifyCenter()
-                    CFNotificationCenterPostNotification(center, .didChangePasteboard, nil, nil, true)
-                    
-                    DispatchQueue.main.async {
-                        completionHandler(.success(()))
-                    }
-                }
-                catch
-                {
-                    DispatchQueue.main.async {
-                        print("Failed to handle pasteboard item.", error)
-                        completionHandler(.failure(error))
-                    }
-                }
-            }
+            self.savePasteboard(in: context, location: location, representationProvider: { (completionHandler) in
+                PasteboardItemRepresentation.representations(for: itemProvider, in: context, completionHandler: completionHandler)
+            }, completionHandler: completionHandler)
         }
         catch
         {
             completionHandler(.failure(error))
+        }
+    }
+    
+    /// Saves a snapshot read directly from the pasteboard daemon.
+    ///
+    /// `snapshot` contains one dictionary per pasteboard item, mapping UTI to data.
+    func savePasteboard(snapshot: [[String: Data]], location: CLLocation?, completionHandler: @escaping (Result<Void, Error>) -> Void)
+    {
+        // Ignore copies that we made from the app.
+        guard !snapshot.contains(where: { $0.keys.contains(UTI.clipping) }) else {
+            completionHandler(.failure(PasteboardError.duplicateItem))
+            return
+        }
+        
+        guard let itemSnapshot = snapshot.first else {
+            completionHandler(.failure(PasteboardError.noItem))
+            return
+        }
+        
+        print("Did read pasteboard from daemon!")
+        
+        let context = DatabaseManager.shared.persistentContainer.newBackgroundContext()
+        self.savePasteboard(in: context, location: location, representationProvider: { (completionHandler) in
+            PasteboardItemRepresentation.representations(for: itemSnapshot, in: context, completionHandler: completionHandler)
+        }, completionHandler: completionHandler)
+    }
+}
+
+private extension DatabaseManager
+{
+    func savePasteboard(in context: NSManagedObjectContext, location: CLLocation?, representationProvider: @escaping (@escaping ([PasteboardItemRepresentation]) -> Void) -> Void, completionHandler: @escaping (Result<Void, Error>) -> Void)
+    {
+        representationProvider { (representations) in
+            do
+            {
+                guard let pasteboardItem = PasteboardItem(representations: representations, context: context) else { throw PasteboardError.noItem }
+                pasteboardItem.location = location
+                
+                print(pasteboardItem)
+                
+                let fetchRequest = PasteboardItem.fetchRequest() as NSFetchRequest<PasteboardItem>
+                fetchRequest.predicate = NSPredicate(format: "%K == NO AND trashedDate == nil", #keyPath(PasteboardItem.isMarkedForDeletion))
+                fetchRequest.sortDescriptors = [NSSortDescriptor(keyPath: \PasteboardItem.date, ascending: false)]
+                fetchRequest.relationshipKeyPathsForPrefetching = ["representations"]
+                fetchRequest.includesPendingChanges = false
+                fetchRequest.fetchLimit = 1
+                
+                if let previousItem = try context.fetch(fetchRequest).first
+                {
+                    let representations = pasteboardItem.representations.reduce(into: [:], { ($0[$1.type] = $1.value as? NSObject) })
+                    let previousRepresentations = previousItem.representations.reduce(into: [:], { ($0[$1.type] = $1.value as? NSObject) })
+
+                    guard representations != previousRepresentations else {
+                        throw PasteboardError.duplicateItem
+                    }
+                }
+                
+                guard let _ = pasteboardItem.preferredRepresentation else { throw PasteboardError.unsupportedItem }
+                
+                context.transactionAuthor = Bundle.main.bundleIdentifier
+                try context.save()
+                
+                let center = CFNotificationCenterGetDarwinNotifyCenter()
+                CFNotificationCenterPostNotification(center, .didChangePasteboard, nil, nil, true)
+                
+                DispatchQueue.main.async {
+                    completionHandler(.success(()))
+                }
+            }
+            catch
+            {
+                DispatchQueue.main.async {
+                    print("Failed to handle pasteboard item.", error)
+                    completionHandler(.failure(error))
+                }
+            }
         }
     }
 }

@@ -10,6 +10,7 @@ import UIKit
 import AVFoundation
 import UserNotifications
 import CoreLocation
+import WidgetKit
 
 import ClipboardKit
 import Roxas
@@ -26,8 +27,22 @@ private let PasteboardMonitorIgnoreNextPasteboardChange: @convention(c) (CFNotif
 
 class PasteboardMonitor
 {
+    /// Delays, in seconds, between retries of a failed daemon read.
+    private static let daemonReadRetryDelays: [TimeInterval] = [1, 3]
+
     private(set) var isStarted = false
     fileprivate var ignoreNextPasteboardChange = false
+
+    /// How long to wait before checking whether the widget saved the pasteboard.
+    private static let widgetCheckDelay: TimeInterval = 20
+
+    /// How many times to ask the widget before giving up on a copy.
+    private static let widgetMaximumAttempts = 9
+
+    /// Whether a widget capture is currently in flight.
+    private var isTriggerRunning = false
+    private var triggerAttempts = 0
+    private var triggerStartDate: Date?
 
     private let feedbackGenerator = UINotificationFeedbackGenerator()
 }
@@ -41,6 +56,86 @@ extension PasteboardMonitor
 
         self.registerForNotifications()
         completionHandler(.success(()))
+    }
+}
+
+extension PasteboardMonitor
+{
+    /// Reads the pasteboard from the daemon, which works while the app is in the background.
+    func savePasteboardUsingDaemonReader()
+    {
+        let location = ApplicationMonitor.shared.locationManager.location
+        let reader = PasteboardDaemonReader()
+
+        self.readFromDaemon(reader: reader, attempt: 0, location: location)
+    }
+
+    private func readFromDaemon(reader: PasteboardDaemonReader, attempt: Int, location: CLLocation?)
+    {
+        Diagnostics.shared.log("Daemon read start; attempt=\(attempt) state=\(UIApplication.shared.applicationState.rawValue)")
+
+        reader.readGeneralPasteboard { (snapshots, error) in
+            #if DEBUG
+            self.logDaemonComparison(snapshots: snapshots, error: error)
+            #endif
+
+            let types = snapshots?.map { $0.keys.sorted() } ?? []
+            Diagnostics.shared.log("Daemon read finished; attempt=\(attempt) items=\(snapshots?.count ?? 0) types=\(types) error=\(error.map { String(describing: $0) } ?? "none")")
+
+            // If the private path is unavailable, keep the existing UIPasteboard behavior as a fallback.
+            guard let snapshots = snapshots, !snapshots.isEmpty else {
+                // The pasteboard is sometimes briefly unavailable right after it changes, so retry
+                // a few times before giving up on it.
+                if attempt < Self.daemonReadRetryDelays.count
+                {
+                    let delay = Self.daemonReadRetryDelays[attempt]
+                    Diagnostics.shared.log("Daemon read retrying in \(delay)s")
+                    DispatchQueue.main.asyncAfter(deadline: .now() + delay) {
+                        self.readFromDaemon(reader: reader, attempt: attempt + 1, location: location)
+                    }
+                    return
+                }
+
+                NSLog("Pasteboard daemon read failed, falling back to UIPasteboard: %@", error?.localizedDescription ?? "no items")
+                self.savePasteboardUsingUIPasteboard()
+                return
+            }
+
+            DatabaseManager.shared.savePasteboard(snapshot: snapshots, location: location) { (result) in
+                switch result
+                {
+                case .success:
+                    Diagnostics.shared.log("Daemon snapshot saved")
+                case .failure(PasteboardError.duplicateItem):
+                    Diagnostics.shared.log("Daemon snapshot was a duplicate")
+                case .failure(let error):
+                    NSLog("Failed to save pasteboard daemon snapshot, falling back to UIPasteboard: %@", error.localizedDescription)
+                    Diagnostics.shared.log("Daemon snapshot save failed: \(error)")
+                    self.savePasteboardUsingUIPasteboard()
+                }
+            }
+        }
+    }
+
+    func savePasteboardUsingUIPasteboard()
+    {
+        Diagnostics.shared.log("UIPasteboard read start; state=\(UIApplication.shared.applicationState.rawValue)")
+        
+        let pasteboard = UIPasteboard.general
+        Diagnostics.shared.log("UIPasteboard raw: changeCount=\(pasteboard.changeCount) types=\(pasteboard.types) items=\(pasteboard.items.count) string=\(pasteboard.string ?? "nil")")
+        
+        DatabaseManager.shared.savePasteboard(location: ApplicationMonitor.shared.locationManager.location) { (result) in
+            switch result
+            {
+            case .success:
+                Diagnostics.shared.log("UIPasteboard snapshot saved")
+            case .failure(PasteboardError.duplicateItem):
+                Diagnostics.shared.log("UIPasteboard snapshot was a duplicate")
+            case .failure(let error):
+                Diagnostics.shared.log("UIPasteboard snapshot save failed: \(error)")
+                self.presentChangeNotification()
+            }
+        }
     }
 }
 
@@ -67,50 +162,126 @@ private extension PasteboardMonitor
 
     @objc func pasteboardDidUpdate()
     {
+        Diagnostics.shared.log("Pasteboard change notification; state=\(UIApplication.shared.applicationState.rawValue) ignore=\(self.ignoreNextPasteboardChange)")
+        
         guard !self.ignoreNextPasteboardChange else {
             self.ignoreNextPasteboardChange = false
             return
         }
 
         DispatchQueue.main.async {
-            if UIApplication.shared.applicationState != .background
+            let applicationState = UIApplication.shared.applicationState
+
+            if applicationState == .active
             {
                 // Don't save or notify for items copied from within Clipboard.
                 guard !UIPasteboard.general.contains(pasteboardTypes: [UTI.clipping]) else { return }
             }
 
-            // Read the copy directly. iOS allows this once Paste from Other Apps is set to Allow.
-            // Only a read that iOS refuses falls back to a notification the user swipes down to save.
             // The store loads asynchronously, so a copy that arrives during launch waits for it.
             DatabaseManager.shared.prepare { (preparation) in
                 DispatchQueue.main.async {
                     guard case .success = preparation else { return self.presentChangeNotification() }
 
-                    DatabaseManager.shared.savePasteboard(location: ApplicationMonitor.shared.locationManager.location) { (result) in
-                        switch result
-                        {
-                        case .success, .failure(PasteboardError.duplicateItem): break
-                        case .failure: self.presentChangeNotification()
-                        }
+                    // While the app isn't active the system won't hand over the pasteboard,
+                    // so ask a widget extension to read it on our behalf. The system launches
+                    // the widget's process on demand, and no notification is involved.
+                    if applicationState != .active
+                    {
+                        self.presentWidgetTrigger()
+                        return
+                    }
+
+                    if UserDefaults.shared.usesPasteboardDaemonReader && PasteboardDaemonReader.isAvailable()
+                    {
+                        self.savePasteboardUsingDaemonReader()
+                    }
+                    else
+                    {
+                        self.savePasteboardUsingUIPasteboard()
                     }
                 }
             }
         }
     }
 
-    func presentChangeNotification()
+    #if DEBUG
+    func logDaemonComparison(snapshots: [[String: Data]]?, error: Error?)
     {
-        UNUserNotificationCenter.current().getNotificationSettings { (settings) in
-            if settings.soundSetting == .enabled
-            {
-                UIDevice.current.vibrate()
-            }
+        let daemonTypes = snapshots?.map { $0.keys.sorted() } ?? []
+        let pasteboard = UIPasteboard.general
+
+        NSLog("Pasteboard daemon read: %@ types: %@", error.map { "error: \($0)" } ?? "success", daemonTypes.description)
+        NSLog("UIPasteboard comparison: changeCount: %ld types: %@ hasStrings: %@ hasImages: %@ hasURLs: %@ applicationState: %ld",
+              pasteboard.changeCount,
+              pasteboard.types.description,
+              String(pasteboard.hasStrings),
+              String(pasteboard.hasImages),
+              String(pasteboard.hasURLs),
+              UIApplication.shared.applicationState.rawValue)
+    }
+    #endif
+
+    /// Asks the system to start the widget extension, which reads the pasteboard and
+    /// saves it. The system launches the widget's process on demand, so this works
+    /// without a notification and without any interaction.
+    ///
+    /// The system throttles how often it will start a widget, so the request is made
+    /// again until the store shows the copy was saved.
+    func presentWidgetTrigger()
+    {
+        guard !self.isTriggerRunning else {
+            Diagnostics.shared.log("Widget trigger already running.")
+            return
         }
 
+        self.isTriggerRunning = true
+        self.triggerAttempts = 0
+        self.triggerStartDate = Date()
+
+        self.askWidgetToCapture()
+    }
+
+    private func askWidgetToCapture()
+    {
+        WidgetCenter.shared.reloadTimelines(ofKind: "ClipboardReader")
+
+        Diagnostics.shared.log("Asked the widget to capture the pasteboard; attempt=\(self.triggerAttempts + 1)")
+
+        DispatchQueue.main.asyncAfter(deadline: .now() + Self.widgetCheckDelay) {
+            guard self.isTriggerRunning, let startDate = self.triggerStartDate else { return }
+
+            DatabaseManager.shared.hasItemSaved(after: startDate) { (wasSaved) in
+                DispatchQueue.main.async {
+                    guard self.isTriggerRunning else { return }
+
+                    guard !wasSaved else {
+                        Diagnostics.shared.log("The widget saved the pasteboard.")
+                        self.isTriggerRunning = false
+                        return
+                    }
+
+                    guard self.triggerAttempts < Self.widgetMaximumAttempts else {
+                        Diagnostics.shared.log("The widget never saved the pasteboard.")
+                        self.isTriggerRunning = false
+                        return
+                    }
+
+                    self.triggerAttempts += 1
+                    self.askWidgetToCapture()
+                }
+            }
+        }
+    }
+
+    /// Only used when the store couldn't be opened, which means the copy can't be saved
+    /// until the app is running again.
+    func presentChangeNotification()
+    {
         let content = UNMutableNotificationContent()
         content.categoryIdentifier = UNNotificationCategory.clipboardReaderIdentifier
         content.title = NSLocalizedString("Clipboard Changed", comment: "")
-        content.body = NSLocalizedString("Swipe down to save to Clipboard.", comment: "")
+        content.body = NSLocalizedString("Couldn't save to Clipboard.", comment: "")
 
         if let location = ApplicationMonitor.shared.locationManager.location
         {

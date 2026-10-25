@@ -33,6 +33,10 @@ public extension UserDefaults
     @NSManaged var generateLinkPreviews: Bool
     @NSManaged var allowsShortcutsHistory: Bool
     @NSManaged var hasCompletedOnboarding: Bool
+    
+    /// Reads the general pasteboard from the private pasteboard daemon so
+    /// background changes can be saved without tapping a notification.
+    @NSManaged var usesPasteboardDaemonReader: Bool
 }
 
 public extension UserDefaults
@@ -43,7 +47,8 @@ public extension UserDefaults
             #keyPath(UserDefaults.historyLimit): HistoryLimit._25.rawValue,
             #keyPath(UserDefaults.maximumClippingSize): 10 * .bytesPerMegabyte,
             #keyPath(UserDefaults.showLocationIcon): true,
-            #keyPath(UserDefaults.generateLinkPreviews): true
+            #keyPath(UserDefaults.generateLinkPreviews): true,
+            #keyPath(UserDefaults.usesPasteboardDaemonReader): true
         ])
     }
 }

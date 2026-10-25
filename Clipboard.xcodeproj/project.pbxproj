@@ -15,6 +15,7 @@
 		BF1D5C7A22B029E70062F474 /* Roxas.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = BF1D5C7522B029DC0062F474 /* Roxas.framework */; platformFilter = ios; };
 		BF1D5C7B22B029E70062F474 /* Roxas.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = BF1D5C7522B029DC0062F474 /* Roxas.framework */; platformFilter = ios; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		BF1D5C7F22B02BF30062F474 /* PasteboardMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = BF1D5C7E22B02BF30062F474 /* PasteboardMonitor.swift */; };
+		D1A2B3C4D5E6F708192A3B4C /* PasteboardDaemonReader.m in Sources */ = {isa = PBXBuildFile; fileRef = D1A2B3C4D5E6F708192A3B4E /* PasteboardDaemonReader.m */; };
 		BF235BC1247D8B5300CCFCB0 /* UIPasteboard+PasteboardItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = BF235BC0247D8B5300CCFCB0 /* UIPasteboard+PasteboardItem.swift */; };
 		BF50E7D922C2BF010070E17B /* Bundle+AppGroups.swift in Sources */ = {isa = PBXBuildFile; fileRef = BF50E7D822C2BF010070E17B /* Bundle+AppGroups.swift */; };
 		BF770E6522BC7688002A40FE /* UIDevice+Vibration.swift in Sources */ = {isa = PBXBuildFile; fileRef = BF770E6122BC767A002A40FE /* UIDevice+Vibration.swift */; };
@@ -34,8 +35,8 @@
 		BFAD46CB249058DE00451D6F /* SwitchKeyboardButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = BFAD46CA249058DE00451D6F /* SwitchKeyboardButton.swift */; };
 		BFC176FD2399BC4F0058AC51 /* UserNotifications.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = BF69A53F2395D44600CF838A /* UserNotifications.framework */; };
 		BFC176FE2399BC4F0058AC51 /* UserNotificationsUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = BF69A5412395D44700CF838A /* UserNotificationsUI.framework */; };
-		BFC177012399BC4F0058AC51 /* NotificationViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = BFC177002399BC4F0058AC51 /* NotificationViewController.swift */; };
-		BFC177042399BC4F0058AC51 /* MainInterface.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = BFC177022399BC4F0058AC51 /* MainInterface.storyboard */; };
+		D1A2B3C4D5E6F708192A3B601 /* ClipboardWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = D1A2B3C4D5E6F708192A3B602 /* ClipboardWidget.swift */; };
+		BFC177052399BC4F0058AC51 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		BFC177082399BC4F0058AC51 /* ClipboardReader.appex in Embed App Extensions */ = {isa = PBXBuildFile; fileRef = BFC176FC2399BC4F0058AC51 /* ClipboardReader.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		BFC1F39D22AF0D0E003AC21A /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = BFC1F39C22AF0D0E003AC21A /* AppDelegate.swift */; };
 		BFC1F39F22AF0D0E003AC21A /* HistoryViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = BFC1F39E22AF0D0E003AC21A /* HistoryViewController.swift */; };
@@ -65,6 +66,7 @@
 		D5D375192BAB4DF800213D84 /* UNNotification+Keys.swift in Sources */ = {isa = PBXBuildFile; fileRef = D5D375182BAB4DF800213D84 /* UNNotification+Keys.swift */; };
 		4759DDA5D0700B3E5AA0CC63 /* ClipIntents.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6B89B7FCC129DFBDADB003A /* ClipIntents.swift */; };
 		34E2B9FD67760CE285438556 /* LinkPreviewStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8990390C5F80FBACF1B8F29C /* LinkPreviewStore.swift */; };
+		D1A2B3C4D5E6F708192A3B701 /* LinkPreviewCache.swift in Sources */ = {isa = PBXBuildFile; fileRef = D1A2B3C4D5E6F708192A3B702 /* LinkPreviewCache.swift */; };
 		66F0BC5BEC0EE57370CE1096 /* ClippingDetailViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4EB4BF6F75276895023EF239 /* ClippingDetailViewController.swift */; };
 /* End PBXBuildFile section */
 
@@ -162,6 +164,9 @@
 		D84331CB48764702A0787DB7 /* OnboardingViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingViewController.swift; sourceTree = "<group>"; };
 		BF1D5C6E22B029DB0062F474 /* Roxas.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = Roxas.xcodeproj; path = Dependencies/Roxas/Roxas.xcodeproj; sourceTree = "<group>"; };
 		BF1D5C7E22B02BF30062F474 /* PasteboardMonitor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PasteboardMonitor.swift; sourceTree = "<group>"; };
+		D1A2B3C4D5E6F708192A3B4D /* PasteboardDaemonReader.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = PasteboardDaemonReader.h; sourceTree = "<group>"; };
+		D1A2B3C4D5E6F708192A3B4E /* PasteboardDaemonReader.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = PasteboardDaemonReader.m; sourceTree = "<group>"; };
+		D1A2B3C4D5E6F708192A3B4F /* Clipboard-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "Clipboard-Bridging-Header.h"; sourceTree = "<group>"; };
 		BF1D5D4422B0867C0062F474 /* Model.xcdatamodel */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcdatamodel; path = Model.xcdatamodel; sourceTree = "<group>"; };
 		BF1D5D4622B0869C0062F474 /* DatabaseManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DatabaseManager.swift; sourceTree = "<group>"; };
 		BF1D5D4822B088F40062F474 /* PasteboardItemRepresentation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PasteboardItemRepresentation.swift; sourceTree = "<group>"; };
@@ -192,8 +197,7 @@
 		BFAD46C82490588800451D6F /* UIInputView+Click.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "UIInputView+Click.swift"; sourceTree = "<group>"; };
 		BFAD46CA249058DE00451D6F /* SwitchKeyboardButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SwitchKeyboardButton.swift; sourceTree = "<group>"; };
 		BFC176FC2399BC4F0058AC51 /* ClipboardReader.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = ClipboardReader.appex; sourceTree = BUILT_PRODUCTS_DIR; };
-		BFC177002399BC4F0058AC51 /* NotificationViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationViewController.swift; sourceTree = "<group>"; };
-		BFC177032399BC4F0058AC51 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/MainInterface.storyboard; sourceTree = "<group>"; };
+		D1A2B3C4D5E6F708192A3B602 /* ClipboardWidget.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClipboardWidget.swift; sourceTree = "<group>"; };
 		BFC177052399BC4F0058AC51 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		BFC1770C2399BCF90058AC51 /* ClipboardReader.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = ClipboardReader.entitlements; sourceTree = "<group>"; };
 		BFC1F39922AF0D0E003AC21A /* Clipboard.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Clipboard.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -218,6 +222,7 @@
 		D5D375182BAB4DF800213D84 /* UNNotification+Keys.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "UNNotification+Keys.swift"; sourceTree = "<group>"; };
 		A6B89B7FCC129DFBDADB003A /* ClipIntents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClipIntents.swift; sourceTree = "<group>"; };
 		8990390C5F80FBACF1B8F29C /* LinkPreviewStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LinkPreviewStore.swift; sourceTree = "<group>"; };
+		D1A2B3C4D5E6F708192A3B702 /* LinkPreviewCache.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LinkPreviewCache.swift; sourceTree = "<group>"; };
 		4EB4BF6F75276895023EF239 /* ClippingDetailViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClippingDetailViewController.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -309,6 +314,7 @@
 		BF1D5C8522B038FE0062F474 /* Supporting Files */ = {
 			isa = PBXGroup;
 			children = (
+				D1A2B3C4D5E6F708192A3B4F /* Clipboard-Bridging-Header.h */,
 				BFC1F3A522AF0D0F003AC21A /* LaunchScreen.storyboard */,
 				BFC1F3A822AF0D0F003AC21A /* Info.plist */,
 			);
@@ -330,6 +336,8 @@
 			children = (
 				BF1D5C7E22B02BF30062F474 /* PasteboardMonitor.swift */,
 				BFF9E4922555F4F40052B1B2 /* LocationManager.swift */,
+				D1A2B3C4D5E6F708192A3B4D /* PasteboardDaemonReader.h */,
+				D1A2B3C4D5E6F708192A3B4E /* PasteboardDaemonReader.m */,
 			);
 			path = Pasteboard;
 			sourceTree = "<group>";
@@ -383,8 +391,7 @@
 			isa = PBXGroup;
 			children = (
 				BFC1770C2399BCF90058AC51 /* ClipboardReader.entitlements */,
-				BFC177002399BC4F0058AC51 /* NotificationViewController.swift */,
-				BFC177022399BC4F0058AC51 /* MainInterface.storyboard */,
+				D1A2B3C4D5E6F708192A3B602 /* ClipboardWidget.swift */,
 				BFC177052399BC4F0058AC51 /* Info.plist */,
 			);
 			path = ClipboardReader;
@@ -517,6 +524,7 @@
 			isa = PBXGroup;
 			children = (
 				8990390C5F80FBACF1B8F29C /* LinkPreviewStore.swift */,
+				D1A2B3C4D5E6F708192A3B702 /* LinkPreviewCache.swift */,
 			);
 			path = LinkPreview;
 			sourceTree = "<group>";
@@ -713,7 +721,6 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				BFC177042399BC4F0058AC51 /* MainInterface.storyboard in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -750,7 +757,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				BFC177012399BC4F0058AC51 /* NotificationViewController.swift in Sources */,
+				D1A2B3C4D5E6F708192A3B601 /* ClipboardWidget.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -759,6 +766,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				BF1D5C7F22B02BF30062F474 /* PasteboardMonitor.swift in Sources */,
+				D1A2B3C4D5E6F708192A3B4C /* PasteboardDaemonReader.m in Sources */,
 				BFA714BA22C53F1700EE7236 /* ApplicationMonitor.swift in Sources */,
 				BFDB5B1E22EF7B5000F74113 /* GradientView.swift in Sources */,
 				BFC1F39F22AF0D0E003AC21A /* HistoryViewController.swift in Sources */,
@@ -805,6 +813,7 @@
 				D5D375192BAB4DF800213D84 /* UNNotification+Keys.swift in Sources */,
 				BFA2DF60247DD21F00E31E4D /* Keyboard.swift in Sources */,
 				34E2B9FD67760CE285438556 /* LinkPreviewStore.swift in Sources */,
+				D1A2B3C4D5E6F708192A3B701 /* LinkPreviewCache.swift in Sources */,
 				BF50E7D922C2BF010070E17B /* Bundle+AppGroups.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -842,14 +851,6 @@
 /* End PBXTargetDependency section */
 
 /* Begin PBXVariantGroup section */
-		BFC177022399BC4F0058AC51 /* MainInterface.storyboard */ = {
-			isa = PBXVariantGroup;
-			children = (
-				BFC177032399BC4F0058AC51 /* Base */,
-			);
-			name = MainInterface.storyboard;
-			sourceTree = "<group>";
-		};
 		BFC1F3A022AF0D0E003AC21A /* Main.storyboard */ = {
 			isa = PBXVariantGroup;
 			children = (
@@ -1092,6 +1093,7 @@
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
 				SUPPORTS_MACCATALYST = NO;
+				SWIFT_OBJC_BRIDGING_HEADER = "Clipboard/Clipboard-Bridging-Header.h";
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
@@ -1117,6 +1119,7 @@
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
 				SUPPORTS_MACCATALYST = NO;
+				SWIFT_OBJC_BRIDGING_HEADER = "Clipboard/Clipboard-Bridging-Header.h";
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};

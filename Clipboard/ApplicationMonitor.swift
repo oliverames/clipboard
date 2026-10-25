@@ -11,9 +11,62 @@ import AVFoundation
 import UserNotifications
 import Combine
 
-private enum UserNotification: String
+import ClipboardKit
+
+/// Writes a small rolling log into the App Group so background behavior can be
+/// inspected from a connected Mac without a debugger or Console.
+final class Diagnostics
 {
-    case appStoppedRunning = "com.rileytestut.Clip.AppStoppedRunning"
+    static let shared = Diagnostics()
+    
+    private let queue = DispatchQueue(label: "com.oliverames.clipboard.diagnostics")
+    private let maximumSize = 256 * 1024
+    
+    private var fileURL: URL?
+    {
+        let directory = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask).first
+            ?? FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: "group.com.oliverames.clipboard")
+        
+        guard let directory = directory else { return nil }
+        
+        return directory.appendingPathComponent("clipboard-diagnostics.log")
+    }
+    
+    func log(_ message: String)
+    {
+        NSLog("Diagnostics: %@", message)
+        
+        let line = "\(ISO8601DateFormatter().string(from: Date())) \(message)\n"
+        
+        self.queue.async {
+            self.append(line, to: self.fileURL)
+        }
+    }
+}
+
+private extension Diagnostics
+{
+    func append(_ text: String, to fileURL: URL?)
+    {
+        guard let fileURL = fileURL else { return }
+        
+        if let attributes = try? FileManager.default.attributesOfItem(atPath: fileURL.path),
+           let size = attributes[.size] as? Int,
+           size > self.maximumSize
+        {
+            try? FileManager.default.removeItem(at: fileURL)
+        }
+        
+        if !FileManager.default.fileExists(atPath: fileURL.path)
+        {
+            FileManager.default.createFile(atPath: fileURL.path, contents: nil, attributes: nil)
+        }
+        
+        guard let handle = try? FileHandle(forWritingTo: fileURL) else { return }
+        handle.seekToEndOfFile()
+        handle.write(Data(text.utf8))
+        try? handle.close()
+    }
 }
 
 private extension CFNotificationName
@@ -46,8 +99,9 @@ extension ApplicationMonitor
         guard !self.isMonitoring else { return }
         self.isMonitoring = true
         
-        self.cancelApplicationQuitNotification() // Cancel any notifications from a previous launch.
-        self.scheduleApplicationQuitNotification()
+        Diagnostics.shared.log("ApplicationMonitor start")
+        
+        self.startHeartbeat()
         
         self.pasteboardMonitor.start() { (result) in
             switch result
@@ -55,9 +109,11 @@ extension ApplicationMonitor
             case .success:
                 self.locationManager.start()
                 self.registerForNotifications()
+                Diagnostics.shared.log("Monitoring started")
                 
             case .failure(let error):
                 self.isMonitoring = false
+                Diagnostics.shared.log("Monitoring failed: \(error)")
                 self.sendNotification(title: NSLocalizedString("Failed to Monitor Clipboard", comment: ""), message: error.localizedDescription)
             }
         }
@@ -72,29 +128,15 @@ private extension ApplicationMonitor
         CFNotificationCenterAddObserver(center, nil, ReceivedApplicationState, CFNotificationName.altstoreRequestAppState.rawValue, nil, .deliverImmediately)
     }
     
-    func scheduleApplicationQuitNotification()
+    func startHeartbeat()
     {
-        let delay = 5 as TimeInterval
-        
-        let content = UNMutableNotificationContent()
-        content.title = NSLocalizedString("App Stopped Running", comment: "")
-        content.body = NSLocalizedString("Tap this notification to resume monitoring your clipboard.", comment: "")
-        
-        let trigger = UNTimeIntervalNotificationTrigger(timeInterval: delay + 1, repeats: false)
-        
-        let request = UNNotificationRequest(identifier: UserNotification.appStoppedRunning.rawValue, content: content, trigger: trigger)
-        UNUserNotificationCenter.current().add(request)
-        
-        DispatchQueue.global().asyncAfter(deadline: .now() + delay) {
-            // If app is still running at this point, we schedule another notification with same identifier.
-            // This prevents the currently scheduled notification from displaying, and starts another countdown timer.
-            self.scheduleApplicationQuitNotification()
+        DispatchQueue.global().asyncAfter(deadline: .now() + 10) {
+            DispatchQueue.main.async {
+                Diagnostics.shared.log("Heartbeat; state=\(UIApplication.shared.applicationState.rawValue) previews=\(LinkPreviewStore.shared.cachedPreviewCount)")
+            }
+            
+            self.startHeartbeat()
         }
-    }
-    
-    func cancelApplicationQuitNotification()
-    {
-        UNUserNotificationCenter.current().removePendingNotificationRequests(withIdentifiers: [UserNotification.appStoppedRunning.rawValue])
     }
     
     func sendNotification(title: String, message: String)

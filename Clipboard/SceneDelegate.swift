@@ -7,6 +7,7 @@
 //
 
 import UIKit
+import UserNotifications
 import ClipboardKit
 
 import Roxas
@@ -44,6 +45,8 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate
         // Called as the scene transitions from the background to the foreground.
         // Use this method to undo the changes made on entering the background.
         
+        Diagnostics.shared.log("Scene will enter foreground")
+        
         guard DatabaseManager.shared.isStarted else { return }
         
         DatabaseManager.shared.refresh()
@@ -78,6 +81,8 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate
         // Use this method to save data, release shared resources, and store enough scene-specific state information
         // to restore the scene back to its current state.
         
+        Diagnostics.shared.log("Scene did enter background")
+        
         #if targetEnvironment(simulator)
         // Audio extension hack to access pasteboard doesn't work in simulator, so for testing just start background task.
         RSTBeginBackgroundTask("com.rileytestut.Clip.simulatorBackgroundTask")
@@ -97,10 +102,38 @@ private extension SceneDelegate
 {
     func open(_ context: UIOpenURLContext)
     {
-        guard context.url.scheme?.lowercased() == "clipboard" && context.url.host?.lowercased() == "settings" else { return }
+        guard context.url.scheme?.lowercased() == "clipboard" else { return }
         
-        let openURL = URL(string: UIApplication.openSettingsURLString)!
-        UIApplication.shared.open(openURL, options: [:], completionHandler: nil)
+        switch context.url.host?.lowercased()
+        {
+        case "daemon-reader":
+            let components = URLComponents(url: context.url, resolvingAgainstBaseURL: false)
+            let value = components?.queryItems?.first(where: { $0.name == "enabled" })?.value?.lowercased()
+            
+            switch value
+            {
+            case "1", "true", "yes", "on": UserDefaults.shared.usesPasteboardDaemonReader = true
+            case "0", "false", "no", "off": UserDefaults.shared.usesPasteboardDaemonReader = false
+            default: break
+            }
+            
+            NSLog("Pasteboard daemon reader enabled: %d", UserDefaults.shared.usesPasteboardDaemonReader)
+            
+            #if DEBUG
+            if components?.queryItems?.contains(where: { $0.name == "read" && $0.value == "1" }) == true
+            {
+                NSLog("Reading pasteboard from daemon on demand.")
+                ApplicationMonitor.shared.pasteboardMonitor.savePasteboardUsingDaemonReader()
+            }
+            #endif
+            
+        case "settings":
+            let openURL = URL(string: UIApplication.openSettingsURLString)!
+            UIApplication.shared.open(openURL, options: [:], completionHandler: nil)
+            
+        default:
+            break
+        }
     }
 }
 

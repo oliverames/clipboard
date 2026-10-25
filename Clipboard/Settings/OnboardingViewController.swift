@@ -35,6 +35,9 @@ class OnboardingViewController: UIViewController
             OnboardingStep(title: NSLocalizedString("Keep monitoring in the background", comment: ""),
                  detail: NSLocalizedString("Go to Settings, then Clipboard, then Location, and choose Always. This lets Clipboard keep watching while it's closed.", comment: ""),
                  settingsButtonTitle: NSLocalizedString("Open Settings", comment: "")),
+            OnboardingStep(title: NSLocalizedString("Add the Clipboard widget", comment: ""),
+                 detail: NSLocalizedString("iOS only lets a widget read the clipboard while the app is closed. Long-press your home screen, tap Edit, then Add Widget, and choose Clipboard.", comment: ""),
+                 settingsButtonTitle: nil),
             OnboardingStep(title: NSLocalizedString("Let Shortcuts read clippings (optional)", comment: ""),
                  detail: NSLocalizedString("In Clipboard's settings, turn on Allow Shortcuts Access. Locked devices never return clipboard history.", comment: ""),
                  settingsButtonTitle: nil)

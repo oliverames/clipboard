@@ -70,18 +70,13 @@ class LocationManager: NSObject, ObservableObject
     override init()
     {
         self.locationManager = CLLocationManager()
-        self.locationManager.distanceFilter = CLLocationDistanceMax
+        // A distance filter of CLLocationDistanceMax stops updates almost entirely, which lets
+        // iOS suspend the app. Continuous updates keep the location session (and the app) alive.
+        self.locationManager.distanceFilter = kCLDistanceFilterNone
         self.locationManager.pausesLocationUpdatesAutomatically = false
         self.locationManager.allowsBackgroundLocationUpdates = true
-        
-        if #available(iOS 14.0, *)
-        {
-            self.locationManager.desiredAccuracy = kCLLocationAccuracyReduced
-        }
-        else
-        {
-            self.locationManager.desiredAccuracy = kCLLocationAccuracyThreeKilometers
-        }
+        self.locationManager.showsBackgroundLocationIndicator = false
+        self.locationManager.desiredAccuracy = kCLLocationAccuracyHundredMeters
         
         super.init()
         

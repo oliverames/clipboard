@@ -88,8 +88,41 @@ public final class LinkPreviewStore: ObservableObject
 
     private var pendingURLs = Set<URL>()
 
+    private let cache = LinkPreviewCache()
+
+    /// Cached previews are read from disk, so wait for them before deciding to fetch.
+    private var isCacheLoaded = false
+    private var deferredFetches = Set<URL>()
+
+    /// How many previews were restored from disk.
+    public private(set) var cachedPreviewCount = 0
+
     private init()
     {
+        self.cache.loadEntries { [weak self] (entries) in
+            Task { @MainActor in
+                guard let self = self else { return }
+
+                for entry in entries
+                {
+                    guard let url = URL(string: entry.url) else { continue }
+
+                    let icon = entry.iconFileName.flatMap { self.cache.icon(named: $0) }
+                    self.previews[url] = LinkPreview(title: entry.title, icon: icon)
+                }
+
+                self.cachedPreviewCount = entries.count
+                self.isCacheLoaded = true
+
+                let deferred = self.deferredFetches
+                self.deferredFetches.removeAll()
+
+                for url in deferred
+                {
+                    self.fetchPreviewIfNeeded(for: url)
+                }
+            }
+        }
     }
 }
 
@@ -121,6 +154,14 @@ public extension LinkPreviewStore
         guard UserDefaults.shared.generateLinkPreviews else { return }
         guard self.previews[url] == nil, !self.pendingURLs.contains(url) else { return }
 
+        // Wait for the cached previews to load, so a preview that's already on disk
+        // doesn't get fetched again.
+        guard self.isCacheLoaded else
+        {
+            self.deferredFetches.insert(url)
+            return
+        }
+
         self.pendingURLs.insert(url)
 
         let metadataProvider = LPMetadataProvider()
@@ -151,6 +192,9 @@ private extension LinkPreviewStore
             preview.icon = await self.loadIcon(from: metadata?.iconProvider)
         }
         self.previews[url] = preview
+
+        // Keep the preview on disk so the next launch doesn't have to fetch it again.
+        self.cache.save(entry: LinkPreviewEntry(url: url.absoluteString, title: preview.title, iconFileName: nil), icon: preview.icon)
     }
 
     /// Looks up the App Store icon for the brand in a link's domain, such as GitHub for github.com.
