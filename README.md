@@ -114,12 +114,6 @@ cd clipboard
 open Clipboard.xcodeproj
 ```
 
-The Roxas submodule still targets iOS 10.0, which Xcode 27.2 rejects. Before you build, raise its deployment target to 16.0:
-
-```bash
-sed -i '' 's/IPHONEOS_DEPLOYMENT_TARGET = 10.0;/IPHONEOS_DEPLOYMENT_TARGET = 16.0;/' Dependencies/Roxas/Roxas.xcodeproj/project.pbxproj
-```
-
 Then, in Xcode:
 
 1. Set your development team for the Clipboard, ClipboardKeyboard, ClipboardReader, and ClipboardKit targets.
@@ -134,7 +128,7 @@ Then, in Xcode:
 | `ClipboardKeyboard` | Keyboard extension that lists recent clippings |
 | `ClipboardReader` | Widget extension the system starts on demand to save a copy taken while the app is in the background; also shows your clipping count on the home screen |
 | `ClipboardKit` | Shared framework: the Core Data model, code detection, fuzzy search, transforms, link previews, and SwiftUI keyboard views |
-| `Dependencies/Roxas` | Utility framework, included as a Git submodule |
+| `Dependencies/Roxas` | Utility framework, included as a Git submodule from [oliverames/Roxas](https://github.com/oliverames/Roxas/tree/clipboard-ios16), a fork of Riley Testut's Roxas with the iOS deployment target raised to 16.0 for current Xcode |
 
 The Core Data model has three entities. `PasteboardItem` holds each clipping, with its favorite, pin, and trash state. `PasteboardItemRepresentation` holds each format a clipping was copied in. `ClippingList` groups clippings into named lists.
 
