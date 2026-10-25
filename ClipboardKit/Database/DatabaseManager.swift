@@ -299,8 +299,6 @@ private extension DatabaseManager
                 guard let pasteboardItem = PasteboardItem(representations: representations, context: context) else { throw PasteboardError.noItem }
                 pasteboardItem.location = location
                 
-                print(pasteboardItem)
-                
                 let fetchRequest = PasteboardItem.fetchRequest() as NSFetchRequest<PasteboardItem>
                 fetchRequest.predicate = NSPredicate(format: "%K == NO AND trashedDate == nil", #keyPath(PasteboardItem.isMarkedForDeletion))
                 fetchRequest.sortDescriptors = [NSSortDescriptor(keyPath: \PasteboardItem.date, ascending: false)]
