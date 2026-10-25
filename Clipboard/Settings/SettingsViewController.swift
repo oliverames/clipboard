@@ -106,7 +106,11 @@ struct SettingsView: View
                     Text("Lets the Get Latest Clipping action return your newest text clipping. It only works while your iPhone is unlocked.")
                 }
 
-                // Diagnostics entry point: a Section with a NavigationLink belongs here, above About.
+                Section {
+                    NavigationLink { DiagnosticsView() } label: { Label("Diagnostics", systemImage: "stethoscope") }
+                } footer: {
+                    Text("A record of recent capture attempts, for troubleshooting.")
+                }
 
                 Section {
                     Button("Setup Guide", systemImage: "list.number", action: self.onShowSetupGuide)

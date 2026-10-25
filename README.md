@@ -41,19 +41,24 @@ Clipboard is built on [Clip](https://github.com/rileytestut/Clip), Riley Testut'
 - Detects code snippets so you can filter for them.
 - Shows link previews, including the App Store icon for a site's app. Previews are cached on disk, so they're only fetched once.
 
+### Browse
+- **List or grid.** Read the history as a list, or as a grid of cards that preview text, links, and images.
+- **Detail.** Open a clipping to see all of it, with selectable text, scrolling code, and its kind, size, word count, lists, and town.
+- **Context menus and swipes.** Touch and hold a clipping to copy, transform, share, favorite, pin, or file it. Swipe to copy, pin, favorite, or trash.
+
 ### Organize
 - **Favorites and pins.** Mark clippings as favorites to find them in one place. Pinned clippings stay at the top of the history.
 - **Lists.** Group related clippings into named lists.
-- **Filters.** Show only text, rich text, images, links, or code.
+- **Filters.** Chips above the history show only text, rich text, images, links, or code.
 - **Search.** Fuzzy search finds clippings whose characters appear in order in your query, ignoring case and accents.
 - **Trash.** Deleted clippings move to Trash. Restore them, or empty Trash when you're done.
 - **Map.** See clippings that have a location on a map.
 
 ### Use
-- **Copy As.** Copy a clipping after a transform: UPPERCASE, lowercase, Title Case, camelCase, snake_case, kebab-case, Pretty JSON, Minified JSON, URL Encode, URL Decode, Base64 Encode, Base64 Decode, Strip Markdown, Trim Whitespace, Sort Lines, and Remove Duplicate Lines.
+- **Copy As.** Copy a clipping after a transform, with a preview of each result: UPPERCASE, lowercase, Title Case, camelCase, snake_case, kebab-case, Pretty JSON, Minified JSON, URL Encode, URL Decode, Base64 Encode, Base64 Decode, Strip Markdown, Trim Whitespace, Sort Lines, and Remove Duplicate Lines.
 - **Keyboard.** A keyboard extension lists recent clippings. Pick one to copy it back to the clipboard, then paste it into any app.
 - **Shortcuts.** Save Clipboard saves the current clipboard. Get Latest Clipping returns the newest text clipping. The second action is off until you turn on Allow Shortcuts Access, and it requires an unlocked device.
-- **Settings.** Choose how many clippings to keep, and turn link previews on or off.
+- **Settings.** Choose how many clippings to keep, check background capture, turn link previews on or off, and reopen the setup guide.
 
 ## How capture works
 
