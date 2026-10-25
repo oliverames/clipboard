@@ -345,10 +345,10 @@ silent, from Apple engineers on the developer forums (flagged as such).
 | Close case | What happens today | What can bring capture back without opening the app |
 |-----------|--------------------|-----------------------------------------------------|
 | **Suspended / backgrounded** (normal) | The process stays alive under the location session; the change listener fires and the widget trigger runs. | Already works. This is the common case. |
-| **System-terminated** (memory pressure, Low Power Mode) | The process is killed. | Significant-location-change, region monitoring and visit monitoring all **relaunch the app into the background** when a new event arrives (Apple, documented). The app re-registers the listener on launch and capture resumes, with latency. |
-| **User force-quit** (swipe up in the App Switcher) | The process is killed and, per Apple, generally not relaunched. | **Not reliably beatable.** The current docs name no mechanism. Region monitoring is the only candidate — an Apple engineer stated (Mar 2026) "the app will indeed be relaunched using Region Monitoring even if force quit" — but it is not in the docs and one developer reported it failing on iOS 26.4.2. Must be tested on iOS 27 with no debugger attached. |
+| **System-terminated** (memory pressure, Low Power Mode) | The process is killed. | Significant-location-change, which the app uses, **relaunches the app into the background** when a new event arrives (Apple, documented; region and visit monitoring do the same but aren't used). The app re-registers the listener on launch and capture resumes, with latency. |
+| **User force-quit** (swipe up in the App Switcher) | The process is killed and not relaunched. **Capture stops until Oliver opens the app again.** | Nothing the app ships. **Accepted** (Oliver, 2026-10-25). The current docs name no relaunch mechanism; region monitoring is the only candidate, on the strength of a single Apple-engineer forum post, and it was considered and dropped (see below). |
 | **Reboot, before first unlock** | Nothing runs. | Nothing. Apple: "the system does not launch an app in the background before the user first unlocks the device." |
-| **Reboot, after first unlock** | Nothing until a location event. | Region monitoring / significant-change can relaunch the app once the device has been unlocked once; the app recreates the monitor on launch. |
+| **Reboot, after first unlock** | Nothing until a location event. | Significant-location-change can relaunch the app once the device has been unlocked once, if the app was not force-quit before the reboot. Opening the app always resumes capture. |
 
 Apple's statements, for the record:
 
@@ -369,18 +369,21 @@ Apple's statements, for the record:
   for no location events (archived Location Awareness guide).
 
 What the app does about this: it keeps the significant-change + continuous-update
-session it always had. Adding **region monitoring** (`CLMonitor`, a small geofence
-around the current location, re-centred as you move) is the natural next step — it is
-the one mechanism with any chance against a force-quit and the best coverage after a
-reboot — but it is **not shipped yet**: on iOS 27.2 `CLMonitor.init` raises an
-uncatchable Objective-C assertion in this build context and aborts the app at launch,
-so it was pulled out rather than regress the whole app, and its force-quit benefit is
-unverified on iOS 27 regardless. It needs to be prototyped and confirmed on a device
-(no debugger attached) before it goes back in; that is on the device checklist. The
-honest statement to the user is: every copy is captured while the app is suspended or
-after the system kills it for memory; a force-quit is the hard wall that every
-third-party clipboard manager hits, and only the Apple-only entitlement (which AMFI
-blocks for us) would beat it cleanly.
+session it always had, which covers suspension and system termination. A force-quit
+is **accepted** as the stopping point, decided by Oliver on 2026-10-25: swiping
+Clipboard away in the App Switcher stops capture until he opens the app again, and
+opening it resumes capture straight away (the foreground read also saves whatever is
+on the clipboard at that moment).
+
+Region monitoring (`CLMonitor`, a geofence re-centred as you move) was considered as a
+way to get relaunched after a force-quit and **dropped**. The only evidence it works is
+one forum statement from an Apple engineer, contradicted by a report of it failing on
+iOS 26.4.2. A first attempt also aborted the app at launch, because `CLMonitor.init`
+raised an uncatchable Objective-C assertion in this build context. Don't pick it up
+again unless that decision changes.
+
+Every third-party clipboard manager runs into the force-quit limit. Only the Apple-only
+entitlement, which AMFI blocks for a developer-signed build, would get around it.
 
 ## Private routes evaluated (no notification)
 

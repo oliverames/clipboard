@@ -115,7 +115,7 @@ run_phase() { # run_phase <label> <instruction>
 
 run_phase "foreground" "Keep Clipboard in the FOREGROUND the whole time (split-screen or glance back)."
 run_phase "backgrounded" "Press Home so Clipboard is BACKGROUNDED (do NOT swipe it away). Copy from other apps."
-run_phase "forcequit" "Swipe Clipboard AWAY in the App Switcher (force-quit). Then copy from other apps. This is the hard case."
+run_phase "forcequit" "Swipe Clipboard AWAY in the App Switcher (force-quit). Then copy from other apps. Expected: nothing saves until you reopen Clipboard."
 echo
 echo "=== Phase: reboot ==="
 echo "Reboot the phone. Do the copies AFTER you unlock it the first time."
@@ -124,5 +124,6 @@ run_phase "reboot" "Copy from other apps now (app still force-quit from the prev
 
 echo
 echo "All phases done. Per-phase ledgers and miss rates are in: $OUT_DIR"
-echo "Reminder: 'foreground' and 'backgrounded' should capture ~everything; 'forcequit' and"
-echo "'reboot' are the cases iOS does not guarantee — compare their miss rates against the doc."
+echo "Reminder: 'foreground' and 'backgrounded' should capture ~everything. 'forcequit' is"
+echo "expected to miss every copy until the app is opened again (an accepted limit). 'reboot'"
+echo "recovers only once significant-change relaunches the app or you open it."

@@ -103,14 +103,10 @@ class LocationManager: NSObject, ObservableObject
         // so background monitoring doesn't depend on the app still being in memory.
         self.locationManager.startMonitoringSignificantLocationChanges()
 
-        // NOTE: region monitoring (CLMonitor / a geofence) is the one mechanism Apple's
-        // engineers say also relaunches after a user force-quit, and it is the natural
-        // next step for surviving that case. It is intentionally NOT wired up here: on
-        // iOS 27.2 `CLMonitor.init` raises an uncatchable Objective-C assertion in this
-        // context and aborts the app at launch, and its force-quit benefit is unverified
-        // on iOS 27 anyway. It must be prototyped and confirmed on a device (with no
-        // debugger attached) before it ships. See docs/ios-pasteboard-background-access.md
-        // and GitHub issue #1.
+        // A user force-quit stops capture until the app is opened again. That is an
+        // accepted limit (2026-10-25). Region monitoring was considered as a way to be
+        // relaunched after a force-quit and dropped; see the "Surviving the app being
+        // closed" section of docs/ios-pasteboard-background-access.md.
     }
 
     func stop()
