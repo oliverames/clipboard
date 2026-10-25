@@ -132,7 +132,7 @@ Then, in Xcode:
 |--------|------|
 | `Clipboard` | The app: history, clipping detail, settings, onboarding, map, Shortcuts intents, and pasteboard monitoring |
 | `ClipboardKeyboard` | Keyboard extension that lists recent clippings |
-| `ClipboardReader` | Notification service extension that saves a copy taken while the app is in the background |
+| `ClipboardReader` | Widget extension the system starts on demand to save a copy taken while the app is in the background; also shows your clipping count on the home screen |
 | `ClipboardKit` | Shared framework: the Core Data model, code detection, fuzzy search, transforms, link previews, and SwiftUI keyboard views |
 | `Dependencies/Roxas` | Utility framework, included as a Git submodule |
 
