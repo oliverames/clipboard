@@ -14,26 +14,36 @@ import ClipboardKit
 struct ClippingSheet: View
 {
     var pasteboardItem: PasteboardItem
-    
+
     @Environment(\.dismiss)
     private var dismiss
-    
+
+    @State
+    private var copyCount = 0
+
     var body: some View {
         NavigationStack {
-            ClippingCell(pasteboardItem: pasteboardItem)
-                .padding()
-                .toolbar {
-                    ToolbarItem(placement: .confirmationAction) {
-                        Button("Copy", action: copy)
-                    }
-                    
-                    ToolbarItem(placement: .cancellationAction) {
-                        Button("Cancel", action: cancel)
-                    }
+            ScrollView {
+                ClippingCell(pasteboardItem: pasteboardItem, lineLimit: 6)
+                    .padding(.horizontal)
+            }
+            .navigationTitle(ClippingKind(pasteboardItem).title)
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Close", systemImage: "xmark", role: .close, action: cancel)
                 }
+
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Copy", systemImage: "doc.on.doc", action: copy)
+                        .buttonStyle(.glassProminent)
+                }
+            }
         }
         // No custom presentationBackground: the system sheet adopts Liquid Glass (inset at partial detents).
-        .presentationDetents([.fraction(0.33)])
+        .presentationDetents([.fraction(0.33), .medium])
+        .presentationBackgroundInteraction(.enabled(upThrough: .fraction(0.33)))
+        .sensoryFeedback(.success, trigger: self.copyCount)
     }
 }
 
@@ -44,12 +54,16 @@ private extension ClippingSheet
     {
         let center = CFNotificationCenterGetDarwinNotifyCenter()
         CFNotificationCenterPostNotification(center, .ignoreNextPasteboardChange, nil, nil, true)
-        
+
         UIPasteboard.general.copy(self.pasteboardItem)
-        
-        self.dismiss()
+        self.copyCount += 1
+
+        // Let the haptic land before the sheet goes.
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
+            self.dismiss()
+        }
     }
-    
+
     func cancel()
     {
         self.dismiss()

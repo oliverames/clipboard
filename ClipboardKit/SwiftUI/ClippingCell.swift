@@ -9,67 +9,125 @@
 import SwiftUI
 import CoreData
 
+/// A clipping row for SwiftUI surfaces: the keyboard and the map's clipping sheet.
 public struct ClippingCell: View
 {
     @ObservedObject var pasteboardItem: PasteboardItem
     @ObservedObject private var linkPreviews = LinkPreviewStore.shared
 
-    public init(pasteboardItem: PasteboardItem)
+    @Environment(\.dynamicTypeSize)
+    private var dynamicTypeSize
+
+    @ScaledMetric(relativeTo: .body)
+    private var tileSize = 40.0
+
+    private let lineLimit: Int
+
+    public init(pasteboardItem: PasteboardItem, lineLimit: Int = 2)
     {
         self.pasteboardItem = pasteboardItem
+        self.lineLimit = lineLimit
     }
 
     public var body: some View {
+        let kind = ClippingKind(self.pasteboardItem)
         let link = self.pasteboardItem.linkURL
         let preview = link.flatMap { self.linkPreviews.preview(for: $0) }
-        let typeName = self.pasteboardItem.preferredRepresentation?.type.localizedName ?? NSLocalizedString("Unknown", comment: "")
+        let title = preview?.title ?? link?.absoluteString ?? self.pasteboardItem.contentText ?? kind.title
 
-        HStack(spacing: 12) {
-            Group {
-                if let icon = preview?.icon
-                {
-                    Image(uiImage: icon)
-                        .resizable()
-                        .scaledToFit()
-                }
-                else
-                {
-                    Image(systemName: link == nil ? (self.pasteboardItem.preferredRepresentation?.type.symbolName ?? "doc") : "link")
-                        .font(.title3)
-                        .foregroundStyle(.secondary)
-                }
-            }
-            .frame(width: 40, height: 40)
-            .background(Color(.tertiarySystemFill), in: RoundedRectangle(cornerRadius: 8))
-            .clipShape(RoundedRectangle(cornerRadius: 8))
+        // At accessibility sizes the tile would squeeze the text into a sliver, so the text gets the full width.
+        let layout = self.dynamicTypeSize.isAccessibilitySize ? AnyLayout(VStackLayout(alignment: .leading, spacing: 8)) : AnyLayout(HStackLayout(spacing: 12))
+
+        layout {
+            // No image thumbnails here: decoding full images would push the keyboard extension past its memory limit.
+            ClippingTile(kind: kind, icon: preview?.icon)
+                .frame(width: self.tileSize, height: self.tileSize)
 
             VStack(alignment: .leading, spacing: 2) {
-                if let link
-                {
-                    Text(preview?.title ?? link.absoluteString)
-                        .font(.body)
-                        .lineLimit(preview?.title == nil ? 1 : 2)
-                        .truncationMode(preview?.title == nil ? .middle : .tail)
-                }
-                else
-                {
-                    Text(self.pasteboardItem.contentText ?? typeName)
-                        .font(.body)
-                        .lineLimit(2)
-                }
+                Text(title)
+                    .font(kind.isCode ? .body.monospaced() : .body)
+                    .foregroundStyle(.primary)
+                    .lineLimit(link != nil && preview?.title == nil ? 1 : self.lineLimit)
+                    .truncationMode(link != nil && preview?.title == nil ? .middle : .tail)
 
-                Text((link?.host ?? typeName) + " · " + self.pasteboardItem.ageText())
-                    .font(.footnote)
-                    .foregroundStyle(.secondary)
+                HStack(spacing: 4) {
+                    if self.pasteboardItem.isPinned
+                    {
+                        Image(systemName: "pin.fill").foregroundStyle(.orange)
+                    }
+
+                    if self.pasteboardItem.isFavorite
+                    {
+                        Image(systemName: "star.fill").foregroundStyle(.yellow)
+                    }
+
+                    Text(self.metadataText(kind: kind, link: link))
+                        .foregroundStyle(.secondary)
+                        .lineLimit(1)
+                }
+                .font(.footnote)
+                .imageScale(.small)
             }
-
-            Spacer(minLength: 0)
+            .frame(maxWidth: .infinity, alignment: .leading)
         }
-        .padding(.vertical, 10)
+        .padding(.vertical, 6)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(self.pasteboardItem.accessibilityDescription(kind: kind, title: title))
         .task(id: link) {
             guard let link else { return }
             LinkPreviewStore.shared.fetchPreviewIfNeeded(for: link)
         }
+    }
+
+    private func metadataText(kind: ClippingKind, link: URL?) -> String
+    {
+        let source = link?.host() ?? kind.title
+        return source + " · " + self.pasteboardItem.ageText()
+    }
+}
+
+/// The square that leads a clipping row: a thumbnail, a site icon, or the kind's symbol on its accent color.
+public struct ClippingTile: View
+{
+    var kind: ClippingKind
+    var icon: UIImage?
+    var thumbnail: UIImage?
+
+    public init(kind: ClippingKind, icon: UIImage? = nil, thumbnail: UIImage? = nil)
+    {
+        self.kind = kind
+        self.icon = icon
+        self.thumbnail = thumbnail
+    }
+
+    public var body: some View {
+        GeometryReader { proxy in
+            let radius = proxy.size.width * 0.25
+
+            ZStack {
+                if let image = self.thumbnail ?? self.icon
+                {
+                    Image(uiImage: image)
+                        .resizable()
+                        .scaledToFill()
+                }
+                else
+                {
+                    self.kind.color.opacity(0.16)
+
+                    Image(systemName: self.kind.symbolName)
+                        .font(.system(size: proxy.size.width * 0.42, weight: .semibold))
+                        .foregroundStyle(self.kind.color)
+                }
+            }
+            .frame(width: proxy.size.width, height: proxy.size.height)
+            .clipShape(RoundedRectangle(cornerRadius: radius, style: .continuous))
+            .overlay {
+                RoundedRectangle(cornerRadius: radius, style: .continuous)
+                    .strokeBorder(.separator.opacity(0.5), lineWidth: 0.5)
+            }
+        }
+        .accessibilityHidden(true)
     }
 }
 

@@ -48,7 +48,10 @@ extension UIScrollView
         let reservedInsets = self.applyReservedRegionInsets(adjustingContent: false)
         return (max(self.safeAreaInsets.left, reservedInsets.left), max(self.safeAreaInsets.right, reservedInsets.right))
     }
+}
 
+extension UIView
+{
     /// The space the system reserves along each physical side of this view, plus a small gap.
     ///
     /// Controls stay with the hardware, so the side column can sit on either edge (a left-hand Split View app puts it

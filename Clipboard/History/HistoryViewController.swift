@@ -7,12 +7,11 @@
 //
 
 import UIKit
+import SwiftUI
 import Combine
 import CoreData
 import CoreLocation
 import Contacts
-
-import SwiftUI
 
 import ClipboardKit
 import Roxas
@@ -39,7 +38,7 @@ enum ContentFilter: CaseIterable
     var title: String {
         switch self
         {
-        case .all: return NSLocalizedString("All Types", comment: "")
+        case .all: return NSLocalizedString("All", comment: "")
         case .text: return NSLocalizedString("Text", comment: "")
         case .richText: return NSLocalizedString("Rich Text", comment: "")
         case .image: return NSLocalizedString("Images", comment: "")
@@ -59,24 +58,63 @@ enum ContentFilter: CaseIterable
         case .code: return "chevron.left.forwardslash.chevron.right"
         }
     }
+
+    func matches(_ kind: ClippingKind) -> Bool
+    {
+        switch (self, kind)
+        {
+        case (.all, _): return true
+        case (.text, .text): return true
+        case (.richText, .richText): return true
+        case (.image, .image): return true
+        case (.link, .link): return true
+        case (.code, .code): return true
+        default: return false
+        }
+    }
 }
 
-class HistoryViewController: UITableViewController
+/// How the history lays out clippings.
+enum HistoryLayout: String
 {
-    private var dataSource: UITableViewDiffableDataSource<Int, NSManagedObjectID>!
+    case list
+    case grid
+
+    private static let defaultsKey = "HistoryLayout"
+
+    static var saved: HistoryLayout {
+        get { UserDefaults.standard.string(forKey: self.defaultsKey).flatMap(HistoryLayout.init(rawValue:)) ?? .list }
+        set { UserDefaults.standard.set(newValue.rawValue, forKey: self.defaultsKey) }
+    }
+}
+
+class HistoryViewController: UIViewController
+{
+    fileprivate enum Section: Hashable
+    {
+        case main
+    }
+
+    private static let filterBarKind = "FilterBar"
+
+    private var collectionView: UICollectionView!
+    private var dataSource: UICollectionViewDiffableDataSource<Section, NSManagedObjectID>!
     private var fetchedResultsController: NSFetchedResultsController<PasteboardItem>!
 
     private var collection = HistoryCollection.history
     private var contentFilter = ContentFilter.all
+    private var layoutMode = HistoryLayout.saved
     private var searchText: String?
     private var matches = [NSManagedObjectID: FuzzyMatch]()
+
+    /// Code detection is the costly part of classifying a clipping, and a clipping's content never changes.
+    private var kinds = [NSManagedObjectID: ClippingKind]()
 
     private let thumbnailCache = NSCache<NSManagedObjectID, UIImage>()
     private var pendingThumbnails = Set<NSManagedObjectID>()
 
-    private var settingsBarButtonItem: UIBarButtonItem?
     private var defaultTitle: String?
-    private lazy var placeholderView: RSTPlaceholderView = RSTPlaceholderView()
+    private var isEmpty = false
 
     private let _undoManager = UndoManager()
 
@@ -97,26 +135,22 @@ class HistoryViewController: UITableViewController
         super.viewDidLoad()
 
         self.defaultTitle = self.navigationItem.title
-        self.settingsBarButtonItem = self.navigationItem.rightBarButtonItem
 
-        // The title is what the system shows in overflow menus when the bar runs out of room, as on iPhone Duo.
-        self.settingsBarButtonItem?.title = NSLocalizedString("Settings", comment: "")
-        self.settingsBarButtonItem?.visibilityPriority = .low
-
-        self.tableView.rowHeight = UITableView.automaticDimension
-        self.tableView.estimatedRowHeight = 72
-
-        // Align separators with the clipping text, not the icon.
-        self.tableView.separatorInset = UIEdgeInsets(top: 0, left: 72, bottom: 0, right: 0)
+        self.collectionView = UICollectionView(frame: self.view.bounds, collectionViewLayout: self.makeLayout())
+        self.collectionView.autoresizingMask = [.flexibleWidth, .flexibleHeight]
+        self.collectionView.delegate = self
+        self.collectionView.keyboardDismissMode = .onDrag
+        self.view.addSubview(self.collectionView)
+        self.updateBackgroundColor()
 
         let searchController = UISearchController(searchResultsController: nil)
         searchController.obscuresBackgroundDuringPresentation = false
         searchController.searchResultsUpdater = self
         searchController.searchBar.placeholder = NSLocalizedString("Search Clippings", comment: "")
         self.navigationItem.searchController = searchController
+        self.navigationItem.hidesSearchBarWhenScrolling = false
         self.definesPresentationContext = true
 
-        self.tableView.register(UITableViewCell.self, forCellReuseIdentifier: RSTCellContentGenericCellIdentifier)
         self.dataSource = self.makeDataSource()
         self.updateFetchedResultsController()
 
@@ -124,18 +158,27 @@ class HistoryViewController: UITableViewController
 
         NotificationCenter.default.addObserver(self, selector: #selector(HistoryViewController.didEnterBackground(_:)), name: UIApplication.didEnterBackgroundNotification, object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(HistoryViewController.willEnterForeground(_:)), name: UIApplication.willEnterForegroundNotification, object: nil)
-        NotificationCenter.default.addObserver(self, selector: #selector(HistoryViewController.settingsDidChange(_:)), name: SettingsViewController.settingsDidChangeNotification, object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(HistoryViewController.settingsDidChange(_:)), name: .settingsDidChange, object: nil)
 
         self.fetchLimitSettingObservation = UserDefaults.shared.observe(\.historyLimit) { [weak self] (defaults, change) in
-            self?.applySnapshot(animated: true)
+            DispatchQueue.main.async {
+                self?.applySnapshot(animated: true)
+            }
         }
 
         LinkPreviewStore.shared.$previews
             .receive(on: RunLoop.main)
-            .sink { [weak self] _ in self?.reconfigureVisibleRows() }
+            .sink { [weak self] _ in self?.reconfigureVisibleItems() }
             .store(in: &self.cancellables)
 
-        self.navigationController?.tabBarItem.image = UIImage(systemName: "list.bullet")
+        self.navigationController?.tabBarItem.title = NSLocalizedString("History", comment: "")
+        self.navigationController?.tabBarItem.image = UIImage(systemName: "clock")
+        self.navigationController?.tabBarItem.selectedImage = UIImage(systemName: "clock.fill")
+
+        self.registerForTraitChanges([UITraitPreferredContentSizeCategory.self]) { (self: Self, _) in
+            // Grid columns depend on the text size, so rebuild the layout when it changes.
+            self.collectionView.setCollectionViewLayout(self.makeLayout(), animated: false)
+        }
 
         self.startUpdating()
     }
@@ -144,11 +187,17 @@ class HistoryViewController: UITableViewController
     {
         super.viewDidLayoutSubviews()
 
-        // The outer display reserves a column along one edge for the status bar and toolbar, so rows stop short of it.
-        // Separators follow the rows, so they stop at the same edges.
-        let reservedInsets = self.tableView.applyReservedRegionInsets()
-        self.tableView.separatorInset.left = 72 + reservedInsets.left
-        self.tableView.separatorInset.right = reservedInsets.right
+        // The outer display reserves a column along one edge for the status bar and toolbar, so content stops short of it.
+        self.collectionView.applyReservedRegionInsets()
+    }
+
+    override func viewWillTransition(to size: CGSize, with coordinator: any UIViewControllerTransitionCoordinator)
+    {
+        super.viewWillTransition(to: size, with: coordinator)
+
+        coordinator.animate(alongsideTransition: { _ in
+            self.collectionView.collectionViewLayout.invalidateLayout()
+        })
     }
 
     override func viewDidAppear(_ animated: Bool)
@@ -170,39 +219,184 @@ class HistoryViewController: UITableViewController
         self.resignFirstResponder()
     }
 
-    override func prepare(for segue: UIStoryboardSegue, sender: Any?)
+    override func updateContentUnavailableConfiguration(using state: UIContentUnavailableConfigurationState)
     {
-        guard segue.identifier == "showSettings" else { return }
-        guard let sender = sender as? UIBarButtonItem else { return }
+        guard self.isEmpty else
+        {
+            self.contentUnavailableConfiguration = nil
+            return
+        }
 
-        let navigationController = segue.destination as! UINavigationController
+        var configuration: UIContentUnavailableConfiguration
 
-        let settingsViewController = navigationController.viewControllers[0] as! SettingsViewController
-        settingsViewController.view.layoutIfNeeded()
+        if let searchText, !searchText.isEmpty
+        {
+            configuration = .search()
+            configuration.secondaryText = NSLocalizedString("Check the spelling or try a different search.", comment: "")
+        }
+        else if self.contentFilter != .all
+        {
+            configuration = .empty()
+            configuration.image = UIImage(systemName: self.contentFilter.symbolName)
+            configuration.text = String(format: NSLocalizedString("No %@", comment: "No [content type], such as No Links"), self.contentFilter.title)
+            configuration.secondaryText = NSLocalizedString("Nothing here matches this filter.", comment: "")
 
-        navigationController.preferredContentSize = CGSize(width: 375, height: settingsViewController.tableView.contentSize.height)
+            var button = UIButton.Configuration.glass()
+            button.title = NSLocalizedString("Show All", comment: "")
+            configuration.button = button
+            configuration.buttonProperties.primaryAction = UIAction { [weak self] _ in
+                self?.setContentFilter(.all)
+            }
+        }
+        else
+        {
+            configuration = .empty()
 
-        navigationController.popoverPresentationController?.delegate = self
-        navigationController.popoverPresentationController?.barButtonItem = sender
+            switch self.collection
+            {
+            case .history:
+                configuration.image = UIImage(systemName: "doc.on.clipboard")
+                configuration.text = NSLocalizedString("No Clippings Yet", comment: "")
+                configuration.secondaryText = NSLocalizedString("Copy something in any app, and it appears here.", comment: "")
+
+                var button = UIButton.Configuration.glass()
+                button.title = NSLocalizedString("Set Up Capture", comment: "")
+                configuration.button = button
+                configuration.buttonProperties.primaryAction = UIAction { [weak self] _ in
+                    self?.presentOnboarding()
+                }
+
+            case .favorites:
+                configuration.image = UIImage(systemName: "star")
+                configuration.text = NSLocalizedString("No Favorites", comment: "")
+                configuration.secondaryText = NSLocalizedString("Swipe left on a clipping, or touch and hold it, to add it to Favorites.", comment: "")
+
+            case .trash:
+                configuration.image = UIImage(systemName: "trash")
+                configuration.text = NSLocalizedString("Trash Is Empty", comment: "")
+                configuration.secondaryText = NSLocalizedString("Clippings you delete stay here until you empty the Trash.", comment: "")
+
+            case .list:
+                configuration.image = UIImage(systemName: "list.bullet.rectangle")
+                configuration.text = NSLocalizedString("Empty List", comment: "")
+                configuration.secondaryText = NSLocalizedString("Touch and hold a clipping, then choose Add to List.", comment: "")
+            }
+        }
+
+        self.contentUnavailableConfiguration = configuration
     }
 }
 
+// MARK: - Layout and data
+
 private extension HistoryViewController
 {
-    func makeDataSource() -> UITableViewDiffableDataSource<Int, NSManagedObjectID>
+    func makeLayout() -> UICollectionViewLayout
     {
-        let dataSource = UITableViewDiffableDataSource<Int, NSManagedObjectID>(tableView: self.tableView) { [weak self] (tableView, indexPath, objectID) -> UITableViewCell? in
-            let cell = tableView.dequeueReusableCell(withIdentifier: RSTCellContentGenericCellIdentifier, for: indexPath)
+        let headerSize = NSCollectionLayoutSize(widthDimension: .fractionalWidth(1), heightDimension: .estimated(52))
+        let header = NSCollectionLayoutBoundarySupplementaryItem(layoutSize: headerSize, elementKind: Self.filterBarKind, alignment: .top)
 
-            if let self = self, let item = self.item(withObjectID: objectID)
-            {
-                self.configure(cell, with: item)
+        switch self.layoutMode
+        {
+        case .list:
+            return UICollectionViewCompositionalLayout { [weak self] (sectionIndex, environment) in
+                var configuration = UICollectionLayoutListConfiguration(appearance: .plain)
+                configuration.showsSeparators = true
+                configuration.leadingSwipeActionsConfigurationProvider = { indexPath in self?.leadingSwipeActions(for: indexPath) }
+                configuration.trailingSwipeActionsConfigurationProvider = { indexPath in self?.trailingSwipeActions(for: indexPath) }
+                configuration.itemSeparatorHandler = { indexPath, separatorConfiguration in
+                    // Separators start where the text does, as in Mail and Messages.
+                    var separatorConfiguration = separatorConfiguration
+                    separatorConfiguration.bottomSeparatorInsets.leading = environment.traitCollection.preferredContentSizeCategory.isAccessibilityCategory ? 16 : 72
+                    return separatorConfiguration
+                }
+
+                let section = NSCollectionLayoutSection.list(using: configuration, layoutEnvironment: environment)
+                section.boundarySupplementaryItems = [header]
+                return section
             }
 
-            return cell
+        case .grid:
+            return UICollectionViewCompositionalLayout { (sectionIndex, environment) in
+                let traits = environment.traitCollection
+                let width = environment.container.effectiveContentSize.width
+
+                // Cards stay at least 160 points wide, wider as text grows, and drop to one column at accessibility sizes.
+                let minimumWidth = UIFontMetrics(forTextStyle: .body).scaledValue(for: 160, compatibleWith: traits)
+                let columns = traits.preferredContentSizeCategory.isAccessibilityCategory ? 1 : max(2, Int((width - 16) / (minimumWidth + 12)))
+                let cardHeight = UIFontMetrics(forTextStyle: .subheadline).scaledValue(for: 168, compatibleWith: traits)
+
+                let itemSize = NSCollectionLayoutSize(widthDimension: .fractionalWidth(1.0 / CGFloat(columns)), heightDimension: .fractionalHeight(1))
+                let item = NSCollectionLayoutItem(layoutSize: itemSize)
+
+                let groupSize = NSCollectionLayoutSize(widthDimension: .fractionalWidth(1), heightDimension: .absolute(cardHeight))
+                let group = NSCollectionLayoutGroup.horizontal(layoutSize: groupSize, repeatingSubitem: item, count: columns)
+                group.interItemSpacing = .fixed(12)
+
+                let section = NSCollectionLayoutSection(group: group)
+                section.interGroupSpacing = 12
+                section.contentInsetsReference = .readableContent
+                section.contentInsets = NSDirectionalEdgeInsets(top: 4, leading: 0, bottom: 24, trailing: 0)
+                section.boundarySupplementaryItems = [header]
+                return section
+            }
+        }
+    }
+
+    func makeDataSource() -> UICollectionViewDiffableDataSource<Section, NSManagedObjectID>
+    {
+        let listRegistration = UICollectionView.CellRegistration<UICollectionViewListCell, NSManagedObjectID> { [weak self] (cell, indexPath, objectID) in
+            guard let self, let content = self.content(for: objectID) else { return }
+
+            cell.contentConfiguration = UIHostingConfiguration { HistoryRow(content: content) }
+                .margins(.horizontal, 16)
+                .margins(.vertical, 8)
+            self.configureAccessibility(of: cell, content: content)
+        }
+
+        let gridRegistration = UICollectionView.CellRegistration<UICollectionViewCell, NSManagedObjectID> { [weak self] (cell, indexPath, objectID) in
+            guard let self, let content = self.content(for: objectID) else { return }
+
+            cell.contentConfiguration = UIHostingConfiguration { HistoryCard(content: content) }
+                .margins(.all, 0)
+            self.configureAccessibility(of: cell, content: content)
+        }
+
+        let headerRegistration = UICollectionView.SupplementaryRegistration<UICollectionViewListCell>(elementKind: Self.filterBarKind) { [weak self] (header, kind, indexPath) in
+            guard let self else { return }
+
+            header.contentConfiguration = UIHostingConfiguration {
+                FilterBar(selection: self.contentFilter) { [weak self] filter in
+                    self?.setContentFilter(filter)
+                }
+            }
+            .margins(.horizontal, self.layoutMode == .grid ? 0 : 16)
+            .margins(.vertical, 0)
+            header.backgroundConfiguration = .clear()
+        }
+
+        let dataSource = UICollectionViewDiffableDataSource<Section, NSManagedObjectID>(collectionView: self.collectionView) { [weak self] (collectionView, indexPath, objectID) in
+            switch self?.layoutMode ?? .list
+            {
+            case .list: return collectionView.dequeueConfiguredReusableCell(using: listRegistration, for: indexPath, item: objectID)
+            case .grid: return collectionView.dequeueConfiguredReusableCell(using: gridRegistration, for: indexPath, item: objectID)
+            }
+        }
+
+        dataSource.supplementaryViewProvider = { (collectionView, kind, indexPath) in
+            collectionView.dequeueConfiguredReusableSupplementary(using: headerRegistration, for: indexPath)
         }
 
         return dataSource
+    }
+
+    func configureAccessibility(of cell: UICollectionViewCell, content: HistoryItemContent)
+    {
+        let plainTitle = String(content.title.characters)
+        cell.isAccessibilityElement = true
+        cell.accessibilityLabel = content.item.accessibilityDescription(kind: content.kind, title: content.subtitle.map { plainTitle + ", " + $0 } ?? plainTitle)
+        cell.accessibilityHint = NSLocalizedString("Opens the clipping.", comment: "")
+        cell.accessibilityCustomActions = self.accessibilityActions(for: content.item)
     }
 
     /// Fetches the current collection and keeps the list in sync with Core Data changes.
@@ -269,7 +463,7 @@ private extension HistoryViewController
             items = Array(items.prefix(UserDefaults.shared.historyLimit.rawValue))
         }
 
-        items = items.filter { self.matchesContentFilter($0) }
+        items = items.filter { self.contentFilter.matches(self.kind(for: $0)) }
 
         guard let searchText = self.searchText?.trimmingCharacters(in: .whitespacesAndNewlines), !searchText.isEmpty else { return items }
 
@@ -286,17 +480,16 @@ private extension HistoryViewController
         return scoredItems.sorted { $0.score > $1.score }.map { $0.item }
     }
 
-    func matchesContentFilter(_ item: PasteboardItem) -> Bool
+    func kind(for item: PasteboardItem) -> ClippingKind
     {
-        switch self.contentFilter
+        if let kind = self.kinds[item.objectID]
         {
-        case .all: return true
-        case .text: return item.preferredRepresentation?.type == .text
-        case .richText: return item.preferredRepresentation?.type == .attributedText
-        case .image: return item.preferredRepresentation?.type == .image
-        case .link: return item.linkURL != nil
-        case .code: return self.codeLanguage(for: item) != nil
+            return kind
         }
+
+        let kind = ClippingKind(item)
+        self.kinds[item.objectID] = kind
+        return kind
     }
 
     /// The text a row shows before any link preview arrives, which is also what search matches.
@@ -305,60 +498,23 @@ private extension HistoryViewController
         return item.linkURL?.absoluteString ?? item.contentText
     }
 
-    func codeLanguage(for item: PasteboardItem) -> CodeLanguage?
-    {
-        guard let type = item.preferredRepresentation?.type, type == .text || type == .attributedText else { return nil }
-        guard let text = item.contentText else { return nil }
-
-        // Detection only needs the start of a clipping, and long clippings shouldn't stall scrolling.
-        return CodeDetector.detect(String(text.prefix(4_000)))
-    }
-
     func applySnapshot(animated: Bool)
     {
         let items = self.visibleItems()
         let objectIDs = items.map { $0.objectID }
 
-        var snapshot = NSDiffableDataSourceSnapshot<Int, NSManagedObjectID>()
-        snapshot.appendSections([0])
+        var snapshot = NSDiffableDataSourceSnapshot<Section, NSManagedObjectID>()
+        snapshot.appendSections([.main])
         snapshot.appendItems(objectIDs)
 
-        // Rows keep their identity when their contents change, so reconfigure the ones that already exist.
+        // Items keep their identity when their contents change, so reconfigure the ones that already exist.
         let existingObjectIDs = Set(self.dataSource.snapshot().itemIdentifiers)
         snapshot.reconfigureItems(objectIDs.filter { existingObjectIDs.contains($0) })
 
-        self.dataSource.apply(snapshot, animatingDifferences: animated)
-        self.updatePlaceholder(isEmpty: objectIDs.isEmpty)
-    }
+        self.dataSource.apply(snapshot, animatingDifferences: animated && !UIAccessibility.isReduceMotionEnabled)
 
-    func updatePlaceholder(isEmpty: Bool)
-    {
-        guard isEmpty else
-        {
-            self.tableView.backgroundView = nil
-            return
-        }
-
-        let text: (title: String, detail: String)
-
-        if let searchText, !searchText.isEmpty
-        {
-            text = (NSLocalizedString("No Results", comment: ""), NSLocalizedString("Try a different search or filter.", comment: ""))
-        }
-        else
-        {
-            switch self.collection
-            {
-            case .history: text = (NSLocalizedString("No Clippings", comment: ""), NSLocalizedString("Items that you've copied to the clipboard will appear here.", comment: ""))
-            case .favorites: text = (NSLocalizedString("No Favorites", comment: ""), NSLocalizedString("Star a clipping to keep it here.", comment: ""))
-            case .trash: text = (NSLocalizedString("Trash Is Empty", comment: ""), NSLocalizedString("Clippings you delete appear here until you empty the Trash.", comment: ""))
-            case .list: text = (NSLocalizedString("Empty List", comment: ""), NSLocalizedString("Add clippings to this list from their context menus.", comment: ""))
-            }
-        }
-
-        self.placeholderView.textLabel.text = text.title
-        self.placeholderView.detailTextLabel.text = text.detail
-        self.tableView.backgroundView = self.placeholderView
+        self.isEmpty = objectIDs.isEmpty
+        self.setNeedsUpdateContentUnavailableConfiguration()
     }
 
     func item(withObjectID objectID: NSManagedObjectID) -> PasteboardItem?
@@ -372,99 +528,99 @@ private extension HistoryViewController
         return self.item(withObjectID: objectID)
     }
 
-    func reconfigureItem(_ objectID: NSManagedObjectID)
+    func content(for objectID: NSManagedObjectID) -> HistoryItemContent?
     {
-        var snapshot = self.dataSource.snapshot()
-        guard snapshot.itemIdentifiers.contains(objectID) else { return }
+        guard let item = self.item(withObjectID: objectID) else { return nil }
 
-        snapshot.reconfigureItems([objectID])
-        self.dataSource.apply(snapshot, animatingDifferences: false)
-    }
+        let kind = self.kind(for: item)
+        let match = self.matches[objectID]
 
-    func configure(_ cell: UITableViewCell, with item: PasteboardItem)
-    {
-        var configuration = UIListContentConfiguration.subtitleCell()
-        configuration.directionalLayoutMargins = NSDirectionalEdgeInsets(top: 10, leading: 16, bottom: 10, trailing: 16)
-        configuration.imageToTextPadding = 12
-        configuration.imageProperties.reservedLayoutSize = CGSize(width: 40, height: 40)
-        configuration.imageProperties.maximumSize = CGSize(width: 40, height: 40)
-        configuration.imageProperties.cornerRadius = 8
-        configuration.imageProperties.tintColor = .secondaryLabel
-        configuration.textProperties.numberOfLines = 2
-        configuration.secondaryTextProperties.color = .secondaryLabel
-        configuration.secondaryText = self.secondaryText(for: item)
-
-        let match = self.matches[item.objectID]
+        var title: String
+        var subtitle: String?
+        var icon: UIImage?
+        var isLinkAddress = false
 
         if let link = item.linkURL
         {
             LinkPreviewStore.shared.fetchPreviewIfNeeded(for: link)
             let preview = LinkPreviewStore.shared.preview(for: link)
 
-            if let title = preview?.title
+            icon = preview?.icon
+            subtitle = link.host()
+
+            if let previewTitle = preview?.title
             {
-                configuration.textProperties.numberOfLines = 2
-                configuration.text = title
+                title = previewTitle
             }
             else
             {
                 // Raw addresses keep a single line so the middle of the address stays visible.
-                configuration.textProperties.numberOfLines = 1
-                configuration.textProperties.lineBreakMode = .byTruncatingMiddle
-                self.setText(link.absoluteString, match: match, in: &configuration)
-            }
-
-            configuration.image = preview?.icon ?? UIImage(systemName: "link")
-        }
-        else if let representation = item.preferredRepresentation
-        {
-            self.setText(item.contentText ?? representation.type.localizedName, match: match, in: &configuration)
-
-            if representation.type == .image, let thumbnail = self.thumbnail(for: item)
-            {
-                configuration.image = thumbnail
-            }
-            else
-            {
-                configuration.image = UIImage(systemName: representation.type.symbolName)
+                title = link.absoluteString
+                isLinkAddress = true
             }
         }
         else
         {
-            configuration.text = NSLocalizedString("Unknown", comment: "")
+            title = item.contentText ?? kind.title
+
+            // Collapse runs of whitespace so a multi-line clipping fills its preview instead of showing blank lines.
+            if kind != .image, !kind.isCode
+            {
+                title = title.split(whereSeparator: \.isNewline).map { $0.trimmingCharacters(in: .whitespaces) }.filter { !$0.isEmpty }.joined(separator: " ")
+            }
+
+            if kind == .image
+            {
+                subtitle = item.preferredRepresentation?.imageValue.map { "\(Int($0.size.width * $0.scale)) × \(Int($0.size.height * $0.scale))" }
+            }
         }
 
-        cell.contentConfiguration = configuration
-        cell.accessoryView = self.makeAccessoryView(for: item)
-    }
-
-    func setText(_ text: String, match: FuzzyMatch?, in configuration: inout UIListContentConfiguration)
-    {
-        if let match, !match.ranges.isEmpty
+        // Search hits are bolded only where the shown text is the text that was searched.
+        let attributedTitle: AttributedString
+        if let match, !match.ranges.isEmpty, title == self.displayText(for: item)
         {
-            configuration.attributedText = self.attributedText(for: text, match: match)
+            attributedTitle = self.attributedText(for: title, match: match)
         }
         else
         {
-            configuration.text = text
+            attributedTitle = AttributedString(title)
         }
+
+        return HistoryItemContent(item: item,
+                                  kind: kind,
+                                  title: attributedTitle,
+                                  subtitle: subtitle,
+                                  thumbnail: kind == .image ? self.thumbnail(for: item) : nil,
+                                  icon: icon,
+                                  showsLocation: UserDefaults.shared.showLocationIcon && item.location != nil,
+                                  isLinkAddress: isLinkAddress)
     }
 
-    /// Bolds the characters a search matched, the way Spotlight and Mail mark search hits.
-    func attributedText(for text: String, match: FuzzyMatch) -> NSAttributedString
+    /// Marks the characters a search matched, the way Spotlight and Mail mark search hits.
+    func attributedText(for text: String, match: FuzzyMatch) -> AttributedString
     {
         let attributedText = NSMutableAttributedString(string: text)
-        let font = UIFontMetrics(forTextStyle: .body).scaledFont(for: .systemFont(ofSize: 17, weight: .semibold))
 
         for range in match.ranges
         {
-            attributedText.addAttribute(.font, value: font, range: NSRange(range, in: text))
+            let nsRange = NSRange(range, in: text)
+            attributedText.addAttribute(.foregroundColor, value: UIColor.tintColor, range: nsRange)
+            attributedText.addAttribute(.font, value: UIFont.preferredFont(forTextStyle: .headline), range: nsRange)
         }
 
-        return attributedText
+        var result = (try? AttributedString(attributedText, including: \.uiKit)) ?? AttributedString(text)
+
+        // SwiftUI reads its own attribute scope, so carry the bold and tint across.
+        for run in result.runs where run.uiKit.foregroundColor != nil
+        {
+            result[run.range].foregroundColor = Color.accentColor
+            result[run.range].font = .body.weight(.bold)
+        }
+
+        return result
     }
 
-    /// Returns a cached thumbnail, or decodes one in the background and reconfigures the row when it's ready.
+    /// Returns a cached thumbnail, or decodes one in the background and reconfigures the item when it's ready.
     func thumbnail(for item: PasteboardItem) -> UIImage?
     {
         let objectID = item.objectID
@@ -478,7 +634,7 @@ private extension HistoryViewController
         self.pendingThumbnails.insert(objectID)
 
         DispatchQueue.global(qos: .userInitiated).async {
-            let image = UIImage(data: data)?.resizing(toFill: CGSize(width: 500, height: 500))
+            let image = UIImage(data: data)?.preparingThumbnail(of: CGSize(width: 600, height: 600))
 
             DispatchQueue.main.async {
                 self.pendingThumbnails.remove(objectID)
@@ -486,154 +642,81 @@ private extension HistoryViewController
                 guard let image else { return }
 
                 self.thumbnailCache.setObject(image, forKey: objectID)
-                self.reconfigureItem(objectID)
+                self.reconfigureItems([objectID])
             }
         }
 
         return nil
     }
 
-    func makeAccessoryView(for item: PasteboardItem) -> UIView
+    func reconfigureItems(_ objectIDs: [NSManagedObjectID])
     {
-        var accessoryViews = [UIView]()
-
-        if item.isPinned
-        {
-            accessoryViews.append(self.makeSymbolView(systemImageName: "pin.fill", tintColor: .secondaryLabel))
-        }
-
-        if item.isFavorite
-        {
-            accessoryViews.append(self.makeSymbolView(systemImageName: "star.fill", tintColor: .systemYellow))
-        }
-
-        if UserDefaults.shared.showLocationIcon, item.location != nil
-        {
-            let locationButton = self.makeAccessoryButton(systemImageName: "location")
-            locationButton.addTarget(self, action: #selector(HistoryViewController.locationButtonTapped(_:)), for: .primaryActionTriggered)
-            accessoryViews.append(locationButton)
-        }
-
-        if let badge = self.makeBadgeView(for: item)
-        {
-            accessoryViews.append(badge)
-        }
-
-        let stackView = UIStackView(arrangedSubviews: accessoryViews)
-        stackView.spacing = 8
-        stackView.alignment = .center
-        stackView.frame.size = stackView.systemLayoutSizeFitting(UIView.layoutFittingCompressedSize)
-        return stackView
-    }
-
-    func makeSymbolView(systemImageName: String, tintColor: UIColor) -> UIView
-    {
-        let imageView = UIImageView(image: UIImage(systemName: systemImageName))
-        imageView.tintColor = tintColor
-        imageView.preferredSymbolConfiguration = UIImage.SymbolConfiguration(textStyle: .caption1)
-        return imageView
-    }
-
-    func makeAccessoryButton(systemImageName: String) -> UIButton
-    {
-        var configuration = UIButton.Configuration.plain()
-        configuration.image = UIImage(systemName: systemImageName)
-        configuration.baseForegroundColor = .secondaryLabel
-
-        return UIButton(configuration: configuration, primaryAction: nil)
-    }
-
-    /// A small pill naming the clipping's type: HTTP, TXT, IMG, or the language of a code clipping.
-    func makeBadgeView(for item: PasteboardItem) -> UIView?
-    {
-        let title: String
-
-        switch item.preferredRepresentation?.type
-        {
-        case nil: return nil
-        case .image?: title = "IMG"
-        case .text?, .attributedText?, .url?:
-            if item.linkURL != nil
-            {
-                title = "HTTP"
-            }
-            else if let language = self.codeLanguage(for: item)
-            {
-                title = language.displayName
-            }
-            else
-            {
-                title = "TXT"
-            }
-        }
-
-        let label = UILabel()
-        label.text = title
-        label.font = UIFontMetrics(forTextStyle: .caption2).scaledFont(for: .systemFont(ofSize: 11, weight: .bold))
-        label.adjustsFontForContentSizeCategory = true
-        label.textColor = .secondaryLabel
-        label.translatesAutoresizingMaskIntoConstraints = false
-
-        let badge = UIView()
-        badge.backgroundColor = .tertiarySystemFill
-        badge.layer.cornerRadius = 8
-        badge.layer.masksToBounds = true
-        badge.addSubview(label)
-
-        NSLayoutConstraint.activate([
-            label.leadingAnchor.constraint(equalTo: badge.leadingAnchor, constant: 7),
-            label.trailingAnchor.constraint(equalTo: badge.trailingAnchor, constant: -7),
-            label.topAnchor.constraint(equalTo: badge.topAnchor, constant: 3),
-            label.bottomAnchor.constraint(equalTo: badge.bottomAnchor, constant: -3)
-        ])
-
-        return badge
-    }
-
-    func secondaryText(for item: PasteboardItem) -> String
-    {
-        // The badge names the type, so the subtitle carries the source for links and the age for everything else.
-        if let link = item.linkURL
-        {
-            return (link.host ?? link.absoluteString) + " · " + item.ageText()
-        }
-
-        return item.ageText()
-    }
-
-    func updateDate(for cell: UITableViewCell, item: PasteboardItem)
-    {
-        guard var configuration = cell.contentConfiguration as? UIListContentConfiguration else { return }
-
-        let secondaryText = self.secondaryText(for: item)
-        guard configuration.secondaryText != secondaryText else { return }
-
-        configuration.secondaryText = secondaryText
-        cell.contentConfiguration = configuration
-    }
-
-    func reconfigureVisibleRows()
-    {
-        // The diffable data source owns the table, so rows must be reconfigured through its snapshot.
-        let objectIDs = (self.tableView.indexPathsForVisibleRows ?? []).compactMap { self.dataSource.itemIdentifier(for: $0) }
+        var snapshot = self.dataSource.snapshot()
+        let objectIDs = objectIDs.filter { snapshot.itemIdentifiers.contains($0) }
         guard !objectIDs.isEmpty else { return }
 
-        var snapshot = self.dataSource.snapshot()
         snapshot.reconfigureItems(objectIDs)
         self.dataSource.apply(snapshot, animatingDifferences: false)
     }
 
-    func indexPath(for control: UIControl) -> IndexPath?
+    func reconfigureVisibleItems()
     {
-        let point = control.convert(CGPoint(x: control.bounds.midX, y: control.bounds.midY), to: self.tableView)
-        return self.tableView.indexPathForRow(at: point)
+        // The diffable data source owns the collection view, so items must be reconfigured through its snapshot.
+        let objectIDs = self.collectionView.indexPathsForVisibleItems.compactMap { self.dataSource.itemIdentifier(for: $0) }
+        self.reconfigureItems(objectIDs)
     }
 
-    func share(_ item: PasteboardItem, at indexPath: IndexPath)
+    func refreshFilterBar()
+    {
+        var snapshot = self.dataSource.snapshot()
+        guard !snapshot.sectionIdentifiers.isEmpty else { return }
+
+        snapshot.reloadSections([.main])
+        self.dataSource.apply(snapshot, animatingDifferences: false)
+    }
+
+    func setContentFilter(_ filter: ContentFilter)
+    {
+        guard filter != self.contentFilter else { return }
+
+        Haptics.selection()
+        self.contentFilter = filter
+        self.applySnapshot(animated: true)
+        self.refreshFilterBar()
+    }
+
+    func updateBackgroundColor()
+    {
+        // Cards need a grouped background to stand on; rows sit on the plain one.
+        let color: UIColor = (self.layoutMode == .grid) ? .systemGroupedBackground : .systemBackground
+        self.view.backgroundColor = color
+        self.collectionView.backgroundColor = color
+    }
+
+    func setLayoutMode(_ layoutMode: HistoryLayout)
+    {
+        guard layoutMode != self.layoutMode else { return }
+
+        Haptics.selection()
+        self.layoutMode = layoutMode
+        HistoryLayout.saved = layoutMode
+
+        // Cells change type with the layout, so rebuild every item rather than morphing rows into cards.
+        self.collectionView.setCollectionViewLayout(self.makeLayout(), animated: false)
+        self.updateBackgroundColor()
+
+        var snapshot = self.dataSource.snapshot()
+        snapshot.reloadSections(snapshot.sectionIdentifiers)
+        self.dataSource.apply(snapshot, animatingDifferences: false)
+
+        self.updateNavigationItems()
+    }
+
+    func share(_ item: PasteboardItem, from sourceView: UIView?)
     {
         let activityViewController = UIActivityViewController(activityItems: [item], applicationActivities: nil)
-        activityViewController.popoverPresentationController?.sourceView = self.tableView
-        activityViewController.popoverPresentationController?.sourceRect = self.tableView.rectForRow(at: indexPath)
+        activityViewController.popoverPresentationController?.sourceView = sourceView ?? self.view
+        activityViewController.popoverPresentationController?.sourceRect = sourceView?.bounds ?? CGRect(x: self.view.bounds.midX, y: self.view.bounds.midY, width: 0, height: 0)
         self.present(activityViewController, animated: true, completion: nil)
     }
 
@@ -663,11 +746,11 @@ private extension HistoryViewController
                         title = formatter.string(from: postalAddress)
                     }
 
-                    message = nil
+                    message = NSLocalizedString("Copied near this place.", comment: "")
                 }
                 else if let error
                 {
-                    title = NSLocalizedString("Unable to Look Up Location", comment: "")
+                    title = NSLocalizedString("Couldn't Look Up Location", comment: "")
                     message = error.localizedDescription + "\n\n" + "\(location.coordinate.latitude), \(location.coordinate.longitude)"
                 }
                 else
@@ -687,14 +770,9 @@ private extension HistoryViewController
     {
         self.stopUpdating()
 
-        self.updateTimer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { [weak self] (timer) in
-            guard let self = self else { return }
-
-            for indexPath in self.tableView.indexPathsForVisibleRows ?? []
-            {
-                guard let cell = self.tableView.cellForRow(at: indexPath), let item = self.item(at: indexPath) else { continue }
-                self.updateDate(for: cell, item: item)
-            }
+        // Ages read in minutes, so a refresh every half minute keeps them current without redrawing every second.
+        self.updateTimer = Timer.scheduledTimer(withTimeInterval: 30, repeats: true) { [weak self] (timer) in
+            self?.reconfigureVisibleItems()
         }
     }
 
@@ -705,58 +783,49 @@ private extension HistoryViewController
     }
 }
 
-private extension HistoryViewController
-{
-    func present(_ error: Error)
-    {
-        let nsError = error as NSError
-
-        let alertController = UIAlertController(title: nsError.localizedFailureReason ?? nsError.localizedDescription,
-                                                message: nsError.localizedRecoverySuggestion, preferredStyle: .alert)
-
-        if let recoverableError = error as? RecoverableError, !recoverableError.recoveryOptions.isEmpty
-        {
-            alertController.addAction(.cancel)
-
-            for (index, title) in zip(0..., recoverableError.recoveryOptions)
-            {
-                let action = UIAlertAction(title: title, style: .default) { (action) in
-                    recoverableError.attemptRecovery(optionIndex: index) { (success) in
-                        print("Recovered from error with success:", success)
-                    }
-                }
-                alertController.addAction(action)
-            }
-        }
-        else
-        {
-            alertController.addAction(.ok)
-        }
-
-        self.present(alertController, animated: true, completion: nil)
-    }
-}
-
 // MARK: - Navigation
 
 private extension HistoryViewController
 {
     func updateNavigationItems()
     {
-        // Bar buttons get their own glass background, so the symbols don't need an enclosing circle.
-        let filterButton = UIBarButtonItem(title: NSLocalizedString("Filter", comment: ""), image: UIImage(systemName: "line.3.horizontal.decrease"), target: nil, action: nil, menu: self.makeFilterMenu())
+        // Each item has a title as well as a symbol: the title appears in the overflow menu when the bar runs out of
+        // room, as on iPhone Duo's outer display, and VoiceOver reads it.
+        let settingsButton = UIBarButtonItem(title: NSLocalizedString("Settings", comment: ""), image: UIImage(systemName: "gearshape"), target: self, action: #selector(HistoryViewController.showSettings(_:)), menu: nil)
+        settingsButton.visibilityPriority = .low
 
-        self.navigationItem.rightBarButtonItems = [self.settingsBarButtonItem, filterButton].compactMap { $0 }
+        let layoutButton: UIBarButtonItem
+        switch self.layoutMode
+        {
+        case .list:
+            layoutButton = UIBarButtonItem(title: NSLocalizedString("View as Grid", comment: ""), image: UIImage(systemName: "square.grid.2x2"), primaryAction: UIAction { [weak self] _ in
+                self?.setLayoutMode(.grid)
+            })
+
+        case .grid:
+            layoutButton = UIBarButtonItem(title: NSLocalizedString("View as List", comment: ""), image: UIImage(systemName: "list.bullet"), primaryAction: UIAction { [weak self] _ in
+                self?.setLayoutMode(.list)
+            })
+        }
+
+        self.navigationItem.rightBarButtonItems = [settingsButton, layoutButton]
+
+        // The collection switcher leads, so where you are and how to go elsewhere sit together.
+        let collectionsButton = UIBarButtonItem(title: NSLocalizedString("Collections", comment: ""), image: UIImage(systemName: "tray.2"), target: nil, action: nil, menu: self.makeCollectionsMenu())
+        collectionsButton.visibilityPriority = .high
+
+        var leftItems = [collectionsButton]
 
         switch self.collection
         {
         case .history, .favorites:
-            self.navigationItem.leftBarButtonItem = nil
+            break
 
         case .trash:
-            // A symbol keeps the button in the vertical bar on iPhone Duo; the title still shows in overflow menus.
-            let emptyButton = UIBarButtonItem(title: NSLocalizedString("Empty", comment: ""), image: UIImage(systemName: "trash.slash"), target: self, action: #selector(HistoryViewController.emptyTrashTapped(_:)), menu: nil)
-            self.navigationItem.leftBarButtonItem = emptyButton
+            let emptyButton = UIBarButtonItem(title: NSLocalizedString("Empty Trash", comment: ""), image: UIImage(systemName: "trash.slash"), target: self, action: #selector(HistoryViewController.emptyTrashTapped(_:)), menu: nil)
+            emptyButton.tintColor = .systemRed
+            emptyButton.isEnabled = !(self.fetchedResultsController.fetchedObjects ?? []).isEmpty
+            leftItems.append(emptyButton)
 
         case .list:
             let listMenu = UIMenu(children: [
@@ -769,29 +838,33 @@ private extension HistoryViewController
             ])
 
             // The ellipsis is reserved for the system overflow menu on iPhone Duo, so this menu gets its own symbol.
-            self.navigationItem.leftBarButtonItem = UIBarButtonItem(title: NSLocalizedString("List Options", comment: ""), image: UIImage(systemName: "list.bullet.rectangle"), target: nil, action: nil, menu: listMenu)
+            leftItems.append(UIBarButtonItem(title: NSLocalizedString("List Options", comment: ""), image: UIImage(systemName: "list.bullet.rectangle"), target: nil, action: nil, menu: listMenu))
+        }
+
+        self.navigationItem.leftBarButtonItems = leftItems
+    }
+
+    func symbolName(for collection: HistoryCollection) -> String
+    {
+        switch collection
+        {
+        case .history: return "tray.full"
+        case .favorites: return "star"
+        case .trash: return "trash"
+        case .list: return "list.bullet.rectangle"
         }
     }
 
-    func makeFilterMenu() -> UIMenu
+    func makeCollectionsMenu() -> UIMenu
     {
-        let collections: [(collection: HistoryCollection, title: String, symbolName: String)] = [
-            (.history, NSLocalizedString("All Clippings", comment: ""), "list.bullet"),
-            (.favorites, NSLocalizedString("Favorites", comment: ""), "star"),
-            (.trash, NSLocalizedString("Trash", comment: ""), "trash")
+        let collections: [(collection: HistoryCollection, title: String)] = [
+            (.history, NSLocalizedString("All Clippings", comment: "")),
+            (.favorites, NSLocalizedString("Favorites", comment: ""))
         ]
 
-        let collectionActions: [UIMenuElement] = collections.map { (collection, title, symbolName) in
-            UIAction(title: title, image: UIImage(systemName: symbolName), state: self.collection == collection ? .on : .off) { [weak self] _ in
+        let collectionActions: [UIMenuElement] = collections.map { (collection, title) in
+            UIAction(title: title, image: UIImage(systemName: self.symbolName(for: collection)), state: self.collection == collection ? .on : .off) { [weak self] _ in
                 self?.select(collection: collection)
-            }
-        }
-
-        let typeActions: [UIMenuElement] = ContentFilter.allCases.map { filter in
-            UIAction(title: filter.title, image: UIImage(systemName: filter.symbolName), state: self.contentFilter == filter ? .on : .off) { [weak self] _ in
-                self?.contentFilter = filter
-                self?.applySnapshot(animated: true)
-                self?.updateNavigationItems()
             }
         }
 
@@ -799,7 +872,9 @@ private extension HistoryViewController
             guard let self = self else { return completion([]) }
 
             var listActions: [UIMenuElement] = self.fetchLists().map { list in
-                UIAction(title: list.name, state: self.collection == .list(list.objectID) ? .on : .off) { [weak self] _ in
+                let count = list.items.filter { $0.trashedDate == nil && !$0.isMarkedForDeletion }.count
+                let subtitle = String.localizedStringWithFormat(NSLocalizedString(count == 1 ? "%d clipping" : "%d clippings", comment: ""), count)
+                return UIAction(title: list.name, subtitle: subtitle, image: UIImage(systemName: "list.bullet.rectangle"), state: self.collection == .list(list.objectID) ? .on : .off) { [weak self] _ in
                     self?.select(collection: .list(list.objectID))
                 }
             }
@@ -811,18 +886,28 @@ private extension HistoryViewController
             completion([UIMenu(title: NSLocalizedString("Lists", comment: ""), options: .displayInline, children: listActions)])
         }
 
-        return UIMenu(children: [
+        let trashAction = UIAction(title: NSLocalizedString("Trash", comment: ""), image: UIImage(systemName: "trash"), state: self.collection == .trash ? .on : .off) { [weak self] _ in
+            self?.select(collection: .trash)
+        }
+
+        return UIMenu(title: NSLocalizedString("Collections", comment: ""), children: [
             UIMenu(options: .displayInline, children: collectionActions),
-            UIMenu(title: NSLocalizedString("Type", comment: ""), options: .displayInline, children: typeActions),
-            listsMenu
+            listsMenu,
+            UIMenu(options: .displayInline, children: [trashAction])
         ])
     }
 
     func select(collection: HistoryCollection)
     {
+        if collection != self.collection
+        {
+            Haptics.selection()
+        }
+
         self.collection = collection
         self.navigationItem.title = self.title(for: collection)
         self.updateFetchedResultsController()
+        self.collectionView.setContentOffset(CGPoint(x: 0, y: -self.collectionView.adjustedContentInset.top), animated: false)
     }
 
     func title(for collection: HistoryCollection) -> String?
@@ -854,7 +939,8 @@ private extension HistoryViewController
         let alertController = UIAlertController(title: NSLocalizedString("New List", comment: ""), message: nil, preferredStyle: .alert)
         alertController.addTextField { (textField) in
             textField.placeholder = NSLocalizedString("Name", comment: "")
-            textField.autocapitalizationType = .sentences
+            textField.autocapitalizationType = .words
+            textField.clearButtonMode = .whileEditing
         }
         alertController.addAction(.cancel)
 
@@ -871,6 +957,10 @@ private extension HistoryViewController
             {
                 self?.select(collection: .list(list.objectID))
             }
+            else
+            {
+                self?.confirm(String(format: NSLocalizedString("Added to %@", comment: ""), name), systemImage: "text.badge.plus")
+            }
         })
 
         self.present(alertController, animated: true)
@@ -883,6 +973,8 @@ private extension HistoryViewController
         let alertController = UIAlertController(title: NSLocalizedString("Rename List", comment: ""), message: nil, preferredStyle: .alert)
         alertController.addTextField { (textField) in
             textField.text = list.name
+            textField.autocapitalizationType = .words
+            textField.clearButtonMode = .whileEditing
         }
         alertController.addAction(.cancel)
 
@@ -901,14 +993,15 @@ private extension HistoryViewController
     {
         guard let list = self.currentList() else { return }
 
-        self.confirm(title: NSLocalizedString("Delete List?", comment: ""),
+        self.confirm(title: String(format: NSLocalizedString("Delete “%@”?", comment: ""), list.name),
                      message: NSLocalizedString("The clippings in this list stay in your history.", comment: ""),
-                     actionTitle: NSLocalizedString("Delete", comment: ""))
+                     actionTitle: NSLocalizedString("Delete List", comment: ""))
         { [weak self] in
             self?.select(collection: .history)
 
             DatabaseManager.shared.persistentContainer.viewContext.delete(list)
             self?.saveChanges()
+            Haptics.warning()
         }
     }
 
@@ -918,6 +1011,23 @@ private extension HistoryViewController
         alertController.addAction(.cancel)
         alertController.addAction(UIAlertAction(title: actionTitle, style: .destructive) { _ in handler() })
         self.present(alertController, animated: true)
+    }
+
+    @objc func showSettings(_ sender: UIBarButtonItem)
+    {
+        let settingsViewController = SettingsViewController()
+        settingsViewController.onShowSetupGuide = { [weak self] in
+            self?.dismiss(animated: true) {
+                self?.presentOnboarding()
+            }
+        }
+
+        // A sheet on iPhone; a popover from the button on iPad.
+        settingsViewController.modalPresentationStyle = self.traitCollection.horizontalSizeClass == .regular ? .popover : .pageSheet
+        settingsViewController.popoverPresentationController?.sourceItem = sender
+        settingsViewController.preferredContentSize = CGSize(width: 400, height: 640)
+        settingsViewController.sheetPresentationController?.prefersGrabberVisible = true
+        self.present(settingsViewController, animated: true)
     }
 }
 
@@ -937,19 +1047,31 @@ private extension HistoryViewController
         catch
         {
             print("Failed to save view context.", error)
+
+            let alertController = UIAlertController(title: NSLocalizedString("Couldn't Save Changes", comment: ""), message: error.localizedDescription, preferredStyle: .alert)
+            alertController.addAction(.ok)
+            self.present(alertController, animated: true)
         }
+    }
+
+    func copy(_ item: PasteboardItem)
+    {
+        UIPasteboard.general.copy(item)
+        self.confirm(NSLocalizedString("Copied", comment: ""))
     }
 
     func moveToTrash(_ item: PasteboardItem)
     {
         item.trashedDate = Date()
         self.saveChanges()
+        Haptics.impact()
     }
 
     func restore(_ item: PasteboardItem)
     {
         item.trashedDate = nil
         self.saveChanges()
+        self.confirm(NSLocalizedString("Restored", comment: ""), systemImage: "arrow.uturn.backward.circle.fill")
     }
 
     func deletePermanently(_ items: [PasteboardItem])
@@ -958,18 +1080,21 @@ private extension HistoryViewController
         items.forEach { $0.isMarkedForDeletion = true }
         self.saveChanges()
         DatabaseManager.shared.purge()
+        Haptics.warning()
     }
 
     func toggleFavorite(_ item: PasteboardItem)
     {
         item.isFavorite.toggle()
         self.saveChanges()
+        Haptics.selection()
     }
 
     func togglePin(_ item: PasteboardItem)
     {
         item.isPinned.toggle()
         self.saveChanges()
+        Haptics.selection()
     }
 
     func toggleMembership(of item: PasteboardItem, in list: ClippingList)
@@ -984,6 +1109,7 @@ private extension HistoryViewController
         }
 
         self.saveChanges()
+        Haptics.selection()
     }
 
     func makeAddToListMenu(for item: PasteboardItem) -> UIMenu
@@ -1001,37 +1127,37 @@ private extension HistoryViewController
         return UIMenu(title: NSLocalizedString("Add to List", comment: ""), image: UIImage(systemName: "text.badge.plus"), children: actions)
     }
 
-    func makeMenuElements(for item: PasteboardItem) -> [UIMenuElement]
+    func makeMenuElements(for item: PasteboardItem, sourceView: UIView?) -> [UIMenuElement]
     {
-        var elements = [UIMenuElement]()
-
         if self.collection == .trash
         {
-            elements.append(UIAction(title: NSLocalizedString("Restore", comment: ""), image: UIImage(systemName: "arrow.uturn.backward")) { [weak self] _ in
-                self?.restore(item)
-            })
+            return [
+                UIAction(title: NSLocalizedString("Restore", comment: ""), image: UIImage(systemName: "arrow.uturn.backward")) { [weak self] _ in
+                    self?.restore(item)
+                },
+                UIAction(title: NSLocalizedString("Copy", comment: ""), image: UIImage(systemName: "doc.on.doc")) { [weak self] _ in
+                    self?.copy(item)
+                },
+                UIAction(title: NSLocalizedString("Delete Permanently", comment: ""), image: UIImage(systemName: "trash"), attributes: .destructive) { [weak self] _ in
+                    self?.deletePermanently([item])
+                }
+            ]
         }
 
-        elements.append(UIAction(title: NSLocalizedString("Copy", comment: ""), image: UIImage(systemName: "doc.on.doc")) { _ in
-            UIPasteboard.general.copy(item)
-        })
+        var copyActions: [UIMenuElement] = [
+            UIAction(title: NSLocalizedString("Copy", comment: ""), image: UIImage(systemName: "doc.on.doc")) { [weak self] _ in
+                self?.copy(item)
+            }
+        ]
 
-        if let copyAsMenu = item.makeCopyAsMenu()
+        if let copyAsMenu = item.makeCopyAsMenu(onCopy: { [weak self] in self?.confirm() })
         {
-            elements.append(copyAsMenu)
+            copyActions.append(copyAsMenu)
         }
 
-        elements.append(UIAction(title: NSLocalizedString("Share", comment: ""), image: UIImage(systemName: "square.and.arrow.up")) { [weak self] _ in
-            guard let self = self, let indexPath = self.indexPath(for: item) else { return }
-            self.share(item, at: indexPath)
+        copyActions.append(UIAction(title: NSLocalizedString("Share…", comment: ""), image: UIImage(systemName: "square.and.arrow.up")) { [weak self] _ in
+            self?.share(item, from: sourceView)
         })
-
-        if let location = item.location
-        {
-            elements.append(UIAction(title: NSLocalizedString("Show Location", comment: ""), image: UIImage(systemName: "location")) { [weak self] _ in
-                self?.showLocation(location)
-            })
-        }
 
         let favoriteAction = UIAction(title: item.isFavorite ? NSLocalizedString("Remove from Favorites", comment: "") : NSLocalizedString("Add to Favorites", comment: ""),
                                       image: UIImage(systemName: item.isFavorite ? "star.slash" : "star")) { [weak self] _ in
@@ -1043,118 +1169,87 @@ private extension HistoryViewController
             self?.togglePin(item)
         }
 
-        elements.append(UIMenu(options: .displayInline, children: [favoriteAction, pinAction]))
-        elements.append(self.makeAddToListMenu(for: item))
+        var organizeActions: [UIMenuElement] = [favoriteAction, pinAction, self.makeAddToListMenu(for: item)]
 
         if let list = self.currentList()
         {
-            elements.append(UIAction(title: NSLocalizedString("Remove from List", comment: ""), image: UIImage(systemName: "minus.circle")) { [weak self] _ in
+            organizeActions.append(UIAction(title: String(format: NSLocalizedString("Remove from “%@”", comment: ""), list.name), image: UIImage(systemName: "minus.circle")) { [weak self] _ in
                 item.mutableSetValue(forKey: "lists").remove(list)
                 self?.saveChanges()
             })
         }
 
+        if let location = item.location
+        {
+            organizeActions.append(UIAction(title: NSLocalizedString("Show Location", comment: ""), image: UIImage(systemName: "location")) { [weak self] _ in
+                self?.showLocation(location)
+            })
+        }
+
+        let trashAction = UIAction(title: NSLocalizedString("Move to Trash", comment: ""), image: UIImage(systemName: "trash"), attributes: .destructive) { [weak self] _ in
+            self?.moveToTrash(item)
+        }
+
+        return [
+            UIMenu(options: .displayInline, children: copyActions),
+            UIMenu(options: .displayInline, children: organizeActions),
+            trashAction
+        ]
+    }
+
+    func accessibilityActions(for item: PasteboardItem) -> [UIAccessibilityCustomAction]
+    {
         if self.collection == .trash
         {
-            elements.append(UIAction(title: NSLocalizedString("Delete Permanently", comment: ""), image: UIImage(systemName: "trash"), attributes: .destructive) { [weak self] _ in
-                self?.deletePermanently([item])
-            })
+            return [
+                UIAccessibilityCustomAction(name: NSLocalizedString("Restore", comment: ""), image: UIImage(systemName: "arrow.uturn.backward")) { [weak self] _ in
+                    self?.restore(item)
+                    return true
+                },
+                UIAccessibilityCustomAction(name: NSLocalizedString("Delete Permanently", comment: ""), image: UIImage(systemName: "trash")) { [weak self] _ in
+                    self?.deletePermanently([item])
+                    return true
+                }
+            ]
         }
-        else
-        {
-            elements.append(UIAction(title: NSLocalizedString("Move to Trash", comment: ""), image: UIImage(systemName: "trash"), attributes: .destructive) { [weak self] _ in
+
+        return [
+            UIAccessibilityCustomAction(name: NSLocalizedString("Copy", comment: ""), image: UIImage(systemName: "doc.on.doc")) { [weak self] _ in
+                self?.copy(item)
+                return true
+            },
+            UIAccessibilityCustomAction(name: item.isFavorite ? NSLocalizedString("Remove from Favorites", comment: "") : NSLocalizedString("Add to Favorites", comment: ""), image: UIImage(systemName: "star")) { [weak self] _ in
+                self?.toggleFavorite(item)
+                return true
+            },
+            UIAccessibilityCustomAction(name: item.isPinned ? NSLocalizedString("Unpin", comment: "") : NSLocalizedString("Pin to Top", comment: ""), image: UIImage(systemName: "pin")) { [weak self] _ in
+                self?.togglePin(item)
+                return true
+            },
+            UIAccessibilityCustomAction(name: NSLocalizedString("Move to Trash", comment: ""), image: UIImage(systemName: "trash")) { [weak self] _ in
                 self?.moveToTrash(item)
-            })
-        }
-
-        return elements
+                return true
+            }
+        ]
     }
 
-    func indexPath(for item: PasteboardItem) -> IndexPath?
-    {
-        guard let objectID = Optional(item.objectID) else { return nil }
-        return self.dataSource.indexPath(for: objectID)
-    }
-
-    @objc func locationButtonTapped(_ sender: UIButton)
-    {
-        guard let indexPath = self.indexPath(for: sender), let location = self.item(at: indexPath)?.location else { return }
-
-        self.showLocation(location)
-    }
-
-    @objc func emptyTrashTapped(_ sender: UIBarButtonItem)
-    {
-        let items = self.fetchedResultsController.fetchedObjects ?? []
-
-        self.confirm(title: NSLocalizedString("Empty Trash?", comment: ""),
-                     message: NSLocalizedString("Clippings in the Trash are deleted permanently.", comment: ""),
-                     actionTitle: NSLocalizedString("Empty Trash", comment: ""))
-        { [weak self] in
-            self?.deletePermanently(items)
-        }
-    }
-
-    @objc func didEnterBackground(_ notification: Notification)
-    {
-        // Save any pending changes to disk.
-        self.saveChanges()
-
-        self.undoManager?.removeAllActions()
-
-        self.stopUpdating()
-    }
-
-    @objc func willEnterForeground(_ notification: Notification)
-    {
-        self.startUpdating()
-    }
-
-    @objc func settingsDidChange(_ notification: Notification)
-    {
-        self.applySnapshot(animated: false)
-    }
-
-    @IBAction func unwindToHistoryViewController(_ segue: UIStoryboardSegue)
-    {
-    }
-}
-
-extension HistoryViewController
-{
-    override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath)
-    {
-        self.tableView.deselectRow(at: indexPath, animated: true)
-
-        guard let item = self.item(at: indexPath) else { return }
-
-        let detailViewController = ClippingDetailViewController(pasteboardItem: item)
-        self.navigationController?.pushViewController(detailViewController, animated: true)
-    }
-
-    override func tableView(_ tableView: UITableView, contextMenuConfigurationForRowAt indexPath: IndexPath, point: CGPoint) -> UIContextMenuConfiguration?
-    {
-        guard let item = self.item(at: indexPath) else { return nil }
-
-        return UIContextMenuConfiguration(identifier: nil, previewProvider: nil) { _ in
-            UIMenu(children: self.makeMenuElements(for: item))
-        }
-    }
-
-    override func tableView(_ tableView: UITableView, leadingSwipeActionsConfigurationForRowAt indexPath: IndexPath) -> UISwipeActionsConfiguration?
+    func leadingSwipeActions(for indexPath: IndexPath) -> UISwipeActionsConfiguration?
     {
         guard self.collection != .trash, let item = self.item(at: indexPath) else { return nil }
 
-        let copyAction = UIContextualAction(style: .normal, title: NSLocalizedString("Copy", comment: "")) { _, _, completion in
-            UIPasteboard.general.copy(item)
+        let copyAction = UIContextualAction(style: .normal, title: NSLocalizedString("Copy", comment: "")) { [weak self] _, _, completion in
+            self?.copy(item)
             completion(true)
         }
         copyAction.image = UIImage(systemName: "doc.on.doc")
+        copyAction.backgroundColor = .systemBlue
 
-        return UISwipeActionsConfiguration(actions: [copyAction])
+        let configuration = UISwipeActionsConfiguration(actions: [copyAction])
+        configuration.performsFirstActionWithFullSwipe = true
+        return configuration
     }
 
-    override func tableView(_ tableView: UITableView, trailingSwipeActionsConfigurationForRowAt indexPath: IndexPath) -> UISwipeActionsConfiguration?
+    func trailingSwipeActions(for indexPath: IndexPath) -> UISwipeActionsConfiguration?
     {
         guard let item = self.item(at: indexPath) else { return nil }
 
@@ -1165,6 +1260,7 @@ extension HistoryViewController
                 completion(true)
             }
             restoreAction.image = UIImage(systemName: "arrow.uturn.backward")
+            restoreAction.backgroundColor = .systemGreen
 
             let deleteAction = UIContextualAction(style: .destructive, title: NSLocalizedString("Delete", comment: "")) { [weak self] _, _, completion in
                 self?.deletePermanently([item])
@@ -1185,17 +1281,85 @@ extension HistoryViewController
             self?.togglePin(item)
             completion(true)
         }
-        pinAction.image = UIImage(systemName: item.isPinned ? "pin.slash" : "pin")
+        pinAction.image = UIImage(systemName: item.isPinned ? "pin.slash.fill" : "pin.fill")
         pinAction.backgroundColor = .systemOrange
 
         let favoriteAction = UIContextualAction(style: .normal, title: item.isFavorite ? NSLocalizedString("Unfavorite", comment: "") : NSLocalizedString("Favorite", comment: "")) { [weak self] _, _, completion in
             self?.toggleFavorite(item)
             completion(true)
         }
-        favoriteAction.image = UIImage(systemName: item.isFavorite ? "star.slash" : "star")
+        favoriteAction.image = UIImage(systemName: item.isFavorite ? "star.slash.fill" : "star.fill")
         favoriteAction.backgroundColor = .systemYellow
 
         return UISwipeActionsConfiguration(actions: [trashAction, pinAction, favoriteAction])
+    }
+
+    @objc func emptyTrashTapped(_ sender: UIBarButtonItem)
+    {
+        let items = self.fetchedResultsController.fetchedObjects ?? []
+        guard !items.isEmpty else { return }
+
+        let alertController = UIAlertController(title: NSLocalizedString("Empty Trash?", comment: ""),
+                                                message: String.localizedStringWithFormat(NSLocalizedString(items.count == 1 ? "%d clipping will be deleted permanently. You can't undo this." : "%d clippings will be deleted permanently. You can't undo this.", comment: ""), items.count),
+                                                preferredStyle: .actionSheet)
+        alertController.addAction(.cancel)
+        alertController.addAction(UIAlertAction(title: NSLocalizedString("Empty Trash", comment: ""), style: .destructive) { [weak self] _ in
+            self?.deletePermanently(items)
+        })
+        alertController.popoverPresentationController?.sourceItem = sender
+        self.present(alertController, animated: true)
+    }
+
+    @objc func didEnterBackground(_ notification: Notification)
+    {
+        // Save any pending changes to disk.
+        self.saveChanges()
+
+        self.undoManager?.removeAllActions()
+
+        self.stopUpdating()
+    }
+
+    @objc func willEnterForeground(_ notification: Notification)
+    {
+        self.startUpdating()
+        self.reconfigureVisibleItems()
+    }
+
+    @objc func settingsDidChange(_ notification: Notification)
+    {
+        self.applySnapshot(animated: false)
+    }
+
+    @IBAction func unwindToHistoryViewController(_ segue: UIStoryboardSegue)
+    {
+    }
+}
+
+// MARK: - UICollectionViewDelegate
+
+extension HistoryViewController: UICollectionViewDelegate
+{
+    func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath)
+    {
+        collectionView.deselectItem(at: indexPath, animated: true)
+
+        guard let item = self.item(at: indexPath) else { return }
+
+        let detailViewController = ClippingDetailViewController(pasteboardItem: item)
+        self.navigationController?.pushViewController(detailViewController, animated: true)
+    }
+
+    func collectionView(_ collectionView: UICollectionView, contextMenuConfigurationForItemsAt indexPaths: [IndexPath], point: CGPoint) -> UIContextMenuConfiguration?
+    {
+        guard indexPaths.count == 1, let indexPath = indexPaths.first, let item = self.item(at: indexPath) else { return nil }
+
+        let sourceView = collectionView.cellForItem(at: indexPath)
+
+        return UIContextMenuConfiguration(identifier: item.objectID, previewProvider: nil) { [weak self] _ in
+            guard let self else { return nil }
+            return UIMenu(children: self.makeMenuElements(for: item, sourceView: sourceView))
+        }
     }
 }
 
@@ -1204,6 +1368,11 @@ extension HistoryViewController: NSFetchedResultsControllerDelegate
     func controllerDidChangeContent(_ controller: NSFetchedResultsController<NSFetchRequestResult>)
     {
         self.applySnapshot(animated: true)
+
+        if self.collection == .trash
+        {
+            self.updateNavigationItems()
+        }
     }
 }
 
@@ -1216,22 +1385,18 @@ extension HistoryViewController: UISearchResultsUpdating
     }
 }
 
-extension HistoryViewController: UIPopoverPresentationControllerDelegate
-{
-    func adaptivePresentationStyle(for controller: UIPresentationController, traitCollection: UITraitCollection) -> UIModalPresentationStyle
-    {
-        return .none
-    }
-}
-
 private extension HistoryViewController
 {
     func presentOnboardingIfNeeded()
     {
         guard !UserDefaults.shared.hasCompletedOnboarding, self.presentedViewController == nil else { return }
+        self.presentOnboarding()
+    }
 
+    func presentOnboarding()
+    {
         let onboardingViewController = OnboardingViewController()
-        onboardingViewController.isModalInPresentation = true
+        onboardingViewController.isModalInPresentation = !UserDefaults.shared.hasCompletedOnboarding
         onboardingViewController.onFinish = { [weak self] in
             UserDefaults.shared.hasCompletedOnboarding = true
             self?.dismiss(animated: true)
@@ -1247,7 +1412,8 @@ private extension HistoryViewController
 private extension HistoryViewController
 {
     /// Opens the screen named by the -ClipboardDemoScreen launch argument, for simulator screenshots.
-    /// Values: favorites, trash, list, filter-code, search, detail-text, detail-image, detail-link, settings, keyboard.
+    /// Values: grid, grid-favorites, favorites, trash, list, filter-code, search, detail-text, detail-image,
+    /// detail-link, detail-code, settings, map, keyboard.
     func showDemoScreenIfRequested()
     {
         guard let screen = UserDefaults.standard.string(forKey: "ClipboardDemoScreen"), !self.hasShownDemoScreen else { return }
@@ -1255,6 +1421,8 @@ private extension HistoryViewController
 
         // Give the seeded clippings a moment to arrive from the background context.
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+            // Every run starts from the list, whatever layout the last run left behind.
+            if !screen.hasPrefix("grid") { self.setLayoutMode(.list) }
             self.showDemoScreen(screen)
         }
     }
@@ -1280,10 +1448,11 @@ private extension HistoryViewController
         case "trash": self.select(collection: .trash)
         case "list":
             if let list = self.fetchLists().first(where: { $0.name == "Snippets" }) { self.select(collection: .list(list.objectID)) }
-        case "filter-code":
-            self.contentFilter = .code
-            self.applySnapshot(animated: false)
-            self.updateNavigationItems()
+        case "filter-code": self.setContentFilter(.code)
+        case "grid": self.setLayoutMode(.grid)
+        case "grid-favorites":
+            self.setLayoutMode(.grid)
+            self.select(collection: .favorites)
         case "search":
             self.navigationItem.searchController?.isActive = true
             self.navigationItem.searchController?.searchBar.text = "brown"
@@ -1292,7 +1461,7 @@ private extension HistoryViewController
         case "detail-link": showDetail { $0.linkURL != nil }
         case "detail-code": showDetail { $0.contentText?.hasPrefix("func") == true }
         case "map": self.tabBarController?.selectedIndex = 1
-        case "settings": self.performSegue(withIdentifier: "showSettings", sender: self.settingsBarButtonItem)
+        case "settings": self.showSettings(self.navigationItem.rightBarButtonItems![0])
         case "keyboard":
             let keyboard = Keyboard(inputViewController: nil, needsInputModeSwitchKey: true)
                 .environment(\.managedObjectContext, DatabaseManager.shared.persistentContainer.viewContext)

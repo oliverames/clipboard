@@ -2,170 +2,176 @@
 //  OnboardingViewController.swift
 //  Clipboard
 //
+//  The setup steps capture depends on. This screen only explains them and links to Settings;
+//  the permission prompts themselves come from the capture code.
+//
 
 import UIKit
+import SwiftUI
 
-private struct OnboardingStep
-{
-    var title: String
-    var detail: String
-    var settingsButtonTitle: String?
-}
-
-class OnboardingViewController: UIViewController
+class OnboardingViewController: ReservedRegionHostingController<AnyView>
 {
     var onFinish: (() -> Void)?
 
-    private let contentMargin: CGFloat = 24
-
-    private weak var scrollView: UIScrollView?
-    private var contentLeftConstraint: NSLayoutConstraint?
-    private var contentRightConstraint: NSLayoutConstraint?
-
-    override func viewDidLoad()
+    init()
     {
-        super.viewDidLoad()
+        super.init(rootView: AnyView(EmptyView()))
 
-        self.view.backgroundColor = .systemBackground
-
-        let steps = [
-            OnboardingStep(title: NSLocalizedString("Allow paste access", comment: ""),
-                 detail: NSLocalizedString("Go to Settings, then Privacy & Security, then Paste from Other Apps, then Clipboard, and choose Allow. This option appears after Clipboard reads the clipboard once.", comment: ""),
-                 settingsButtonTitle: NSLocalizedString("Open Settings", comment: "")),
-            OnboardingStep(title: NSLocalizedString("Keep monitoring in the background", comment: ""),
-                 detail: NSLocalizedString("Go to Settings, then Clipboard, then Location, and choose Always. This lets Clipboard keep watching while it's closed.", comment: ""),
-                 settingsButtonTitle: NSLocalizedString("Open Settings", comment: "")),
-            OnboardingStep(title: NSLocalizedString("Add the Clipboard widget", comment: ""),
-                 detail: NSLocalizedString("iOS only lets a widget read the clipboard while the app is closed. Long-press your home screen, tap Edit, then Add Widget, and choose Clipboard.", comment: ""),
-                 settingsButtonTitle: nil),
-            OnboardingStep(title: NSLocalizedString("Let Shortcuts read clippings (optional)", comment: ""),
-                 detail: NSLocalizedString("In Clipboard's settings, turn on Allow Shortcuts Access. Locked devices never return clipboard history.", comment: ""),
-                 settingsButtonTitle: nil)
-        ]
-
-        let titleLabel = self.makeLabel(NSLocalizedString("Welcome to Clipboard", comment: ""), style: .largeTitle, weight: .bold)
-        let subtitleLabel = self.makeLabel(NSLocalizedString("Clipboard keeps a history of everything you copy. It all stays on this iPhone.", comment: ""), style: .body, color: .secondaryLabel)
-
-        let stepViews = steps.enumerated().map { (index, step) in self.makeStepView(number: index + 1, step: step) }
-
-        let stepsStack = UIStackView(arrangedSubviews: stepViews)
-        stepsStack.axis = .vertical
-        stepsStack.spacing = 24
-
-        var doneConfiguration = UIButton.Configuration.prominentGlass()
-        doneConfiguration.title = NSLocalizedString("Get Started", comment: "")
-        let doneButton = UIButton(configuration: doneConfiguration, primaryAction: UIAction { [weak self] _ in
+        self.rootView = AnyView(OnboardingView(onFinish: { [weak self] in
             self?.onFinish?()
-        })
-
-        let contentStack = UIStackView(arrangedSubviews: [titleLabel, subtitleLabel, stepsStack, doneButton])
-        contentStack.axis = .vertical
-        contentStack.spacing = 28
-        contentStack.setCustomSpacing(40, after: stepsStack)
-        contentStack.translatesAutoresizingMaskIntoConstraints = false
-
-        let scrollView = UIScrollView()
-        scrollView.translatesAutoresizingMaskIntoConstraints = false
-        scrollView.addSubview(contentStack)
-        self.view.addSubview(scrollView)
-
-        // The frame layout guide ignores insets, so the side margins are constants that viewDidLayoutSubviews()
-        // widens to clear the safe area and any region the system reserves along a side.
-        let contentLeftConstraint = contentStack.leftAnchor.constraint(equalTo: scrollView.frameLayoutGuide.leftAnchor, constant: self.contentMargin)
-        let contentRightConstraint = contentStack.rightAnchor.constraint(equalTo: scrollView.frameLayoutGuide.rightAnchor, constant: -self.contentMargin)
-
-        NSLayoutConstraint.activate([
-            scrollView.topAnchor.constraint(equalTo: self.view.topAnchor),
-            scrollView.bottomAnchor.constraint(equalTo: self.view.bottomAnchor),
-            scrollView.leadingAnchor.constraint(equalTo: self.view.leadingAnchor),
-            scrollView.trailingAnchor.constraint(equalTo: self.view.trailingAnchor),
-
-            contentStack.topAnchor.constraint(equalTo: scrollView.contentLayoutGuide.topAnchor, constant: 40),
-            contentStack.bottomAnchor.constraint(equalTo: scrollView.contentLayoutGuide.bottomAnchor, constant: -24),
-            contentLeftConstraint,
-            contentRightConstraint
-        ])
-
-        self.scrollView = scrollView
-        self.contentLeftConstraint = contentLeftConstraint
-        self.contentRightConstraint = contentRightConstraint
+        }))
     }
 
-    override func viewDidLayoutSubviews()
+    @MainActor required dynamic init?(coder aDecoder: NSCoder)
     {
-        super.viewDidLayoutSubviews()
-
-        guard let scrollView = self.scrollView else { return }
-
-        // Read at layout time, per physical edge: either side can carry a bar, and the two values are unrelated.
-        let clearance = scrollView.sideClearanceForFrameGuideContent()
-
-        if self.contentLeftConstraint?.constant != self.contentMargin + clearance.left
-        {
-            self.contentLeftConstraint?.constant = self.contentMargin + clearance.left
-        }
-
-        if self.contentRightConstraint?.constant != -(self.contentMargin + clearance.right)
-        {
-            self.contentRightConstraint?.constant = -(self.contentMargin + clearance.right)
-        }
+        fatalError("init(coder:) has not been implemented")
     }
 }
 
-private extension OnboardingViewController
+private struct OnboardingStep: Identifiable
 {
-    func makeLabel(_ text: String, style: UIFont.TextStyle, weight: UIFont.Weight = .regular, color: UIColor = .label) -> UILabel
-    {
-        let label = UILabel()
-        label.text = text
-        label.font = UIFontMetrics(forTextStyle: style).scaledFont(for: .systemFont(ofSize: UIFont.preferredFont(forTextStyle: style).pointSize, weight: weight))
-        label.adjustsFontForContentSizeCategory = true
-        label.textColor = color
-        label.numberOfLines = 0
-        return label
+    var id: Int
+    var symbolName: String
+    var tint: Color
+    var title: LocalizedStringKey
+    var detail: LocalizedStringKey
+    var opensSettings: Bool
+    var isOptional = false
+}
+
+struct OnboardingView: View
+{
+    var onFinish: () -> Void
+
+    @ScaledMetric(relativeTo: .largeTitle)
+    private var heroSize = 88.0
+
+    @ScaledMetric(relativeTo: .headline)
+    private var stepIconSize = 40.0
+
+    private let steps = [
+        OnboardingStep(id: 1, symbolName: "hand.raised.fill", tint: .blue,
+                       title: "Allow paste access",
+                       detail: "In Settings, go to Privacy & Security, then Paste from Other Apps, then Clipboard, and choose Allow. The option appears after Clipboard reads the clipboard once.",
+                       opensSettings: true),
+        OnboardingStep(id: 2, symbolName: "location.fill", tint: .green,
+                       title: "Keep watching in the background",
+                       detail: "In Settings, go to Clipboard, then Location, and choose Always. This keeps Clipboard watching while it's closed.",
+                       opensSettings: true),
+        OnboardingStep(id: 3, symbolName: "square.grid.2x2.fill", tint: .orange,
+                       title: "Add the Clipboard widget",
+                       detail: "iOS only lets a widget read the clipboard while the app is closed. Touch and hold your Home Screen, tap Edit, then Add Widget, and choose Clipboard.",
+                       opensSettings: false),
+        OnboardingStep(id: 4, symbolName: "square.2.layers.3d.fill", tint: .indigo,
+                       title: "Let Shortcuts read clippings",
+                       detail: "In Clipboard's settings, turn on Allow Shortcuts Access. A locked iPhone never returns clipboard history.",
+                       opensSettings: false, isOptional: true)
+    ]
+
+    var body: some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 28) {
+                VStack(alignment: .leading, spacing: 16) {
+                    Image(systemName: "doc.on.clipboard.fill")
+                        .font(.system(size: self.heroSize * 0.42, weight: .semibold))
+                        .foregroundStyle(.white)
+                        .frame(width: self.heroSize, height: self.heroSize)
+                        .background(
+                            LinearGradient(colors: [Color(red: 0.99, green: 0.72, blue: 0.26), Color(red: 0.93, green: 0.42, blue: 0.13)], startPoint: .top, endPoint: .bottom),
+                            in: RoundedRectangle(cornerRadius: self.heroSize * 0.26, style: .continuous)
+                        )
+                        .accessibilityHidden(true)
+
+                    Text("Welcome to Clipboard")
+                        .font(.largeTitle.bold())
+                        .fixedSize(horizontal: false, vertical: true)
+
+                    Text("Clipboard keeps a history of what you copy, so nothing you copied is lost. It all stays on this iPhone.")
+                        .font(.body)
+                        .foregroundStyle(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+
+                VStack(alignment: .leading, spacing: 12) {
+                    ForEach(self.steps) { step in
+                        self.stepView(step)
+                    }
+                }
+            }
+            .padding(.horizontal, 24)
+            .padding(.top, 40)
+            .padding(.bottom, 24)
+            .frame(maxWidth: 640)
+            .frame(maxWidth: .infinity)
+        }
+        .background(Color(uiColor: .systemGroupedBackground))
+        .safeAreaInset(edge: .bottom) {
+            Button(action: self.onFinish) {
+                Text("Get Started")
+                    .font(.headline)
+                    .frame(maxWidth: 480)
+                    .padding(.vertical, 6)
+            }
+            .buttonStyle(.glassProminent)
+            .padding(.horizontal, 24)
+            .padding(.top, 24)
+            .padding(.bottom, 12)
+            .frame(maxWidth: .infinity)
+            .background {
+                // Steps scroll under the button, so fade them out behind it.
+                LinearGradient(stops: [.init(color: Color(uiColor: .systemGroupedBackground).opacity(0), location: 0), .init(color: Color(uiColor: .systemGroupedBackground), location: 0.4)], startPoint: .top, endPoint: .bottom)
+                    .ignoresSafeArea()
+            }
+        }
     }
 
-    func makeStepView(number: Int, step: OnboardingStep) -> UIView
+    private func stepView(_ step: OnboardingStep) -> some View
     {
-        let numberLabel = UILabel()
-        numberLabel.text = "\(number)"
-        numberLabel.font = .preferredFont(forTextStyle: .headline)
-        numberLabel.textAlignment = .center
-        numberLabel.textColor = .white
-        numberLabel.backgroundColor = .systemBlue
-        numberLabel.clipsToBounds = true
-        numberLabel.layer.cornerRadius = 14
-        numberLabel.translatesAutoresizingMaskIntoConstraints = false
-        NSLayoutConstraint.activate([
-            numberLabel.widthAnchor.constraint(equalToConstant: 28),
-            numberLabel.heightAnchor.constraint(equalToConstant: 28)
-        ])
+        HStack(alignment: .top, spacing: 14) {
+            Image(systemName: step.symbolName)
+                .font(.system(size: self.stepIconSize * 0.45, weight: .semibold))
+                .foregroundStyle(step.tint)
+                .frame(width: self.stepIconSize, height: self.stepIconSize)
+                .background(step.tint.opacity(0.15), in: Circle())
+                .accessibilityHidden(true)
 
-        var textViews: [UIView] = [
-            self.makeLabel(step.title, style: .headline, weight: .semibold),
-            self.makeLabel(step.detail, style: .subheadline, color: .secondaryLabel)
-        ]
+            VStack(alignment: .leading, spacing: 6) {
+                HStack(alignment: .firstTextBaseline, spacing: 6) {
+                    Text(step.title)
+                        .font(.headline)
 
-        if let settingsButtonTitle = step.settingsButtonTitle
-        {
-            var configuration = UIButton.Configuration.tinted()
-            configuration.title = settingsButtonTitle
-            configuration.cornerStyle = .capsule
-            let settingsButton = UIButton(configuration: configuration, primaryAction: UIAction { _ in
-                UIApplication.shared.open(URL(string: UIApplication.openSettingsURLString)!)
-            })
-            textViews.append(settingsButton)
+                    if step.isOptional
+                    {
+                        Text("Optional")
+                            .font(.caption.weight(.semibold))
+                            .foregroundStyle(.secondary)
+                            .padding(.horizontal, 6)
+                            .padding(.vertical, 2)
+                            .background(Color(uiColor: .tertiarySystemFill), in: Capsule())
+                    }
+                }
+
+                Text(step.detail)
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+
+                if step.opensSettings
+                {
+                    Button("Open Settings") {
+                        UIApplication.shared.open(URL(string: UIApplication.openSettingsURLString)!)
+                    }
+                    .font(.subheadline.weight(.semibold))
+                    .buttonStyle(.bordered)
+                    .buttonBorderShape(.capsule)
+                    .padding(.top, 2)
+                }
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
         }
-
-        let textStack = UIStackView(arrangedSubviews: textViews)
-        textStack.axis = .vertical
-        textStack.alignment = .leading
-        textStack.spacing = 6
-
-        let stepStack = UIStackView(arrangedSubviews: [numberLabel, textStack])
-        stepStack.axis = .horizontal
-        stepStack.alignment = .top
-        stepStack.spacing = 12
-        return stepStack
+        .padding(16)
+        .background(Color(uiColor: .secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 20, style: .continuous))
+        .accessibilityElement(children: .contain)
+        .accessibilityLabel(Text("Step \(step.id)"))
     }
 }

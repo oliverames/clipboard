@@ -33,6 +33,7 @@
 		BF8F76F3254CC0E0005AF18B /* SceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = BF8F76F2254CC0E0005AF18B /* SceneDelegate.swift */; };
 		BFA2DF60247DD21F00E31E4D /* Keyboard.swift in Sources */ = {isa = PBXBuildFile; fileRef = BF7E6FF0247C50540058F4D4 /* Keyboard.swift */; };
 		BFA2DF61247DD23800E31E4D /* ClippingCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = BF7E6FF2247C518D0058F4D4 /* ClippingCell.swift */; };
+		1534F35479BD3DE5F4E8CDC0 /* ClippingKind.swift in Sources */ = {isa = PBXBuildFile; fileRef = B2FADCF25BF963E6978C160F /* ClippingKind.swift */; };
 		BFA2DF6B247DE47900E31E4D /* Preview.swift in Sources */ = {isa = PBXBuildFile; fileRef = BFA2DF6A247DE47900E31E4D /* Preview.swift */; };
 		BFA714BA22C53F1700EE7236 /* ApplicationMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = BFA714B922C53F1700EE7236 /* ApplicationMonitor.swift */; };
 		BFAC49E022B40EC90011E7C4 /* AudioToolbox.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = BFAC49DF22B40EC90011E7C4 /* AudioToolbox.framework */; };
@@ -46,6 +47,7 @@
 		BFC177082399BC4F0058AC51 /* ClipboardReader.appex in Embed App Extensions */ = {isa = PBXBuildFile; fileRef = BFC176FC2399BC4F0058AC51 /* ClipboardReader.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		BFC1F39D22AF0D0E003AC21A /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = BFC1F39C22AF0D0E003AC21A /* AppDelegate.swift */; };
 		BFC1F39F22AF0D0E003AC21A /* HistoryViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = BFC1F39E22AF0D0E003AC21A /* HistoryViewController.swift */; };
+		B608FEF343DED0D9CEEE0474 /* HistoryItemViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B475E64A71F01F213A649CA /* HistoryItemViews.swift */; };
 		FE3D0E4E8567A67E142FE4F8 /* DemoClippings.swift in Sources */ = {isa = PBXBuildFile; fileRef = 966DC915B26815B583ECC79B /* DemoClippings.swift */; };
 		BFC1F3A222AF0D0E003AC21A /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = BFC1F3A022AF0D0E003AC21A /* Main.storyboard */; };
 		BFC1F3A422AF0D0F003AC21A /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = BFC1F3A322AF0D0F003AC21A /* Assets.xcassets */; };
@@ -67,6 +69,8 @@
 		BFC9E67C22B2CA4400974663 /* CFNotification+PasteboardListener.swift in Sources */ = {isa = PBXBuildFile; fileRef = BFC9E67B22B2CA4400974663 /* CFNotification+PasteboardListener.swift */; };
 		BFDB5B1E22EF7B5000F74113 /* GradientView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BFDB5B1D22EF7B5000F74113 /* GradientView.swift */; };
 		BFEF44AE2398693300095A92 /* ForwardingNavigationController.swift in Sources */ = {isa = PBXBuildFile; fileRef = BFEF44AB2398693300095A92 /* ForwardingNavigationController.swift */; };
+		E928A5DD595D5B76DAB08BD0 /* ReservedRegionHostingController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 94A4F19F830E721034BA7139 /* ReservedRegionHostingController.swift */; };
+		4A3CCA9F76E9E15155042434 /* Feedback.swift in Sources */ = {isa = PBXBuildFile; fileRef = BFBD9A9EAEE7117C11B2F729 /* Feedback.swift */; };
 		BFF9E4932555F4F40052B1B2 /* LocationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = BFF9E4922555F4F40052B1B2 /* LocationManager.swift */; };
 		D534428E2BAB202700E133EE /* ClippingsMapView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D534428D2BAB202700E133EE /* ClippingsMapView.swift */; };
 		D5D375152BAB330200213D84 /* ClippingSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = D5D375142BAB330200213D84 /* ClippingSheet.swift */; };
@@ -209,6 +213,7 @@
 		BF7E6FE4247C4FCD0058F4D4 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		BF7E6FF0247C50540058F4D4 /* Keyboard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Keyboard.swift; sourceTree = "<group>"; };
 		BF7E6FF2247C518D0058F4D4 /* ClippingCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClippingCell.swift; sourceTree = "<group>"; };
+		B2FADCF25BF963E6978C160F /* ClippingKind.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClippingKind.swift; sourceTree = "<group>"; };
 		BF8F76F2254CC0E0005AF18B /* SceneDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SceneDelegate.swift; sourceTree = "<group>"; };
 		BFA2DF6A247DE47900E31E4D /* Preview.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Preview.swift; sourceTree = "<group>"; };
 		BFA714B922C53F1700EE7236 /* ApplicationMonitor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ApplicationMonitor.swift; sourceTree = "<group>"; };
@@ -223,6 +228,7 @@
 		BFC1F39922AF0D0E003AC21A /* Clipboard.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Clipboard.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		BFC1F39C22AF0D0E003AC21A /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		BFC1F39E22AF0D0E003AC21A /* HistoryViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HistoryViewController.swift; sourceTree = "<group>"; };
+		9B475E64A71F01F213A649CA /* HistoryItemViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HistoryItemViews.swift; sourceTree = "<group>"; };
 		966DC915B26815B583ECC79B /* DemoClippings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DemoClippings.swift; sourceTree = "<group>"; };
 		BFC1F3A122AF0D0E003AC21A /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/Main.storyboard; sourceTree = "<group>"; };
 		BFC1F3A322AF0D0F003AC21A /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
@@ -237,6 +243,8 @@
 		BFC9E67B22B2CA4400974663 /* CFNotification+PasteboardListener.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "CFNotification+PasteboardListener.swift"; sourceTree = "<group>"; };
 		BFDB5B1D22EF7B5000F74113 /* GradientView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = GradientView.swift; sourceTree = "<group>"; };
 		BFEF44AB2398693300095A92 /* ForwardingNavigationController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ForwardingNavigationController.swift; sourceTree = "<group>"; };
+		94A4F19F830E721034BA7139 /* ReservedRegionHostingController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReservedRegionHostingController.swift; sourceTree = "<group>"; };
+		BFBD9A9EAEE7117C11B2F729 /* Feedback.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Feedback.swift; sourceTree = "<group>"; };
 		BFF9E4922555F4F40052B1B2 /* LocationManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocationManager.swift; sourceTree = "<group>"; };
 		D534428D2BAB202700E133EE /* ClippingsMapView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClippingsMapView.swift; sourceTree = "<group>"; };
 		D5D375142BAB330200213D84 /* ClippingSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClippingSheet.swift; sourceTree = "<group>"; };
@@ -398,6 +406,7 @@
 				BFA2DF6A247DE47900E31E4D /* Preview.swift */,
 				BF7E6FF0247C50540058F4D4 /* Keyboard.swift */,
 				BF7E6FF2247C518D0058F4D4 /* ClippingCell.swift */,
+				B2FADCF25BF963E6978C160F /* ClippingKind.swift */,
 				BFAD46CA249058DE00451D6F /* SwitchKeyboardButton.swift */,
 			);
 			path = SwiftUI;
@@ -415,6 +424,7 @@
 			children = (
 				4EB4BF6F75276895023EF239 /* ClippingDetailViewController.swift */,
 				BFC1F39E22AF0D0E003AC21A /* HistoryViewController.swift */,
+				9B475E64A71F01F213A649CA /* HistoryItemViews.swift */,
 				966DC915B26815B583ECC79B /* DemoClippings.swift */,
 			);
 			path = History;
@@ -542,6 +552,8 @@
 			children = (
 				BFDB5B1D22EF7B5000F74113 /* GradientView.swift */,
 				BFEF44AB2398693300095A92 /* ForwardingNavigationController.swift */,
+				94A4F19F830E721034BA7139 /* ReservedRegionHostingController.swift */,
+				BFBD9A9EAEE7117C11B2F729 /* Feedback.swift */,
 			);
 			path = Components;
 			sourceTree = "<group>";
@@ -851,6 +863,7 @@
 				BFA714BA22C53F1700EE7236 /* ApplicationMonitor.swift in Sources */,
 				BFDB5B1E22EF7B5000F74113 /* GradientView.swift in Sources */,
 				BFC1F39F22AF0D0E003AC21A /* HistoryViewController.swift in Sources */,
+				B608FEF343DED0D9CEEE0474 /* HistoryItemViews.swift in Sources */,
 				FE3D0E4E8567A67E142FE4F8 /* DemoClippings.swift in Sources */,
 				66F0BC5BEC0EE57370CE1096 /* ClippingDetailViewController.swift in Sources */,
 				4759DDA5D0700B3E5AA0CC63 /* ClipIntents.swift in Sources */,
@@ -863,6 +876,8 @@
 				6D2B8F3CAE404B71C9F2E5D8 /* UIScrollView+ReservedRegion.swift in Sources */,
 				BFC1F39D22AF0D0E003AC21A /* AppDelegate.swift in Sources */,
 				BFEF44AE2398693300095A92 /* ForwardingNavigationController.swift in Sources */,
+				E928A5DD595D5B76DAB08BD0 /* ReservedRegionHostingController.swift in Sources */,
+				4A3CCA9F76E9E15155042434 /* Feedback.swift in Sources */,
 				BF0BDE5622B456A600E1419D /* PasteboardItem+ActivityItemSource.swift in Sources */,
 				BFAD2C4A257AD4D600FF9532 /* PublishedPipeline.swift in Sources */,
 				BF0BDE5A22B4771300E1419D /* SettingsViewController.swift in Sources */,
@@ -882,6 +897,7 @@
 				BF235BC1247D8B5300CCFCB0 /* UIPasteboard+PasteboardItem.swift in Sources */,
 				BFAD46C92490588800451D6F /* UIInputView+Click.swift in Sources */,
 				BFA2DF61247DD23800E31E4D /* ClippingCell.swift in Sources */,
+				1534F35479BD3DE5F4E8CDC0 /* ClippingKind.swift in Sources */,
 				BFC9E66422B1B03C00974663 /* PasteboardItemRepresentation.swift in Sources */,
 				BFC9E66522B1B04000974663 /* Model.xcdatamodeld in Sources */,
 				BFAD46CB249058DE00451D6F /* SwitchKeyboardButton.swift in Sources */,

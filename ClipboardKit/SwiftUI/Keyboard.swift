@@ -34,6 +34,9 @@ public struct Keyboard: View
     @ScaledMetric(relativeTo: .title2)
     private var switchKeyboardButtonSize = 44.0
 
+    @State
+    private var feedbackTrigger = 0
+
     public init(inputViewController: UIInputViewController?,
                 needsInputModeSwitchKey: Bool? = nil,
                 hasFullAccess: Bool? = nil)
@@ -47,53 +50,38 @@ public struct Keyboard: View
         ZStack(alignment: .bottomLeading) {
             if !self.hasFullAccess
             {
-                VStack(spacing: 24) {
-                    VStack(spacing: 8) {
-                        Text("Full Access Disabled")
-                            .font(.title3.weight(.semibold))
+                ContentUnavailableView {
+                    Label("Full Access Is Off", systemImage: "lock.fill")
+                } description: {
+                    Text("To show your clippings here, turn on Allow Full Access for the Clipboard keyboard in Settings.")
+                } actions: {
+                    Button("Open Settings", action: self.openSettings)
+                        .buttonStyle(.glassProminent)
 
-                        Text("Allow Full Access for this keyboard in Settings to access saved clippings.")
-                            .font(.callout)
-                            .foregroundStyle(.secondary)
-                            .multilineTextAlignment(.center)
-                    }
-
-                    Button(action: self.openSettings) {
-                        Text("Open Settings")
-                    }
-                    .buttonStyle(.borderedProminent)
-
-                    Button(action: self.pasteUUID) {
-                        Text("Paste Random UUID")
-                    }
-                    .buttonStyle(.bordered)
+                    Button("Insert Random UUID", action: self.pasteUUID)
+                        .buttonStyle(.glass)
                 }
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .padding()
+                .scrollIndicators(.hidden)
             }
             else if self.pasteboardItems.isEmpty
             {
-                VStack(spacing: 8) {
-                    Text("No Clippings")
-                        .font(.title3.weight(.semibold))
-
-                    Text("Items that you've copied to the clipboard will appear here.")
-                        .font(.callout)
-                        .foregroundStyle(.secondary)
-                        .multilineTextAlignment(.center)
+                ContentUnavailableView {
+                    Label("No Clippings", systemImage: "doc.on.clipboard")
+                } description: {
+                    Text("Text you copy appears here, ready to insert.")
                 }
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .padding()
             }
             else
             {
                 List(self.pasteboardItems, id: \.objectID) { (pasteboardItem) in
-                    HStack(spacing: 8) {
+                    HStack(spacing: 4) {
                         Button(action: { self.paste(pasteboardItem) }) {
                             ClippingCell(pasteboardItem: pasteboardItem)
                                 .contentShape(Rectangle())
                         }
                         .buttonStyle(.plain)
+                        .accessibilityHint("Inserts this clipping.")
+                        .disabled(pasteboardItem.contentText == nil)
 
                         Button(action: { self.copy(pasteboardItem) }) {
                             Image(systemName: "doc.on.doc")
@@ -104,9 +92,17 @@ public struct Keyboard: View
                         .buttonStyle(.borderless)
                         .accessibilityLabel("Copy")
                     }
+                    .listRowBackground(Color.clear)
+                    .contextMenu {
+                        Button("Insert", systemImage: "text.insert") { self.paste(pasteboardItem) }
+                            .disabled(pasteboardItem.contentText == nil)
+                        Button("Copy", systemImage: "doc.on.doc") { self.copy(pasteboardItem) }
+                    }
                 }
                 .listStyle(.plain)
                 .scrollContentBackground(.hidden)
+                // Keeps the last row clear of the floating globe button.
+                .contentMargins(.bottom, self.needsInputModeSwitchKey ? self.switchKeyboardButtonSize + 16 : 0, for: .scrollContent)
                 // Only the scrolling list extends under the bottom edge. Horizontal safe area stays honored
                 // so row content (including the trailing Copy button) clears any reserved region on iPhone Duo.
                 .ignoresSafeArea(.container, edges: .bottom)
@@ -121,11 +117,13 @@ public struct Keyboard: View
                 SwitchKeyboardButton(inputViewController: self.inputViewController,
                                      configuration: .init(textStyle: .title2))
                     .frame(width: self.switchKeyboardButtonSize, height: self.switchKeyboardButtonSize)
-                    .glassEffect(.regular, in: .circle)
+                    .glassEffect(.regular.interactive(), in: .circle)
+                    .accessibilityLabel("Next Keyboard")
                     .padding(.leading, margin)
                     .padding(.bottom, margin)
             }
         }
+        .sensoryFeedback(.success, trigger: self.feedbackTrigger)
     }
 }
 
@@ -146,6 +144,7 @@ private extension Keyboard
         CFNotificationCenterPostNotification(center, .ignoreNextPasteboardChange, nil, nil, true)
 
         UIPasteboard.general.copy(pasteboardItem)
+        self.feedbackTrigger += 1
     }
 
     func pasteUUID()

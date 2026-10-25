@@ -2,8 +2,13 @@
 //  ClippingDetailViewController.swift
 //  Clipboard
 //
+//  One clipping, full size, with its metadata, in the spirit of Pastebot's detail window.
+//  Copy leads the bottom toolbar; favorite and pin toggle from the navigation bar.
+//
 
 import UIKit
+import SwiftUI
+import CoreLocation
 
 import ClipboardKit
 
@@ -11,16 +16,12 @@ class ClippingDetailViewController: UIViewController
 {
     private let pasteboardItem: PasteboardItem
 
-    private let contentMargin: CGFloat = 20
-
-    private weak var scrollView: UIScrollView?
-    private var contentLeftConstraint: NSLayoutConstraint?
-    private var contentRightConstraint: NSLayoutConstraint?
-
     init(pasteboardItem: PasteboardItem)
     {
         self.pasteboardItem = pasteboardItem
         super.init(nibName: nil, bundle: nil)
+
+        self.hidesBottomBarWhenPushed = true
     }
 
     required init?(coder: NSCoder)
@@ -32,286 +33,420 @@ class ClippingDetailViewController: UIViewController
     {
         super.viewDidLoad()
 
-        self.view.backgroundColor = .systemBackground
+        self.view.backgroundColor = .systemGroupedBackground
         self.navigationItem.largeTitleDisplayMode = .never
 
-        // Actions sit in the top bar, as in Pastebot's detail window, rather than in a bottom toolbar.
-        // Each item has a title as well as a symbol: the symbol shows in the bar, and the title appears in the
-        // overflow menu when the bar runs out of room, as on iPhone Duo. Copy is the main action, so it overflows last.
-        let shareButton = UIBarButtonItem(title: NSLocalizedString("Share", comment: ""), image: UIImage(systemName: "square.and.arrow.up"), target: self, action: #selector(ClippingDetailViewController.shareItem(_:)), menu: nil)
-        let copyButton = UIBarButtonItem(title: NSLocalizedString("Copy", comment: ""), image: UIImage(systemName: "doc.on.doc"), target: self, action: #selector(ClippingDetailViewController.copyItem(_:)), menu: nil)
-        copyButton.visibilityPriority = .high
+        // The SwiftUI content is a child, so the hosting controller doesn't take over this screen's UIKit toolbar.
+        let hostingController = ReservedRegionHostingController(rootView: ClippingDetailView(item: self.pasteboardItem))
+        hostingController.view.backgroundColor = .clear
+        self.addChild(hostingController)
+        hostingController.view.frame = self.view.bounds
+        hostingController.view.autoresizingMask = [.flexibleWidth, .flexibleHeight]
+        self.view.addSubview(hostingController.view)
+        hostingController.didMove(toParent: self)
 
-        var barButtonItems = [shareButton]
-
-        if let copyAsMenu = self.pasteboardItem.makeCopyAsMenu()
-        {
-            let copyAsButton = UIBarButtonItem(title: NSLocalizedString("Copy As", comment: ""), image: UIImage(systemName: "textformat.abc"), target: nil, action: nil, menu: copyAsMenu)
-            copyAsButton.visibilityPriority = .low
-            barButtonItems.append(copyAsButton)
-        }
-
-        barButtonItems.append(copyButton)
-        self.navigationItem.rightBarButtonItems = barButtonItems
-
-        let contentStack = UIStackView(arrangedSubviews: self.makeContentViews())
-        contentStack.axis = .vertical
-        contentStack.spacing = 24
-        contentStack.translatesAutoresizingMaskIntoConstraints = false
-
-        let scrollView = UIScrollView()
-        scrollView.alwaysBounceVertical = true
-        scrollView.translatesAutoresizingMaskIntoConstraints = false
-        scrollView.addSubview(contentStack)
-        self.view.addSubview(scrollView)
-
-        // The frame layout guide ignores insets, so the side margins are constants that viewDidLayoutSubviews()
-        // widens to clear the safe area and any region the system reserves along a side.
-        let contentLeftConstraint = contentStack.leftAnchor.constraint(equalTo: scrollView.frameLayoutGuide.leftAnchor, constant: self.contentMargin)
-        let contentRightConstraint = contentStack.rightAnchor.constraint(equalTo: scrollView.frameLayoutGuide.rightAnchor, constant: -self.contentMargin)
-
-        NSLayoutConstraint.activate([
-            scrollView.topAnchor.constraint(equalTo: self.view.topAnchor),
-            scrollView.bottomAnchor.constraint(equalTo: self.view.bottomAnchor),
-            scrollView.leadingAnchor.constraint(equalTo: self.view.leadingAnchor),
-            scrollView.trailingAnchor.constraint(equalTo: self.view.trailingAnchor),
-
-            contentStack.topAnchor.constraint(equalTo: scrollView.contentLayoutGuide.topAnchor, constant: 16),
-            contentStack.bottomAnchor.constraint(equalTo: scrollView.contentLayoutGuide.bottomAnchor, constant: -24),
-            contentLeftConstraint,
-            contentRightConstraint
-        ])
-
-        self.scrollView = scrollView
-        self.contentLeftConstraint = contentLeftConstraint
-        self.contentRightConstraint = contentRightConstraint
+        self.updateBarItems()
     }
 
-    override func viewDidLayoutSubviews()
+    override func viewWillAppear(_ animated: Bool)
     {
-        super.viewDidLayoutSubviews()
+        super.viewWillAppear(animated)
+        self.navigationController?.setToolbarHidden(false, animated: animated)
+    }
 
-        guard let scrollView = self.scrollView else { return }
-
-        // Read at layout time, per physical edge: either side can carry a bar, and the two values are unrelated.
-        let clearance = scrollView.sideClearanceForFrameGuideContent()
-
-        if self.contentLeftConstraint?.constant != self.contentMargin + clearance.left
-        {
-            self.contentLeftConstraint?.constant = self.contentMargin + clearance.left
-        }
-
-        if self.contentRightConstraint?.constant != -(self.contentMargin + clearance.right)
-        {
-            self.contentRightConstraint?.constant = -(self.contentMargin + clearance.right)
-        }
+    override func viewWillDisappear(_ animated: Bool)
+    {
+        super.viewWillDisappear(animated)
+        self.navigationController?.setToolbarHidden(true, animated: animated)
     }
 }
 
 private extension ClippingDetailViewController
 {
-    func makeContentViews() -> [UIView]
-    {
-        var views: [UIView] = [self.makeHeaderView()]
+    var isTrashed: Bool { self.pasteboardItem.trashedDate != nil }
 
-        if let image = self.pasteboardItem.preferredRepresentation?.imageValue
+    func updateBarItems()
+    {
+        let item = self.pasteboardItem
+
+        // Every item has a title: it shows in the overflow menu when the bar runs out of room, as on iPhone Duo.
+        if self.isTrashed
         {
-            views.append(self.makeImageView(image))
-            views.append(self.makeMetadataCapsule())
+            self.navigationItem.rightBarButtonItems = []
         }
         else
         {
-            views.append(self.makeTextView())
-            views.append(self.makeMetadataView())
+            let favoriteButton = UIBarButtonItem(title: item.isFavorite ? NSLocalizedString("Remove from Favorites", comment: "") : NSLocalizedString("Add to Favorites", comment: ""),
+                                                 image: UIImage(systemName: item.isFavorite ? "star.fill" : "star"),
+                                                 primaryAction: UIAction { [weak self] _ in self?.toggleFavorite() })
+            favoriteButton.tintColor = item.isFavorite ? .systemYellow : nil
+
+            let pinButton = UIBarButtonItem(title: item.isPinned ? NSLocalizedString("Unpin", comment: "") : NSLocalizedString("Pin to Top", comment: ""),
+                                            image: UIImage(systemName: item.isPinned ? "pin.fill" : "pin"),
+                                            primaryAction: UIAction { [weak self] _ in self?.togglePin() })
+            pinButton.tintColor = item.isPinned ? .systemOrange : nil
+
+            self.navigationItem.rightBarButtonItems = [favoriteButton, pinButton]
         }
 
-        return views
-    }
+        let copyButton = UIBarButtonItem(title: NSLocalizedString("Copy", comment: ""), image: UIImage(systemName: "doc.on.doc"), primaryAction: UIAction(title: NSLocalizedString("Copy", comment: "")) { [weak self] _ in
+            self?.copyItem()
+        })
+        copyButton.style = .prominent
+        copyButton.visibilityPriority = .high
 
-    func makeHeaderView() -> UIView
-    {
-        let symbolName = self.pasteboardItem.preferredRepresentation?.type.symbolName ?? "doc"
+        let shareButton = UIBarButtonItem(title: NSLocalizedString("Share", comment: ""), image: UIImage(systemName: "square.and.arrow.up"), target: self, action: #selector(ClippingDetailViewController.shareItem(_:)), menu: nil)
 
-        let iconView = UIImageView(image: UIImage(systemName: symbolName))
-        iconView.tintColor = .secondaryLabel
-        iconView.contentMode = .center
-        iconView.backgroundColor = .tertiarySystemFill
-        iconView.layer.cornerRadius = 22
-        iconView.clipsToBounds = true
-        iconView.translatesAutoresizingMaskIntoConstraints = false
-        NSLayoutConstraint.activate([
-            iconView.widthAnchor.constraint(equalToConstant: 44),
-            iconView.heightAnchor.constraint(equalToConstant: 44)
-        ])
+        var items = [UIBarButtonItem]()
 
-        let titleText = self.pasteboardItem.preferredRepresentation?.type.localizedName ?? NSLocalizedString("Clipping", comment: "")
-        let titleLabel = self.makeLabel(titleText, font: self.scaledFont(.title2, weight: .bold))
-        let dateLabel = self.makeLabel(self.pasteboardItem.date.formatted(date: .abbreviated, time: .shortened), font: .preferredFont(forTextStyle: .footnote), color: .secondaryLabel)
-
-        let titlesStack = UIStackView(arrangedSubviews: [titleLabel, dateLabel])
-        titlesStack.axis = .vertical
-        titlesStack.alignment = .leading
-        titlesStack.spacing = 2
-
-        let headerStack = UIStackView(arrangedSubviews: [iconView, titlesStack])
-        headerStack.axis = .horizontal
-        headerStack.alignment = .center
-        headerStack.spacing = 12
-        return headerStack
-    }
-
-    func makeTextView() -> UIView
-    {
-        let textView = UITextView()
-        textView.isEditable = false
-        textView.isScrollEnabled = false
-        textView.backgroundColor = .clear
-        textView.textContainerInset = .zero
-        textView.textContainer.lineFragmentPadding = 0
-        textView.adjustsFontForContentSizeCategory = true
-        textView.dataDetectorTypes = [.link]
-
-        if let attributedText = self.pasteboardItem.preferredRepresentation?.attributedStringValue
+        if self.isTrashed
         {
-            textView.attributedText = attributedText
+            let restoreButton = UIBarButtonItem(title: NSLocalizedString("Restore", comment: ""), image: UIImage(systemName: "arrow.uturn.backward"), primaryAction: UIAction { [weak self] _ in
+                self?.restoreItem()
+            })
+            items = [restoreButton, .flexibleSpace(), shareButton, copyButton]
         }
         else
         {
-            textView.font = .preferredFont(forTextStyle: .body)
-            textView.text = self.pasteboardItem.contentText
-        }
+            let trashButton = UIBarButtonItem(title: NSLocalizedString("Move to Trash", comment: ""), image: UIImage(systemName: "trash"), primaryAction: UIAction { [weak self] _ in
+                self?.trashItem()
+            })
+            trashButton.visibilityPriority = .low
 
-        return textView
-    }
+            items = [trashButton, .flexibleSpace(), shareButton]
 
-    func makeImageView(_ image: UIImage) -> UIView
-    {
-        let imageView = UIImageView(image: image)
-        imageView.contentMode = .scaleAspectFit
-        imageView.layer.cornerRadius = 16
-        imageView.clipsToBounds = true
-        imageView.translatesAutoresizingMaskIntoConstraints = false
-        NSLayoutConstraint.activate([
-            imageView.heightAnchor.constraint(equalTo: imageView.widthAnchor, multiplier: image.size.height / image.size.width)
-        ])
-
-        return imageView
-    }
-
-    /// Image metadata sits in a glass capsule beneath the image, as Pastebot's image clippings do.
-    func makeMetadataCapsule() -> UIView
-    {
-        // The glass shapes itself from the corner configuration, so the view isn't clipped. It stays a capsule while
-        // the metadata is short and keeps a 20 point radius once the rows wrap.
-        let effectView = UIVisualEffectView(effect: UIGlassEffect())
-        effectView.cornerConfiguration = .capsule(maximumRadius: 20)
-
-        let metadataView = self.makeMetadataView()
-        metadataView.translatesAutoresizingMaskIntoConstraints = false
-        effectView.contentView.addSubview(metadataView)
-
-        NSLayoutConstraint.activate([
-            metadataView.topAnchor.constraint(equalTo: effectView.contentView.layoutMarginsGuide.topAnchor),
-            metadataView.bottomAnchor.constraint(equalTo: effectView.contentView.layoutMarginsGuide.bottomAnchor),
-            metadataView.leadingAnchor.constraint(equalTo: effectView.contentView.layoutMarginsGuide.leadingAnchor),
-            metadataView.trailingAnchor.constraint(equalTo: effectView.contentView.layoutMarginsGuide.trailingAnchor)
-        ])
-
-        effectView.contentView.layoutMargins = UIEdgeInsets(top: 16, left: 16, bottom: 16, right: 16)
-        return effectView
-    }
-
-    /// Labels sit in a right-aligned column, and values follow them, as in Pastebot's metadata panel.
-    func makeMetadataView() -> UIView
-    {
-        // Every label column takes the width of the widest label, so the column follows Dynamic Type and the
-        // available width instead of a fixed number.
-        var firstTitleLabel: UILabel?
-
-        let rows: [UIView] = self.makeDetails().map { detail in
-            let titleLabel = self.makeLabel(detail.title + ":", font: self.scaledFont(.footnote, weight: .semibold), color: .secondaryLabel)
-            titleLabel.textAlignment = .right
-            titleLabel.setContentHuggingPriority(.defaultHigh, for: .horizontal)
-            titleLabel.setContentCompressionResistancePriority(.required, for: .horizontal)
-
-            if let firstTitleLabel
+            if let copyAsMenu = item.makeCopyAsMenu(onCopy: { [weak self] in self?.confirm() })
             {
-                titleLabel.widthAnchor.constraint(equalTo: firstTitleLabel.widthAnchor).isActive = true
-            }
-            else
-            {
-                firstTitleLabel = titleLabel
+                let copyAsButton = UIBarButtonItem(title: NSLocalizedString("Copy As", comment: ""), image: UIImage(systemName: "wand.and.sparkles"), target: nil, action: nil, menu: copyAsMenu)
+                items.append(copyAsButton)
             }
 
-            let valueLabel = self.makeLabel(detail.value, font: .preferredFont(forTextStyle: .footnote), color: .secondaryLabel)
-
-            let rowStack = UIStackView(arrangedSubviews: [titleLabel, valueLabel])
-            rowStack.axis = .horizontal
-            rowStack.alignment = .top
-            rowStack.spacing = 12
-            return rowStack
+            items.append(copyButton)
         }
 
-        let metadataStack = UIStackView(arrangedSubviews: rows)
-        metadataStack.axis = .vertical
-        metadataStack.alignment = .leading
-        metadataStack.spacing = 8
-        return metadataStack
+        self.setToolbarItems(items, animated: false)
     }
 
-    func makeLabel(_ text: String, font: UIFont, color: UIColor = .label) -> UILabel
+    func save()
     {
-        let label = UILabel()
-        label.text = text
-        label.font = font
-        label.textColor = color
-        label.adjustsFontForContentSizeCategory = true
-        label.numberOfLines = 0
-        return label
+        let context = DatabaseManager.shared.persistentContainer.viewContext
+        guard context.hasChanges else { return }
+
+        do
+        {
+            try context.save()
+        }
+        catch
+        {
+            let alertController = UIAlertController(title: NSLocalizedString("Couldn't Save Changes", comment: ""), message: error.localizedDescription, preferredStyle: .alert)
+            alertController.addAction(.ok)
+            self.present(alertController, animated: true)
+        }
     }
 
-    func scaledFont(_ style: UIFont.TextStyle, weight: UIFont.Weight = .regular) -> UIFont
+    func copyItem()
     {
-        return UIFontMetrics(forTextStyle: style).scaledFont(for: .systemFont(ofSize: UIFont.preferredFont(forTextStyle: style).pointSize, weight: weight))
+        UIPasteboard.general.copy(self.pasteboardItem)
+        self.confirm()
     }
 
-    func makeDetails() -> [(title: String, value: String)]
+    func toggleFavorite()
     {
-        let representation = self.pasteboardItem.preferredRepresentation
+        self.pasteboardItem.isFavorite.toggle()
+        self.save()
+        Haptics.selection()
+        self.updateBarItems()
+    }
+
+    func togglePin()
+    {
+        self.pasteboardItem.isPinned.toggle()
+        self.save()
+        Haptics.selection()
+        self.updateBarItems()
+    }
+
+    func trashItem()
+    {
+        self.pasteboardItem.trashedDate = Date()
+        self.save()
+        Haptics.impact()
+        self.navigationController?.popViewController(animated: true)
+    }
+
+    func restoreItem()
+    {
+        self.pasteboardItem.trashedDate = nil
+        self.save()
+        Haptics.success()
+        self.navigationController?.popViewController(animated: true)
+    }
+
+    @objc func shareItem(_ sender: UIBarButtonItem)
+    {
+        let activityViewController = UIActivityViewController(activityItems: [self.pasteboardItem], applicationActivities: nil)
+        activityViewController.popoverPresentationController?.sourceItem = sender
+        self.present(activityViewController, animated: true)
+    }
+}
+
+// MARK: - Content
+
+struct ClippingDetailView: View
+{
+    @ObservedObject var item: PasteboardItem
+    @ObservedObject private var linkPreviews = LinkPreviewStore.shared
+
+    @Environment(\.dynamicTypeSize)
+    private var dynamicTypeSize
+
+    @ScaledMetric(relativeTo: .title2)
+    private var tileSize = 52.0
+
+    @State
+    private var placeName: String?
+
+    /// SwiftUI lays out all of a Text at once, so very long clippings show their start and say so.
+    private static let displayLimit = 20_000
+
+    var body: some View {
+        let kind = ClippingKind(self.item)
+
+        ScrollView {
+            VStack(alignment: .leading, spacing: 20) {
+                self.header(kind: kind)
+                self.content(kind: kind)
+                self.metadata(kind: kind)
+            }
+            .padding(.horizontal, 20)
+            .padding(.vertical, 16)
+            .frame(maxWidth: 720)
+            .frame(maxWidth: .infinity)
+        }
+        .background(Color(uiColor: .systemGroupedBackground))
+        .task {
+            await self.lookUpPlace()
+        }
+    }
+
+    // MARK: Header
+
+    @ViewBuilder
+    private func header(kind: ClippingKind) -> some View {
+        let layout = self.dynamicTypeSize.isAccessibilitySize ? AnyLayout(VStackLayout(alignment: .leading, spacing: 10)) : AnyLayout(HStackLayout(spacing: 14))
+
+        layout {
+            ClippingTile(kind: kind, icon: self.item.linkURL.flatMap { self.linkPreviews.preview(for: $0)?.icon })
+                .frame(width: self.tileSize, height: self.tileSize)
+
+            VStack(alignment: .leading, spacing: 2) {
+                Text(kind.title)
+                    .font(.title2.bold())
+
+                Text(self.item.date.formatted(date: .complete, time: .shortened))
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+            }
+        }
+        .accessibilityElement(children: .combine)
+    }
+
+    // MARK: Content
+
+    @ViewBuilder
+    private func content(kind: ClippingKind) -> some View {
+        if let image = self.item.preferredRepresentation?.imageValue
+        {
+            Image(uiImage: image)
+                .resizable()
+                .scaledToFit()
+                .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
+                .overlay {
+                    RoundedRectangle(cornerRadius: 20, style: .continuous)
+                        .strokeBorder(Color(uiColor: .separator).opacity(0.5), lineWidth: 0.5)
+                }
+                .frame(maxWidth: .infinity)
+                .accessibilityLabel(Text("Image"))
+        }
+        else if let link = self.item.linkURL
+        {
+            let preview = self.linkPreviews.preview(for: link)
+
+            VStack(alignment: .leading, spacing: 12) {
+                if let title = preview?.title
+                {
+                    Text(title)
+                        .font(.headline)
+                }
+
+                Text(link.absoluteString)
+                    .font(.callout)
+                    .foregroundStyle(.secondary)
+                    .textSelection(.enabled)
+
+                Link(destination: link) {
+                    Label("Open in Browser", systemImage: "safari")
+                        .frame(maxWidth: .infinity)
+                }
+                .buttonStyle(.bordered)
+                .buttonBorderShape(.capsule)
+            }
+            .padding(16)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(Color(uiColor: .secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 20, style: .continuous))
+        }
+        else
+        {
+            VStack(alignment: .leading, spacing: 10) {
+                if kind.isCode
+                {
+                    // Code keeps its line structure; long lines scroll sideways instead of wrapping.
+                    ScrollView(.horizontal) {
+                        self.text(kind: kind)
+                            .textSelection(.enabled)
+                            .fixedSize(horizontal: true, vertical: false)
+                    }
+                    .scrollIndicators(.automatic)
+                }
+                else
+                {
+                    self.text(kind: kind)
+                        .textSelection(.enabled)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                }
+
+                if (self.item.contentText?.count ?? 0) > Self.displayLimit
+                {
+                    Text("Showing the first 20,000 characters. Copy includes everything.")
+                        .font(.footnote)
+                        .foregroundStyle(.secondary)
+                }
+            }
+            .padding(16)
+            .background(Color(uiColor: .secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 20, style: .continuous))
+        }
+    }
+
+    private func text(kind: ClippingKind) -> Text
+    {
+        if kind == .richText, let attributedText = self.item.preferredRepresentation?.attributedStringValue,
+           attributedText.length <= Self.displayLimit,
+           var styled = try? AttributedString(attributedText, including: \.uiKit)
+        {
+            // Keep the clipping's own styling, but in colors that read in both light and dark mode.
+            styled.uiKit.foregroundColor = nil
+            styled.uiKit.backgroundColor = nil
+            return Text(styled).foregroundColor(.primary)
+        }
+
+        let text = String((self.item.contentText ?? "").prefix(Self.displayLimit))
+        return Text(text).font(kind.isCode ? .callout.monospaced() : .body)
+    }
+
+    // MARK: Metadata
+
+    @ViewBuilder
+    private func metadata(kind: ClippingKind) -> some View {
+        let rows = self.details(kind: kind)
+
+        VStack(alignment: .leading, spacing: 0) {
+            ForEach(Array(rows.enumerated()), id: \.offset) { (index, row) in
+                MetadataRow(title: row.title, value: row.value)
+
+                if index < rows.count - 1
+                {
+                    Divider().padding(.leading, 16)
+                }
+            }
+        }
+        .background(Color(uiColor: .secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 20, style: .continuous))
+    }
+
+    private func details(kind: ClippingKind) -> [(title: String, value: String)]
+    {
+        let representation = self.item.preferredRepresentation
 
         var details = [(title: String, value: String)]()
-        details.append((NSLocalizedString("Kind", comment: ""), representation?.type.localizedName ?? NSLocalizedString("Unknown", comment: "")))
+        details.append((NSLocalizedString("Kind", comment: ""), kind.title))
 
-        if representation?.type != .image, let text = self.pasteboardItem.contentText
+        if representation?.type != .image, let text = self.item.contentText
         {
-            details.append((NSLocalizedString("Characters", comment: ""), "\(text.count)"))
+            let words = text.split(whereSeparator: { $0.isWhitespace || $0.isNewline }).count
+            details.append((NSLocalizedString("Characters", comment: ""), text.count.formatted()))
+            details.append((NSLocalizedString("Words", comment: ""), words.formatted()))
             details.append((NSLocalizedString("Size", comment: ""), ByteCountFormatter.string(fromByteCount: Int64(text.utf8.count), countStyle: .file)))
         }
 
         if let image = representation?.imageValue
         {
             details.append((NSLocalizedString("Dimensions", comment: ""), "\(Int(image.size.width * image.scale)) × \(Int(image.size.height * image.scale))"))
+
+            if let data = representation?.dataValue
+            {
+                details.append((NSLocalizedString("Size", comment: ""), ByteCountFormatter.string(fromByteCount: Int64(data.count), countStyle: .file)))
+            }
         }
 
-        details.append((NSLocalizedString("Date", comment: ""), self.pasteboardItem.date.formatted(date: .abbreviated, time: .shortened)))
+        details.append((NSLocalizedString("Copied", comment: ""), self.item.date.formatted(date: .abbreviated, time: .shortened)))
 
-        if let host = self.pasteboardItem.linkURL?.host
+        if let host = self.item.linkURL?.host()
         {
             details.append((NSLocalizedString("Source", comment: ""), host))
+        }
+
+        if !self.item.lists.isEmpty
+        {
+            let names = self.item.lists.map(\.name).sorted { $0.localizedStandardCompare($1) == .orderedAscending }
+            details.append((NSLocalizedString("Lists", comment: ""), names.formatted(.list(type: .and))))
+        }
+
+        if self.item.location != nil
+        {
+            details.append((NSLocalizedString("Location", comment: ""), self.placeName ?? NSLocalizedString("Tagged", comment: "")))
         }
 
         return details
     }
 
-    @objc func copyItem(_ sender: UIBarButtonItem)
+    private func lookUpPlace() async
     {
-        UIPasteboard.general.copy(self.pasteboardItem)
-    }
+        guard let location = self.item.location, self.placeName == nil else { return }
 
-    @objc func shareItem(_ sender: UIBarButtonItem)
-    {
-        let activityViewController = UIActivityViewController(activityItems: [self.pasteboardItem], applicationActivities: nil)
-        activityViewController.popoverPresentationController?.barButtonItem = sender
-        self.present(activityViewController, animated: true)
+        // The location isn't precise, so name the town rather than a street address.
+        guard let placemark = try? await CLGeocoder().reverseGeocodeLocation(location).first else { return }
+        self.placeName = [placemark.locality, placemark.administrativeArea].compactMap { $0 }.joined(separator: ", ")
+    }
+}
+
+/// A label and value. They sit side by side until text gets large, then the value moves under its label.
+private struct MetadataRow: View
+{
+    var title: String
+    var value: String
+
+    @Environment(\.dynamicTypeSize)
+    private var dynamicTypeSize
+
+    var body: some View {
+        let layout = self.dynamicTypeSize.isAccessibilitySize ? AnyLayout(VStackLayout(alignment: .leading, spacing: 2)) : AnyLayout(HStackLayout(alignment: .firstTextBaseline, spacing: 12))
+
+        layout {
+            Text(self.title)
+                .foregroundStyle(.secondary)
+
+            if !self.dynamicTypeSize.isAccessibilitySize
+            {
+                Spacer(minLength: 8)
+            }
+
+            Text(self.value)
+                .layoutPriority(1)
+                .multilineTextAlignment(self.dynamicTypeSize.isAccessibilitySize ? .leading : .trailing)
+                .textSelection(.enabled)
+        }
+        .font(.subheadline)
+        .padding(.horizontal, 16)
+        .padding(.vertical, 11)
+        .accessibilityElement(children: .combine)
     }
 }
