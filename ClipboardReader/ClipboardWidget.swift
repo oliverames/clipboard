@@ -51,23 +51,102 @@ struct ClipboardWidgetView: View
 {
     var entry: ClipboardEntry
 
+    @Environment(\.widgetFamily)
+    private var family
+
+    @Environment(\.widgetRenderingMode)
+    private var renderingMode
+
+    private static let amber = Color(red: 0.95, green: 0.55, blue: 0.15)
+
     var body: some View
     {
-        VStack(alignment: .leading, spacing: 4) {
-            Image(systemName: "doc.on.clipboard")
-                .font(.title2)
-            Text("\(entry.count)")
-                .font(.title2.bold())
+        Group {
+            switch self.family
+            {
+            case .systemMedium: self.mediumBody
+            default: self.smallBody
+            }
+        }
+        .containerBackground(for: .widget) {
+            // A warm wash matching the app icon in full color; the system supplies glass in tinted and clear modes.
+            LinearGradient(colors: [Self.amber.opacity(0.22), Self.amber.opacity(0.06)], startPoint: .top, endPoint: .bottom)
+        }
+    }
+
+    private var badge: some View
+    {
+        Image(systemName: "doc.on.clipboard.fill")
+            .font(.title3.weight(.semibold))
+            .foregroundStyle(self.renderingMode == .fullColor ? Self.amber : .primary)
+            .widgetAccentable()
+            .accessibilityHidden(true)
+    }
+
+    private var count: some View
+    {
+        VStack(alignment: .leading, spacing: 0) {
+            Text(self.entry.count, format: .number)
+                .font(.system(.largeTitle, design: .rounded).weight(.bold))
+                .contentTransition(.numericText())
                 .minimumScaleFactor(0.5)
                 .lineLimit(1)
-            Text("clippings")
-                .font(.caption)
+
+            Text(self.entry.count == 1 ? "Clipping" : "Clippings")
+                .font(.subheadline.weight(.medium))
                 .foregroundStyle(.secondary)
+                .lineLimit(1)
+        }
+        .accessibilityElement(children: .combine)
+    }
+
+    private var smallBody: some View
+    {
+        VStack(alignment: .leading) {
+            self.badge
+            Spacer(minLength: 4)
+            self.count
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
-        .padding()
-        .containerBackground(.fill.tertiary, for: .widget)
     }
+
+    private var mediumBody: some View
+    {
+        HStack(alignment: .top, spacing: 16) {
+            self.smallBody
+
+            VStack(alignment: .leading, spacing: 6) {
+                Label("Saving copies", systemImage: "checkmark.circle.fill")
+                    .font(.subheadline.weight(.semibold))
+                    .widgetAccentable()
+
+                Text("Copies you make while Clipboard is closed are saved to your history.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .lineLimit(3)
+
+                Spacer(minLength: 0)
+
+                Text("Updated \(self.entry.date, style: .relative) ago")
+                    .font(.caption2)
+                    .foregroundStyle(.tertiary)
+                    .lineLimit(1)
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+        }
+    }
+}
+
+#Preview("Small", as: .systemSmall) {
+    ClipboardWidget()
+} timeline: {
+    ClipboardEntry(date: .now, count: 24)
+}
+
+#Preview("Medium", as: .systemMedium) {
+    ClipboardWidget()
+} timeline: {
+    ClipboardEntry(date: .now.addingTimeInterval(-300), count: 24)
 }
 
 @main
