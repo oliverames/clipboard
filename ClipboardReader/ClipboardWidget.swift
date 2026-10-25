@@ -129,10 +129,30 @@ final class ClipboardStore
         UserDefaults.shared.registerAppDefaults()
 
         let pasteboard = UIPasteboard.general
+        let changeCount = pasteboard.changeCount
+
+        CaptureLedger.shared.record(.widgetRan, changeCount: changeCount)
+
         guard !pasteboard.items.isEmpty else
         {
             self.isCapturing = false
             return
+        }
+
+        // Idempotent by change count: if this copy was already saved (by a previous
+        // widget run, or by the app itself), don't read or write it again.
+        guard ChangeCountGate.shouldProcess(changeCount, lastHandled: UserDefaults.shared.lastSavedChangeCount) else
+        {
+            CaptureLedger.shared.record(.duplicate, changeCount: changeCount, note: "change count already handled")
+            self.isCapturing = false
+            return
+        }
+
+        // The store loads asynchronously. A copy that arrives before it is ready
+        // waits for it here rather than being dropped.
+        if !DatabaseManager.shared.isStarted
+        {
+            CaptureLedger.shared.record(.storeWaited, changeCount: changeCount)
         }
 
         DatabaseManager.shared.persistentContainer.shouldAddStoresAsynchronously = true
@@ -141,10 +161,24 @@ final class ClipboardStore
             {
             case .failure:
                 NSLog("ClipboardReader: Failed to prepare the database.")
+                CaptureLedger.shared.record(.storeUnavailable, changeCount: changeCount)
                 self.isCapturing = false
 
             case .success:
                 DatabaseManager.shared.savePasteboard(location: nil) { (result) in
+                    switch result
+                    {
+                    case .success:
+                        UserDefaults.shared.lastSavedChangeCount = changeCount
+                        CaptureLedger.shared.record(.saved, changeCount: changeCount)
+                    case .failure(PasteboardError.duplicateItem):
+                        // Same content as the last clipping: mark this change count
+                        // handled so later widget runs stop retrying it.
+                        UserDefaults.shared.lastSavedChangeCount = changeCount
+                        CaptureLedger.shared.record(.duplicate, changeCount: changeCount)
+                    case .failure(let error):
+                        CaptureLedger.shared.record(.storeUnavailable, changeCount: changeCount, note: String(describing: error))
+                    }
                     NSLog("ClipboardReader: Saved pasteboard: %@", String(describing: result))
                     self.isCapturing = false
                 }

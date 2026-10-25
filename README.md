@@ -134,7 +134,7 @@ The Core Data model has three entities. `PasteboardItem` holds each clipping, wi
 
 ## Status
 
-Everything listed under Features is implemented. Background capture is handled by the notification service extension, and foreground capture by a direct read through the private `Pasteboard.framework` interface. Both are verified on a physical iPhone.
+Everything listed under Features is implemented. Background capture is handled by the widget extension, which the system launches on demand, and foreground capture by a direct read through the private `Pasteboard.framework` interface. Capture is instrumented by a content-free ledger (Settings ▸ Diagnostics shows the miss rate), and the widget's read is deduplicated by pasteboard change count. Capture survives the app being suspended and being terminated by the system for memory; a user force-quit (swipe away in the App Switcher) is the hard limit that every third-party clipboard manager hits, because iOS reserves background pasteboard access to Apple-signed code and system-launched extensions. The full write-up, including the first-party entitlement route and why AMFI blocks it for a developer-signed build, is in [docs/ios-pasteboard-background-access.md](docs/ios-pasteboard-background-access.md).
 
 **Planned:** iCloud sync. It needs an iCloud container and a Core Data model that CloudKit can sync. Clipboard doesn't sync between devices yet.
 

@@ -25,8 +25,8 @@ typedef void (^PasteboardDaemonReaderCompletion)(NSArray<NSDictionary<NSString *
 /// This only works while the app is in the foreground. The pasteboard server withholds the
 /// general pasteboard from apps in the background unless they carry Apple's private
 /// `com.apple.Pasteboard.background-access` entitlement, which can't be issued to a
-/// third-party app. Background copies are read by the `ClipboardReader` notification
-/// service extension instead, because the system launches that itself.
+/// third-party app. Background copies are read by the `ClipboardReader` widget
+/// extension instead, because the system launches that itself.
 - (void)readGeneralPasteboardWithCompletionHandler:(PasteboardDaemonReaderCompletion)completionHandler;
 
 @end

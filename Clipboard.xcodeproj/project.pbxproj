@@ -7,6 +7,11 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		78BB6840A2255515D3A40C06 /* CaptureLedger.swift in Sources */ = {isa = PBXBuildFile; fileRef = A87694482FE90DB2AD392F02 /* CaptureLedger.swift */; };
+		3DC5D6A7D47918EED7C1EB8F /* CaptureLedgerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C3F8A8D7723EDFF5E39984C6 /* CaptureLedgerTests.swift */; };
+		A74074A1E5268DFBA7E2C657 /* ChangeCountGateTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A32CAFB052E6B0464DCB6806 /* ChangeCountGateTests.swift */; };
+		13A013EEE4563B478F09A852 /* DatabaseStoreRaceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 86A8F270A629D489169F1784 /* DatabaseStoreRaceTests.swift */; };
+		C35971812C6A4B44A2A3D8D4 /* ClipboardKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = BFC9E65022B1A22700974663 /* ClipboardKit.framework */; };
 		BF0BDE5122B4414A00E1419D /* UTI.swift in Sources */ = {isa = PBXBuildFile; fileRef = BF0BDE5022B4414A00E1419D /* UTI.swift */; };
 		BF0BDE5622B456A600E1419D /* PasteboardItem+ActivityItemSource.swift in Sources */ = {isa = PBXBuildFile; fileRef = BF0BDE5522B456A600E1419D /* PasteboardItem+ActivityItemSource.swift */; };
 		BF0BDE5A22B4771300E1419D /* SettingsViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = BF0BDE5922B4771300E1419D /* SettingsViewController.swift */; };
@@ -71,6 +76,13 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
+		0D0277C57EB2048AE88B7D7C /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = BFC1F39122AF0D0E003AC21A /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = BFC9E64F22B1A22700974663;
+			remoteInfo = ClipboardKit;
+		};
 		BF1D5C7422B029DC0062F474 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = BF1D5C6E22B029DB0062F474 /* Roxas.xcodeproj */;
@@ -157,6 +169,11 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		A87694482FE90DB2AD392F02 /* CaptureLedger.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CaptureLedger.swift; sourceTree = "<group>"; };
+		C3F8A8D7723EDFF5E39984C6 /* CaptureLedgerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CaptureLedgerTests.swift; sourceTree = "<group>"; };
+		A32CAFB052E6B0464DCB6806 /* ChangeCountGateTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChangeCountGateTests.swift; sourceTree = "<group>"; };
+		86A8F270A629D489169F1784 /* DatabaseStoreRaceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DatabaseStoreRaceTests.swift; sourceTree = "<group>"; };
+		8964E8ED07BBEE4753F5A128 /* ClipboardKitTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = ClipboardKitTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		BF0BDE5022B4414A00E1419D /* UTI.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UTI.swift; sourceTree = "<group>"; };
 		BF0BDE5522B456A600E1419D /* PasteboardItem+ActivityItemSource.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "PasteboardItem+ActivityItemSource.swift"; sourceTree = "<group>"; };
 		BF0BDE5722B4757100E1419D /* UserDefaults+App.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "UserDefaults+App.swift"; sourceTree = "<group>"; };
@@ -227,6 +244,14 @@
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
+		D64100B77E1224C2384427CB /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				C35971812C6A4B44A2A3D8D4 /* ClipboardKit.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		BF7E6FDD247C4FCD0058F4D4 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
@@ -264,6 +289,16 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		AAA3BCB7E409FA4E405E64AE /* ClipboardKitTests */ = {
+			isa = PBXGroup;
+			children = (
+				C3F8A8D7723EDFF5E39984C6 /* CaptureLedgerTests.swift */,
+				A32CAFB052E6B0464DCB6806 /* ChangeCountGateTests.swift */,
+				86A8F270A629D489169F1784 /* DatabaseStoreRaceTests.swift */,
+			);
+			path = ClipboardKitTests;
+			sourceTree = "<group>";
+		};
 		BF0BDE5422B4568A00E1419D /* Extensions */ = {
 			isa = PBXGroup;
 			children = (
@@ -407,6 +442,7 @@
 				BF1D5C6722B029090062F474 /* Dependencies */,
 				BFC1F39A22AF0D0E003AC21A /* Products */,
 				BF1D5CDF22B063E00062F474 /* Frameworks */,
+				AAA3BCB7E409FA4E405E64AE /* ClipboardKitTests */,
 			);
 			sourceTree = "<group>";
 		};
@@ -417,6 +453,7 @@
 				BFC9E65022B1A22700974663 /* ClipboardKit.framework */,
 				BFC176FC2399BC4F0058AC51 /* ClipboardReader.appex */,
 				BF7E6FE0247C4FCD0058F4D4 /* ClipboardKeyboard.appex */,
+				8964E8ED07BBEE4753F5A128 /* ClipboardKitTests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -535,6 +572,7 @@
 				83B9C4CC03874A2EAE646D46 /* CodeDetector.swift */,
 				FA5FD35F721B4F21AA53772A /* FuzzyMatcher.swift */,
 				4EC55C8F48AB4F9893C54B90 /* ClippingTransform.swift */,
+				A87694482FE90DB2AD392F02 /* CaptureLedger.swift */,
 			);
 			path = Logic;
 			sourceTree = "<group>";
@@ -553,6 +591,24 @@
 /* End PBXHeadersBuildPhase section */
 
 /* Begin PBXNativeTarget section */
+		9500072A64DDDFF6636462B8 /* ClipboardKitTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = D44DC685F7047C669B9DB516 /* Build configuration list for PBXNativeTarget "ClipboardKitTests" */;
+			buildPhases = (
+				96977484644A3D9920B78D3B /* Sources */,
+				D64100B77E1224C2384427CB /* Frameworks */,
+				773FA15C72F6A080AEFE4299 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				A038987F570FE54C5E369E88 /* PBXTargetDependency */,
+			);
+			name = ClipboardKitTests;
+			productName = ClipboardKitTests;
+			productReference = 8964E8ED07BBEE4753F5A128 /* ClipboardKitTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
 		BF7E6FDF247C4FCD0058F4D4 /* ClipboardKeyboard */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = BF7E6FEC247C4FCD0058F4D4 /* Build configuration list for PBXNativeTarget "ClipboardKeyboard" */;
@@ -688,6 +744,7 @@
 				BFC9E64F22B1A22700974663 /* ClipboardKit */,
 				BFC176FB2399BC4F0058AC51 /* ClipboardReader */,
 				BF7E6FDF247C4FCD0058F4D4 /* ClipboardKeyboard */,
+				9500072A64DDDFF6636462B8 /* ClipboardKitTests */,
 			);
 		};
 /* End PBXProject section */
@@ -717,6 +774,13 @@
 /* End PBXReferenceProxy section */
 
 /* Begin PBXResourcesBuildPhase section */
+		773FA15C72F6A080AEFE4299 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		BFC176FA2399BC4F0058AC51 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -745,6 +809,16 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
+		96977484644A3D9920B78D3B /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				3DC5D6A7D47918EED7C1EB8F /* CaptureLedgerTests.swift in Sources */,
+				A74074A1E5268DFBA7E2C657 /* ChangeCountGateTests.swift in Sources */,
+				13A013EEE4563B478F09A852 /* DatabaseStoreRaceTests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		BF7E6FDC247C4FCD0058F4D4 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -792,6 +866,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				78BB6840A2255515D3A40C06 /* CaptureLedger.swift in Sources */,
 				BF0BDE5E22B47D4900E1419D /* UserDefaults+App.swift in Sources */,
 				BFC9E67C22B2CA4400974663 /* CFNotification+PasteboardListener.swift in Sources */,
 				BFC9E66222B1B03900974663 /* DatabaseManager.swift in Sources */,
@@ -821,6 +896,11 @@
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
+		A038987F570FE54C5E369E88 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = BFC9E64F22B1A22700974663 /* ClipboardKit */;
+			targetProxy = 0D0277C57EB2048AE88B7D7C /* PBXContainerItemProxy */;
+		};
 		BF1D5C7D22B029E80062F474 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			name = Roxas;
@@ -870,6 +950,59 @@
 /* End PBXVariantGroup section */
 
 /* Begin XCBuildConfiguration section */
+		FBE912931765C5C94E917B22 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = NO;
+				CLANG_ENABLE_MODULES = YES;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 17;
+				DEVELOPMENT_TEAM = 84M4ZF255G;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 27.2;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.2;
+				PRODUCT_BUNDLE_IDENTIFIER = com.oliverames.clipboard.ClipboardKitTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+			};
+			name = Debug;
+		};
+		F20F4AD40090704A3F49E130 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = NO;
+				CLANG_ENABLE_MODULES = YES;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 17;
+				DEVELOPMENT_TEAM = 84M4ZF255G;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 27.2;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.2;
+				PRODUCT_BUNDLE_IDENTIFIER = com.oliverames.clipboard.ClipboardKitTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
 		BF7E6FE8247C4FCD0058F4D4 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -1189,6 +1322,15 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
+		D44DC685F7047C669B9DB516 /* Build configuration list for PBXNativeTarget "ClipboardKitTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				FBE912931765C5C94E917B22 /* Debug */,
+				F20F4AD40090704A3F49E130 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
 		BF7E6FEC247C4FCD0058F4D4 /* Build configuration list for PBXNativeTarget "ClipboardKeyboard" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (

@@ -37,18 +37,36 @@ public extension UserDefaults
     /// Reads the general pasteboard from the private pasteboard daemon so
     /// background changes can be saved without tapping a notification.
     @NSManaged var usesPasteboardDaemonReader: Bool
+
+    /// Records a content-free ledger of capture events into the App Group so the
+    /// background pipeline can be measured. See `CaptureLedger`.
+    @NSManaged var captureDiagnosticsEnabled: Bool
+
+    /// The pasteboard change count of the most recently saved clipping, shared
+    /// across the app and its extensions so a change count is only saved once.
+    /// A value of 0 means nothing has been saved yet.
+    @NSManaged var lastSavedChangeCount: Int
 }
 
 public extension UserDefaults
 {
     func registerAppDefaults()
     {
+        // Capture diagnostics default on for development and device measurement,
+        // off for a shipped release so a shipped build keeps no ledger.
+        #if DEBUG
+        let captureDiagnosticsDefault = true
+        #else
+        let captureDiagnosticsDefault = false
+        #endif
+
         self.register(defaults: [
             #keyPath(UserDefaults.historyLimit): HistoryLimit._25.rawValue,
             #keyPath(UserDefaults.maximumClippingSize): 10 * .bytesPerMegabyte,
             #keyPath(UserDefaults.showLocationIcon): true,
             #keyPath(UserDefaults.generateLinkPreviews): true,
-            #keyPath(UserDefaults.usesPasteboardDaemonReader): true
+            #keyPath(UserDefaults.usesPasteboardDaemonReader): true,
+            #keyPath(UserDefaults.captureDiagnosticsEnabled): captureDiagnosticsDefault
         ])
     }
 }

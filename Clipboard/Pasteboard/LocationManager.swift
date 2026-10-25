@@ -66,7 +66,20 @@ class LocationManager: NSObject, ObservableObject
     }
 
     private let locationManager: CLLocationManager
-    
+
+    /// A geofence around the last known location. Region monitoring is the one Core
+    /// Location mechanism Apple's engineers say relaunches an app after the user
+    /// force-quits it, and it also relaunches after a reboot once the device is first
+    /// unlocked. It is kept deliberately separate from the significant-change and
+    /// continuous-update session above so that, if it ever fails, the proven path is
+    /// untouched. Whether it actually relaunches on iOS 27.2 after a force-quit is
+    /// unverified and must be confirmed on device (see the capture research doc).
+    private var regionMonitorTask: Task<Void, Never>?
+    private static let regionMonitorName = "com.oliverames.clipboard.capture"
+    private static let geofenceIdentifier = "capture.recenter"
+    /// Small radius so leaving it (and thus a relaunch opportunity) happens on a short move.
+    private static let geofenceRadius: CLLocationDistance = 100
+
     override init()
     {
         self.locationManager = CLLocationManager()
@@ -102,13 +115,59 @@ class LocationManager: NSObject, ObservableObject
         // Significant-change monitoring lets iOS relaunch the app after it has been terminated,
         // so background monitoring doesn't depend on the app still being in memory.
         self.locationManager.startMonitoringSignificantLocationChanges()
+
+        self.startRegionMonitoring()
     }
 
     func stop()
     {
         self.locationManager.stopUpdatingLocation()
         self.locationManager.stopMonitoringSignificantLocationChanges()
+        self.regionMonitorTask?.cancel()
+        self.regionMonitorTask = nil
         self.status = nil
+    }
+
+    /// Starts (or, after a relaunch, resumes) region monitoring. Recreating a
+    /// `CLMonitor` with the same name restores its conditions, so a geofence added in
+    /// a previous launch is still being watched; iterating its events here keeps the
+    /// app able to re-center the fence as the device moves. All of this is isolated in
+    /// its own task and its failures are swallowed, so it can never disturb the
+    /// significant-change / continuous-update path.
+    private func startRegionMonitoring()
+    {
+        guard self.regionMonitorTask == nil else { return }
+
+        self.regionMonitorTask = Task { [weak self] in
+            let monitor = await CLMonitor(LocationManager.regionMonitorName)
+
+            // If a relaunch restored no condition yet, seed one at the current location.
+            if await monitor.identifiers.isEmpty, let coordinate = self?.locationManager.location?.coordinate
+            {
+                let condition = CLMonitor.CircularGeographicCondition(center: coordinate, radius: LocationManager.geofenceRadius)
+                await monitor.add(condition, identifier: LocationManager.geofenceIdentifier, assuming: .satisfied)
+            }
+
+            do
+            {
+                for try await event in await monitor.events
+                {
+                    guard !Task.isCancelled else { break }
+
+                    // Leaving the fence is the relaunch-worthy move; re-center so the
+                    // next move out also fires (and relaunches us if we were killed).
+                    if event.state == .unsatisfied, let coordinate = self?.locationManager.location?.coordinate
+                    {
+                        let condition = CLMonitor.CircularGeographicCondition(center: coordinate, radius: LocationManager.geofenceRadius)
+                        await monitor.add(condition, identifier: LocationManager.geofenceIdentifier, assuming: .satisfied)
+                    }
+                }
+            }
+            catch
+            {
+                // Region monitoring is best-effort; never let it break the proven path.
+            }
+        }
     }
 }
 

@@ -43,6 +43,8 @@ class PasteboardMonitor
     private var isTriggerRunning = false
     private var triggerAttempts = 0
     private var triggerStartDate: Date?
+    /// The pasteboard change count the current widget trigger is trying to capture.
+    private var triggerChangeCount = 0
 
     private let feedbackGenerator = UINotificationFeedbackGenerator()
 }
@@ -101,12 +103,17 @@ extension PasteboardMonitor
                 return
             }
 
+            let changeCount = UIPasteboard.general.changeCount
             DatabaseManager.shared.savePasteboard(snapshot: snapshots, location: location) { (result) in
                 switch result
                 {
                 case .success:
+                    if changeCount != 0 { UserDefaults.shared.lastSavedChangeCount = changeCount }
+                    CaptureLedger.shared.record(.saved, changeCount: changeCount)
                     Diagnostics.shared.log("Daemon snapshot saved")
                 case .failure(PasteboardError.duplicateItem):
+                    if changeCount != 0 { UserDefaults.shared.lastSavedChangeCount = changeCount }
+                    CaptureLedger.shared.record(.duplicate, changeCount: changeCount)
                     Diagnostics.shared.log("Daemon snapshot was a duplicate")
                 case .failure(let error):
                     NSLog("Failed to save pasteboard daemon snapshot, falling back to UIPasteboard: %@", error.localizedDescription)
@@ -122,14 +129,19 @@ extension PasteboardMonitor
         Diagnostics.shared.log("UIPasteboard read start; state=\(UIApplication.shared.applicationState.rawValue)")
         
         let pasteboard = UIPasteboard.general
+        let changeCount = pasteboard.changeCount
         Diagnostics.shared.log("UIPasteboard raw: changeCount=\(pasteboard.changeCount) types=\(pasteboard.types) items=\(pasteboard.items.count) stringLength=\(pasteboard.string?.count ?? 0)")
-        
+
         DatabaseManager.shared.savePasteboard(location: ApplicationMonitor.shared.locationManager.location) { (result) in
             switch result
             {
             case .success:
+                if changeCount != 0 { UserDefaults.shared.lastSavedChangeCount = changeCount }
+                CaptureLedger.shared.record(.saved, changeCount: changeCount)
                 Diagnostics.shared.log("UIPasteboard snapshot saved")
             case .failure(PasteboardError.duplicateItem):
+                if changeCount != 0 { UserDefaults.shared.lastSavedChangeCount = changeCount }
+                CaptureLedger.shared.record(.duplicate, changeCount: changeCount)
                 Diagnostics.shared.log("UIPasteboard snapshot was a duplicate")
             case .failure(let error):
                 Diagnostics.shared.log("UIPasteboard snapshot save failed: \(error)")
@@ -162,8 +174,11 @@ private extension PasteboardMonitor
 
     @objc func pasteboardDidUpdate()
     {
+        // The change count is readable even while backgrounded; only the contents are withheld.
+        let changeCount = UIPasteboard.general.changeCount
         Diagnostics.shared.log("Pasteboard change notification; state=\(UIApplication.shared.applicationState.rawValue) ignore=\(self.ignoreNextPasteboardChange)")
-        
+        CaptureLedger.shared.record(.changeHeard, changeCount: changeCount)
+
         guard !self.ignoreNextPasteboardChange else {
             self.ignoreNextPasteboardChange = false
             return
@@ -178,10 +193,18 @@ private extension PasteboardMonitor
                 guard !UIPasteboard.general.contains(pasteboardTypes: [UTI.clipping]) else { return }
             }
 
+            if !DatabaseManager.shared.isStarted
+            {
+                CaptureLedger.shared.record(.storeWaited, changeCount: changeCount)
+            }
+
             // The store loads asynchronously, so a copy that arrives during launch waits for it.
             DatabaseManager.shared.prepare { (preparation) in
                 DispatchQueue.main.async {
-                    guard case .success = preparation else { return self.presentChangeNotification() }
+                    guard case .success = preparation else {
+                        CaptureLedger.shared.record(.storeUnavailable, changeCount: changeCount)
+                        return self.presentChangeNotification()
+                    }
 
                     // While the app isn't active the system won't hand over the pasteboard,
                     // so ask a widget extension to read it on our behalf. The system launches
@@ -230,14 +253,27 @@ private extension PasteboardMonitor
     /// again until the store shows the copy was saved.
     func presentWidgetTrigger()
     {
+        let changeCount = UIPasteboard.general.changeCount
+
+        // If a trigger is already in flight and a newer copy arrives, keep the same
+        // loop but aim it at the newest change count and give it a fresh deadline.
+        // The widget always reads whatever is current, so the newest copy is the one
+        // that gets saved; this just stops an early give-up from dropping it.
         guard !self.isTriggerRunning else {
-            Diagnostics.shared.log("Widget trigger already running.")
+            Diagnostics.shared.log("Widget trigger already running; coalescing to changeCount=\(changeCount).")
+            if changeCount != self.triggerChangeCount
+            {
+                self.triggerChangeCount = changeCount
+                self.triggerAttempts = 0
+                self.triggerStartDate = Date()
+            }
             return
         }
 
         self.isTriggerRunning = true
         self.triggerAttempts = 0
         self.triggerStartDate = Date()
+        self.triggerChangeCount = changeCount
 
         self.askWidgetToCapture()
     }
@@ -247,15 +283,21 @@ private extension PasteboardMonitor
         WidgetCenter.shared.reloadTimelines(ofKind: "ClipboardReader")
 
         Diagnostics.shared.log("Asked the widget to capture the pasteboard; attempt=\(self.triggerAttempts + 1)")
+        CaptureLedger.shared.record(.reloadRequested, changeCount: self.triggerChangeCount, attempt: self.triggerAttempts + 1)
 
         DispatchQueue.main.asyncAfter(deadline: .now() + Self.widgetCheckDelay) {
             guard self.isTriggerRunning, let startDate = self.triggerStartDate else { return }
+
+            // The widget marks the change count it saved, so prefer that signal; fall
+            // back to "any clipping saved since we started" for copies with no count.
+            let savedChangeCount = UserDefaults.shared.lastSavedChangeCount
+            let savedByChangeCount = self.triggerChangeCount != 0 && savedChangeCount == self.triggerChangeCount
 
             DatabaseManager.shared.hasItemSaved(after: startDate) { (wasSaved) in
                 DispatchQueue.main.async {
                     guard self.isTriggerRunning else { return }
 
-                    guard !wasSaved else {
+                    guard !(wasSaved || savedByChangeCount) else {
                         Diagnostics.shared.log("The widget saved the pasteboard.")
                         self.isTriggerRunning = false
                         return
@@ -263,6 +305,7 @@ private extension PasteboardMonitor
 
                     guard self.triggerAttempts < Self.widgetMaximumAttempts else {
                         Diagnostics.shared.log("The widget never saved the pasteboard.")
+                        CaptureLedger.shared.record(.missed, changeCount: self.triggerChangeCount, attempt: self.triggerAttempts + 1)
                         self.isTriggerRunning = false
                         return
                     }

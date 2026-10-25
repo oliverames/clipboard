@@ -84,7 +84,15 @@ public class DatabaseManager
     private init()
     {
     }
-    
+
+    /// Switches the store to an in-memory one before it is loaded, so the
+    /// prepare/save path can be exercised deterministically in tests without touching
+    /// disk or an App Group. Must be called before `prepare`.
+    public func useInMemoryStoreForTesting()
+    {
+        self.persistentContainer.persistentStoreDescriptions.forEach { $0.type = NSInMemoryStoreType }
+    }
+
     public func prepare(completionHandler: @escaping (Result<Void, Error>) -> Void)
     {
         func finish(_ result: Result<Void, Error>)

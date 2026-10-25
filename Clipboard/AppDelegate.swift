@@ -38,6 +38,16 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         self.registerForNotifications()
         
         #if DEBUG
+        // Stages the capture ledger into the app's Documents directory so the device
+        // test script can pull it off the phone with devicectl:
+        //   devicectl device process launch --environment CLIPBOARD_EXPORT_LEDGER=1 ...
+        if ProcessInfo.processInfo.environment["CLIPBOARD_EXPORT_LEDGER"] == "1",
+           let documents = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first
+        {
+            let exported = CaptureLedger.shared.exportCopy(to: documents.appendingPathComponent("capture-ledger.jsonl"))
+            NSLog("Capture ledger export requested; succeeded=%d", exported)
+        }
+
         // Lets a simulator or device run exercise the private reader without
         // going through a notification or URL prompt:
         //   simctl launch --env CLIPBOARD_DAEMON_SELFTEST=1 ...

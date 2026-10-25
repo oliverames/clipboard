@@ -20,8 +20,14 @@ follow the logic.
 
 ## The rule
 
-> **The general pasteboard is readable in the background by a process the system
-> launches itself — an app extension — and by nothing else.**
+> **The general pasteboard is readable in the background by a process carrying
+> `com.apple.Pasteboard.background-access`, by an Apple-signed process, or by a
+> process the system launches itself as an app extension — and by nothing else.**
+
+The daemon grants background access on `background-access` **or** the extension bit
+(`isExtension`), not on a single entitlement. The entitlement is the first-party
+path and is unusable by a third-party app (see "What was ruled out"); the extension
+bit is the path this app actually uses.
 
 A third-party app that is in the background gets `PBErrorDomain` code 10,
 `"Pasteboard com.apple.UIKit.pboard.general is not available at this time."`
@@ -128,6 +134,41 @@ This is the entitlement the daemon checks, and it cannot be had:
 The entitlement has to be in the provisioning profile, and Apple does not issue
 `com.apple.Pasteboard.*` to third-party apps.
 
+Oliver asked specifically whether a first-party Apple entitlement could be carried
+on a build signed with his own developer certificate (team `84M4ZF255G`) with
+Developer Mode on. It cannot, and the reason is in AppleMobileFileIntegrity (AMFI),
+decompiled from the iOS 27.2 device runtime (`AppleMobileFileIntegrity`, build
+`24B115`, arm64e):
+
+- AMFI carries the entitlement-classification tables as data symbols. The
+  `_unrestrictedEntitlements` list — the entitlements any signed code may carry
+  without an Apple-issued profile — was decoded in full. **No `com.apple.Pasteboard.*`
+  entitlement is in it, or in any other AMFI classification list.** The string
+  `pasteboard` does not appear anywhere in the AMFI binary. Every pasteboard
+  entitlement is therefore a plain *restricted* entitlement by exclusion.
+- A restricted entitlement must be provisioned by a best-matching profile. AMFI's
+  own error strings are the enforcement: `"The file is adhoc signed but contains
+  restricted entitlements"` and `"The best matching profile does not match the
+  entitlements of this file"`. Ad-hoc or self-signing the entitlement in is rejected
+  — which is exactly the `0xe8008015` / `ApplicationVerificationFailed` result
+  recorded above.
+- **Developer Mode does not help.** `_AMFIIsDeveloperModeEnabled` disassembles to a
+  single kernel sysctl read (`security.mac.amfi.developer_mode_status == 1`), and the
+  `_developerModeEntitlements` list it unlocks is the debugging set only —
+  `get-task-allow`, `task_for_pid-allow`, `com.apple.system-task-ports.*`,
+  `com.apple.private.cs.debugger`. Developer Mode relaxes debugging, task-port attach
+  and JIT; it never widens the restricted-entitlement allowlist and contains no
+  pasteboard entry.
+- All ten pasteboard entitlements are checked by the **daemon**, not the client
+  framework: the device `Pasteboard.framework` carries none of the entitlement
+  strings and imports neither `SecTaskCopyValuesForEntitlements` nor
+  `LSApplicationExtensionRecord`. So there is nothing to spoof on the client side.
+
+**Verdict: the first-party entitlement route is closed for any developer-signed
+third-party build, Developer Mode on or off.** The extension (`isExtension`) path is
+the only lawful way to reach the general pasteboard in the background, and it is what
+this app uses.
+
 ### A configuration profile
 
 The daemon's entire preference surface is four keys, all of which were decoded from
@@ -143,6 +184,41 @@ the binary:
 None of them controls background access, and preferences are the only thing a
 configuration profile can set that the daemon reads. The one MDM-shaped thing the
 daemon does use, `MCProfileConnection`, is about which app may paste into which.
+
+Re-checked in October 2026 against the full MDM restriction schema and current Apple
+deployment docs, including supervised-only payloads:
+
+- The only pasteboard key in Apple's MDM schema is `requireManagedPasteboard`
+  (`com.apple.applicationaccess`, iOS 15+): "If `true`, the
+  `allowOpenFromManagedToUnmanaged` and `allowOpenFromUnmanagedToManaged`
+  restrictions also limit copy-and-paste functionality." It *restricts* pasting
+  between managed and unmanaged apps; no payload *grants* an app a background read.
+  This matches the daemon logic: `MCProfileConnection` governs pasting into apps, not
+  reading from the pasteboard.
+- Supervision is no help, and getting it is costly. Apple Platform Deployment, *About
+  device supervision*: manual supervision with Apple Configurator "requires that you
+  have the device in your physical possession. During this process, the device is
+  erased and all data is lost." Automated Device Enrollment supervises only during
+  Setup Assistant, and adding a personally bought iPhone to Apple Business via
+  Configurator prompts to erase it. Every documented route to supervising an
+  already-set-up iPhone erases it or requires an already-erased device; none grants
+  pasteboard background access anyway. (Oliver recalled supervising without an erase;
+  no current Apple doc describes that path — the likeliest explanation is installing
+  an unsupervised profile or restoring a backup after a Configurator prepare, neither
+  of which is supervision and neither of which helps here.)
+
+### Launch daemons and launchd jobs
+
+Not possible on iOS without a jailbreak. Apple Platform Security states all
+third-party apps are sandboxed and "apps can only perform background processing
+through system-provided APIs"; third-party code runs as the unprivileged `mobile`
+user with no way to install a persistent daemon. The Service Management framework
+(`SMAppService`, the supported way to register a login/daemon helper) is macOS and
+Mac Catalyst only — there is no iOS equivalent. `xcrun devicectl device process
+launch` starts an ordinary app process under the normal lifecycle; Apple documents
+no way for such a process to outlive the host connection or survive a reboot, and
+Developer Mode only permits development-signed apps to run, granting no daemon
+capability. So a launchd-style always-resident reader is off the table on his phone.
 
 ### A silent audio session
 
@@ -191,8 +267,14 @@ the store shows the copy was saved:
 WidgetCenter.shared.reloadTimelines(ofKind: "ClipboardReader")
 ```
 
-repeating every 45 seconds, up to four times, checked against the store with
-`DatabaseManager.hasItemSaved(after:)`.
+repeating on a fixed cadence up to a fixed number of attempts, checked against the
+store both by `DatabaseManager.hasItemSaved(after:)` and by the change count the
+widget records once it saves. If a newer copy arrives while a trigger is in flight,
+the trigger re-aims at the newest change count and resets its deadline rather than
+giving up early (the widget always reads whatever is current, so the newest copy is
+the one that survives). The widget's read is idempotent: it skips work when the
+current change count was already saved (`ChangeCountGate` + `lastSavedChangeCount` in
+the shared defaults), so repeated launches for the same copy don't duplicate it.
 
 ### The notification service extension
 
@@ -225,6 +307,17 @@ While the app is in the foreground it reads the pasteboard itself, through
 `PBServerConnection`, which returns the original type identifiers rather than the
 flattened ones `UIPasteboard` hands back.
 
+### Measuring it: the capture ledger
+
+None of this can be called rock solid without measurement, so the app keeps a small,
+content-free ledger in the App Group (`CaptureLedger`, written by the app and the
+widget both). It records each change heard, each reload requested, each widget run,
+each save, each duplicate, each store wait, and each miss — with the change count and
+timestamp, and **never the clipboard contents** (ac158ef removed content logging
+deliberately; the ledger keeps it out). Settings ▸ Diagnostics shows the miss rate
+computed from it: the fraction of change counts the app saw that never produced a
+save. It is on by default in development builds and off in a shipped release.
+
 ## Known limits
 
 - **The system throttles how often it starts a widget.** Asking for a timeline is a
@@ -239,6 +332,102 @@ flattened ones `UIPasteboard` hands back.
 - **Opening the app is the fast path.** While the app is in the foreground it reads
   the pasteboard itself, so bringing it forward captures the current clipboard
   immediately, without waiting for the system to start anything.
+
+## Surviving the app being closed
+
+The point of a clipboard manager is that it keeps working after you stop looking at
+it. "Closed" is four different things on iOS, and they behave differently. None of
+this is beaten by a private entitlement (restricted, above) or a daemon (impossible,
+above), so the question is only what the location mechanism can recover from. The
+findings below are from Apple's current Core Location docs and, where the docs are
+silent, from Apple engineers on the developer forums (flagged as such).
+
+| Close case | What happens today | What can bring capture back without opening the app |
+|-----------|--------------------|-----------------------------------------------------|
+| **Suspended / backgrounded** (normal) | The process stays alive under the location session; the change listener fires and the widget trigger runs. | Already works. This is the common case. |
+| **System-terminated** (memory pressure, Low Power Mode) | The process is killed. | Significant-location-change, region monitoring and visit monitoring all **relaunch the app into the background** when a new event arrives (Apple, documented). The app re-registers the listener on launch and capture resumes, with latency. |
+| **User force-quit** (swipe up in the App Switcher) | The process is killed and, per Apple, generally not relaunched. | **Not reliably beatable.** The current docs name no mechanism. Region monitoring is the only candidate — an Apple engineer stated (Mar 2026) "the app will indeed be relaunched using Region Monitoring even if force quit" — but it is not in the docs and one developer reported it failing on iOS 26.4.2. Must be tested on iOS 27 with no debugger attached. |
+| **Reboot, before first unlock** | Nothing runs. | Nothing. Apple: "the system does not launch an app in the background before the user first unlocks the device." |
+| **Reboot, after first unlock** | Nothing until a location event. | Region monitoring / significant-change can relaunch the app once the device has been unlocked once; the app recreates the monitor on launch. |
+
+Apple's statements, for the record:
+
+- `startMonitoringSignificantLocationChanges()`: "If you start this service and your
+  app is subsequently terminated, the system automatically relaunches the app into
+  the background if a new event arrives." Expect no more than one event per ~5 min /
+  500 m.
+- Region monitoring (*Monitoring the user's proximity to geographic regions*): "If an
+  iOS app isn't running when a condition is satisfied, the system tries to launch
+  it… Monitoring can only occur after the user unlocks the device after a reboot."
+- `startMonitoringVisits()`: "If your app is terminated while this service is active,
+  the system relaunches your app when new visit events are ready to be delivered."
+- BGTaskScheduler does **not** help after a force-quit: "the system… constrains to
+  the set of apps that are still visible in the App Switcher" (WWDC20), and
+  "The system cancels any running tasks if a person closes the app in the app
+  switcher."
+- Background App Refresh is an additional gate: with it off, the system relaunches
+  for no location events (archived Location Awareness guide).
+
+What the app does about this: it keeps the significant-change + continuous-update
+session it always had, and **adds region monitoring** (`CLMonitor`, a small geofence
+around the current location, re-centred as you move) as a second relaunch path, since
+region monitoring is the one mechanism with any chance against a force-quit and the
+best coverage after a reboot. This is strictly additive and isolated from the proven
+path. **Whether it actually relaunches after a force-quit on iOS 27.2 is unverified
+and is on the device checklist.** The honest statement to the user is: every copy is
+captured while the app is suspended or after the system kills it for memory; a
+force-quit is the hard wall that every third-party clipboard manager hits, and only
+the Apple-only entitlement (which AMFI blocks for us) would beat it cleanly.
+
+## Private routes evaluated (no notification)
+
+These were reverse-engineered on the iOS 27.2 runtime to see whether capture could be
+made to work without the app process and without a notification. None removes the
+force-quit wall; recorded here with the evidence so they are not re-investigated.
+
+- **A system-launched process woken *by a pasteboard change*.** No. On a change the
+  daemon does nothing but `notify_post` + `notify_set_state` on the Darwin name
+  `_PBPasteboardChangedNotifyNotification`. It registers no launchd `LaunchEvent`, no
+  `xpc_activity`, no SpringBoard launch, no BGTask, and nothing in WidgetKit/Chrono. A
+  Darwin notification only wakes an already-running registrant; it cannot launch a
+  process. So nothing — no extension, no helper — is started because a copy happened.
+- **The change listener surviving suspension.**
+  `+[PBServerConnection beginListeningToPasteboardChangeNotifications]` is a
+  `notify_register_dispatch` on an in-process queue. It cannot run in a suspended app
+  (the queue isn't serviced; notifications coalesce) and not at all in a force-quit
+  app. It needs the process alive.
+- **A cheap change-count read.** `notify_get_state` on that name returns the change
+  count with no content read and no authorization. `-[PBServerConnection
+  preauthorizePasteForAuditToken:pasteboardName:changeCount:completionBlock:]` takes a
+  change count too. Useful for dedup and polling (the app now dedups saves by change
+  count), but not a background capture path.
+- **The extension allowance's exact shape.** `isExtension` is set purely from
+  `[LSBundleRecord isKindOfClass:LSApplicationExtensionRecord]` — no narrowing by
+  extension-point identifier, by being currently hosted, or by host foreground state.
+  For the general pasteboard the daemon even skips the `linkedOnVersion >= 14.5` check
+  it applies to other named pasteboards. So *any* system-launched app extension
+  clears the background-withholding rule; the differentiator between extension points
+  is only who launches each, and when.
+- **Private WidgetKit/ChronoKit SPI to force an unthrottled reload.** None exposed.
+  Refresh goes through `CHSWidgetRefreshStrategyFactory rateLimitedWithPolicyIdentifier:`
+  and is budgeted by `DuetBudgetServicing` ("Throttling additional refresh request…").
+  There is no third-party call to bypass it. Widget reloads come from the app
+  (`WidgetCenter.reloadTimelines`, needs the app alive) or from `chronod`'s own
+  relevance / Smart-Stack / scheduled refreshes (app-independent but throttled and not
+  pasteboard-driven).
+- **Other extension points.** WidgetKit, ChronoServices, ChronoCore and ChronoKit
+  contain **zero** references to "pasteboard". Only the widget and the notification
+  service extension are launched by the system without user interaction, and neither
+  is launched by a pasteboard change. App Intents, Live Activity, a full-access
+  keyboard and the share extension are all user- or automation-invoked, so none is a
+  background, copy-triggered reader.
+
+One item needs on-device confirmation and could not be settled from the binaries:
+whether `chronod` still fires its own scheduled/relevance widget refreshes for a
+widget whose host app was **force-quit** (the `chronod` binary is not in the shared
+cache). If it does, an occasional later refresh would read whatever is on the
+pasteboard at that time — not per-copy capture, but a partial recovery. This is on
+the device checklist.
 
 ## Reproducing the analysis
 
