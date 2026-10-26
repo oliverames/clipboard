@@ -119,6 +119,41 @@ public enum DiagnosticsScrubber
         return clean
     }
 
+    /// Which event contexts may leave the device, and which fields of each. The SDK can put an
+    /// error's user info and other free-form dictionaries into an event's contexts, so everything
+    /// not listed is dropped, `user info` included.
+    private static let allowedContextFields: [String: Set<String>] = [
+        "os": ["os", "name", "version", "build", "kernel_version", "rooted", "type"],
+        "device": ["family", "model", "model_id", "arch", "simulator", "memory_size", "free_memory",
+                   "usable_memory", "storage_size", "free_storage", "processor_count", "low_power_mode",
+                   "thermal_state", "type"],
+        "app": ["app_identifier", "app_name", "app_version", "app_build", "build_type", "app_id",
+                "app_start_time", "app_memory", "in_foreground", "is_active", "type"],
+        // The SDK's own trace identifiers (random per launch) and runtime description.
+        "trace": ["trace_id", "span_id", "status", "type"],
+        "runtime": ["name", "version", "raw_description", "type"],
+    ]
+
+    /// Keeps only the allowed contexts and fields, then scrubs whatever strings remain. The device's
+    /// name and locale, the per-device app hash, culture, user and user info never pass.
+    public static func context(_ context: [String: [String: Any]]) -> [String: [String: Any]]
+    {
+        var clean: [String: [String: Any]] = [:]
+        for (name, fields) in context {
+            guard let allowed = allowedContextFields[name] else { continue }
+            var kept: [String: Any] = [:]
+            for (key, value) in fields where allowed.contains(key) {
+                switch value {
+                case let text as String: kept[key] = scrub(text)
+                case let number as NSNumber: kept[key] = number
+                default: break
+                }
+            }
+            if !kept.isEmpty { clean[name] = kept }
+        }
+        return clean
+    }
+
     /// Splits camelCase, snake_case and dotted keys into words and drops the key when any word
     /// names something sensitive: `pasteboardText`, `item_title` and `fileName` all go, so
     /// reporting code names counts plainly (`count`, `status`).

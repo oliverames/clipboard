@@ -227,26 +227,10 @@ enum CrashReporting
         }
         if let extra = event.extra { event.extra = DiagnosticsScrubber.scrub(extra) }
         for crumb in event.breadcrumbs ?? [] { scrub(crumb) }
-        if var context = event.context
-        {
-            // Locale and time zone narrow down where someone is; the device's own name can hold
-            // the person's name.
-            context["culture"] = nil
-            context["user"] = nil
-            if var device = context["device"]
-            {
-                device["name"] = nil
-                device["locale"] = nil
-                context["device"] = device
-            }
-            // A per-device hash of the vendor identifier: the same on every report from one device.
-            if var app = context["app"]
-            {
-                app["device_app_hash"] = nil
-                context["app"] = app
-            }
-            event.context = context
-        }
+        // Only the listed contexts and fields go: the SDK can put an error's user info and other
+        // free-form dictionaries here, and the device's name and locale, culture and the
+        // per-device app hash identify the person.
+        if let context = event.context { event.context = DiagnosticsScrubber.context(context) }
     }
 
     // MARK: Debug checks

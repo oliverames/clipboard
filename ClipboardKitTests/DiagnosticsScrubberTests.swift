@@ -72,4 +72,23 @@ final class DiagnosticsScrubberTests: XCTestCase
         XCTAssertEqual(clean["count"] as? Int, 3)
         XCTAssertEqual(clean["reason"] as? String, "near <coord>,<coord>")
     }
+
+    func testContextsKeepOnlyAllowedFields()
+    {
+        let clean = DiagnosticsScrubber.context([
+            "user info": ["NSLocalizedDescription": "Couldn't save \"Meet at the pier, code 4417\""],
+            "clipping": ["text": "Meet at the pier"],
+            "culture": ["timezone": "America/New_York", "locale": "en_US"],
+            "device": ["name": "Oliver's iPhone", "model": "iPhone18,1", "locale": "en_US", "memory_size": 8_000_000_000,
+                       "note": "Meet at the pier"],
+            "app": ["device_app_hash": "29f2", "app_build": "18", "app_version": "1.2"],
+            "os": ["name": "iOS", "version": "27.2"],
+        ] as [String: [String: Any]])
+
+        XCTAssertEqual(Set(clean.keys), ["device", "app", "os"])
+        XCTAssertEqual(Set(clean["device"].map { Array($0.keys) } ?? []), ["model", "memory_size"])
+        XCTAssertEqual(clean["device"]?["model"] as? String, "iPhone18,1")
+        XCTAssertEqual(Set(clean["app"].map { Array($0.keys) } ?? []), ["app_build", "app_version"])
+        XCTAssertEqual(clean["os"]?["version"] as? String, "27.2")
+    }
 }
