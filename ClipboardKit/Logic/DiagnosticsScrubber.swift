@@ -96,6 +96,12 @@ public enum DiagnosticsScrubber
         "Not enough memory",
     ]
 
+    /// An event's fingerprint, which is sent with it: each part scrubbed like any other text.
+    public static func fingerprint(_ parts: [String]) -> [String]
+    {
+        parts.map { scrub($0) }
+    }
+
     /// Scrubs every string inside a breadcrumb's or event's data, keeping numbers and booleans.
     /// Keys that name a sensitive value are dropped outright, whatever their value.
     public static func scrub(_ data: [String: Any]) -> [String: Any]

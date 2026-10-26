@@ -92,4 +92,10 @@ final class DiagnosticsScrubberTests: XCTestCase
         XCTAssertEqual(Set(clean["app"].map { Array($0.keys) } ?? []), ["app_build", "app_version"])
         XCTAssertEqual(clean["os"]?["version"] as? String, "27.2")
     }
+
+    func testFingerprintPartsAreScrubbed()
+    {
+        XCTAssertEqual(DiagnosticsScrubber.fingerprint(["database", "Failed for \"Meet at the pier\" at https://clip.example/a", "NSCocoaErrorDomain"]),
+                       ["database", "Failed for <quoted> at <url>", "NSCocoaErrorDomain"])
+    }
 }

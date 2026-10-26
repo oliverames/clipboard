@@ -207,6 +207,8 @@ enum CrashReporting
         event.user = nil
         event.request = nil
         event.serverName = nil
+        // The fingerprint goes out with the event, and report() builds it from the message.
+        if let fingerprint = event.fingerprint { event.fingerprint = DiagnosticsScrubber.fingerprint(fingerprint) }
         if let message = event.message
         {
             event.message = SentryMessage(formatted: DiagnosticsScrubber.scrub(message.formatted))
