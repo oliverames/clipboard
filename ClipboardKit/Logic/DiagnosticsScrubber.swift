@@ -33,9 +33,10 @@ public enum DiagnosticsScrubber
         let patterns: [(String, String)] = [
             // Any URL, with its host, path, query string and fragment.
             (#"[A-Za-z][A-Za-z0-9+.-]*://[^\s"'<>]+"#, "<url>"),
+            // Bearer credentials first, so a header line keeps its token covered.
+            (#"(?i)\bbearer\s+\S+"#, "Bearer <redacted>"),
             // Header and cookie lines, and key=value or key: value secrets.
             (#"(?i)\b(authorization|cookie|set-cookie|x-[a-z0-9-]+|api[_-]?key|token|access[_-]?token|auth|password|secret|session(?:id)?)\b\s*[:=]\s*\S+"#, "$1=<redacted>"),
-            (#"(?i)\bbearer\s+\S+"#, "Bearer <redacted>"),
             (#"[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}"#, "<email>"),
             // File system paths (app container, Caches, the App Group), which can name a file.
             (#"(?:/private)?/(?:var|Users|private|tmp|Library|System/Volumes)/[^\s"']*"#, "<path>"),

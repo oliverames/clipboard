@@ -43,6 +43,7 @@ final class DiagnosticsScrubberTests: XCTestCase
         XCTAssertEqual(DiagnosticsScrubber.scrub("near 44.4759, -73.2121"), "near <coord>, <coord>")
         XCTAssertEqual(DiagnosticsScrubber.scrub("copied \"Meet at the pier\" now"), "copied <quoted> now")
         XCTAssertEqual(DiagnosticsScrubber.scrub("token=deadbeef"), "token=<redacted>")
+        XCTAssertEqual(DiagnosticsScrubber.scrub("Authorization: Bearer abc"), "Authorization=<redacted> <redacted>")
     }
 
     func testFixedMessagesAndDomainsPassUnchanged()
