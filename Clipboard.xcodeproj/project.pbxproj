@@ -7,6 +7,11 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		D83BE9D0FC5BD251B8D08123 /* CrashReporting.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4F74DA4EB0D1D2E233D2B520 /* CrashReporting.swift */; };
+		CEB95D3B57CB0647920BB927 /* DiagnosticsScrubber.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0B8F77224FABA8B1B85C744A /* DiagnosticsScrubber.swift */; };
+		D1E4B0A89C06E11B6A762E5E /* DiagnosticsScrubberTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4F816D0DD968FDE07256962C /* DiagnosticsScrubberTests.swift */; };
+		DBC0047CEDE08F1A136D2158 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 0AE293A7E58C2F6E98331233 /* PrivacyInfo.xcprivacy */; };
+		82B60D8FE32521EF1FD6BCC8 /* Sentry in Frameworks */ = {isa = PBXBuildFile; productRef = 29312F35BA0715E772778D82 /* Sentry */; };
 		6F8AFD8CAD13DBEA9921B013 /* DiagnosticsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4615E9E0511DE82DE1535DAD /* DiagnosticsView.swift */; };
 		78BB6840A2255515D3A40C06 /* CaptureLedger.swift in Sources */ = {isa = PBXBuildFile; fileRef = A87694482FE90DB2AD392F02 /* CaptureLedger.swift */; };
 		3DC5D6A7D47918EED7C1EB8F /* CaptureLedgerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C3F8A8D7723EDFF5E39984C6 /* CaptureLedgerTests.swift */; };
@@ -177,6 +182,11 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		C4537C902A4696ED25A5B9EB /* Diagnostics.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Diagnostics.xcconfig; sourceTree = "<group>"; };
+		4F74DA4EB0D1D2E233D2B520 /* CrashReporting.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CrashReporting.swift; sourceTree = "<group>"; };
+		0B8F77224FABA8B1B85C744A /* DiagnosticsScrubber.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DiagnosticsScrubber.swift; sourceTree = "<group>"; };
+		4F816D0DD968FDE07256962C /* DiagnosticsScrubberTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DiagnosticsScrubberTests.swift; sourceTree = "<group>"; };
+		0AE293A7E58C2F6E98331233 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		4615E9E0511DE82DE1535DAD /* DiagnosticsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DiagnosticsView.swift; sourceTree = "<group>"; };
 		A87694482FE90DB2AD392F02 /* CaptureLedger.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CaptureLedger.swift; sourceTree = "<group>"; };
 		C3F8A8D7723EDFF5E39984C6 /* CaptureLedgerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CaptureLedgerTests.swift; sourceTree = "<group>"; };
@@ -292,6 +302,7 @@
 				BF1D5C7A22B029E70062F474 /* Roxas.framework in Frameworks */,
 				BFC9E65722B1A22700974663 /* ClipboardKit.framework in Frameworks */,
 				BFAC49E022B40EC90011E7C4 /* AudioToolbox.framework in Frameworks */,
+				82B60D8FE32521EF1FD6BCC8 /* Sentry in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -306,12 +317,29 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		CAF9A7848D83E23E51982447 /* Config */ = {
+			isa = PBXGroup;
+			children = (
+				C4537C902A4696ED25A5B9EB /* Diagnostics.xcconfig */,
+			);
+			path = Config;
+			sourceTree = "<group>";
+		};
+		2499A043042B8D785B468CF3 /* Diagnostics */ = {
+			isa = PBXGroup;
+			children = (
+				4F74DA4EB0D1D2E233D2B520 /* CrashReporting.swift */,
+			);
+			path = Diagnostics;
+			sourceTree = "<group>";
+		};
 		AAA3BCB7E409FA4E405E64AE /* ClipboardKitTests */ = {
 			isa = PBXGroup;
 			children = (
 				C3F8A8D7723EDFF5E39984C6 /* CaptureLedgerTests.swift */,
 				A32CAFB052E6B0464DCB6806 /* ChangeCountGateTests.swift */,
 				86A8F270A629D489169F1784 /* DatabaseStoreRaceTests.swift */,
+				4F816D0DD968FDE07256962C /* DiagnosticsScrubberTests.swift */,
 			);
 			path = ClipboardKitTests;
 			sourceTree = "<group>";
@@ -360,6 +388,7 @@
 			children = (
 				BFC1F3A322AF0D0F003AC21A /* Assets.xcassets */,
 				0DAB2DA872814B358DC46A6F /* AppIcon.icon */,
+				0AE293A7E58C2F6E98331233 /* PrivacyInfo.xcprivacy */,
 			);
 			path = Resources;
 			sourceTree = "<group>";
@@ -465,6 +494,7 @@
 				BFC1F39A22AF0D0E003AC21A /* Products */,
 				BF1D5CDF22B063E00062F474 /* Frameworks */,
 				AAA3BCB7E409FA4E405E64AE /* ClipboardKitTests */,
+				CAF9A7848D83E23E51982447 /* Config */,
 			);
 			sourceTree = "<group>";
 		};
@@ -488,6 +518,7 @@
 				BFC1F39C22AF0D0E003AC21A /* AppDelegate.swift */,
 				BF8F76F2254CC0E0005AF18B /* SceneDelegate.swift */,
 				BFA714B922C53F1700EE7236 /* ApplicationMonitor.swift */,
+				2499A043042B8D785B468CF3 /* Diagnostics */,
 				BFC1F3A022AF0D0E003AC21A /* Main.storyboard */,
 				BFAC49D722B2EF170011E7C4 /* History */,
 				D53442912BAB202A00E133EE /* Map View */,
@@ -598,6 +629,7 @@
 				FA5FD35F721B4F21AA53772A /* FuzzyMatcher.swift */,
 				4EC55C8F48AB4F9893C54B90 /* ClippingTransform.swift */,
 				A87694482FE90DB2AD392F02 /* CaptureLedger.swift */,
+				0B8F77224FABA8B1B85C744A /* DiagnosticsScrubber.swift */,
 			);
 			path = Logic;
 			sourceTree = "<group>";
@@ -686,6 +718,9 @@
 				BFC177072399BC4F0058AC51 /* PBXTargetDependency */,
 				BF7E6FE6247C4FCD0058F4D4 /* PBXTargetDependency */,
 			);
+			packageProductDependencies = (
+				29312F35BA0715E772778D82 /* Sentry */,
+			);
 			name = Clipboard;
 			productName = Clipboard;
 			productReference = BFC1F39922AF0D0E003AC21A /* Clipboard.app */;
@@ -756,6 +791,9 @@
 			);
 			mainGroup = BFC1F39022AF0D0E003AC21A;
 			productRefGroup = BFC1F39A22AF0D0E003AC21A /* Products */;
+			packageReferences = (
+				B986392D7CEA0EDC9BB2E2A5 /* XCRemoteSwiftPackageReference "sentry-cocoa" */,
+			);
 			projectDirPath = "";
 			projectReferences = (
 				{
@@ -820,6 +858,7 @@
 				BFC1F3A722AF0D0F003AC21A /* LaunchScreen.storyboard in Resources */,
 				BFC1F3A422AF0D0F003AC21A /* Assets.xcassets in Resources */,
 				206C0B410FCB4553B6F2EB71 /* AppIcon.icon in Resources */,
+				DBC0047CEDE08F1A136D2158 /* PrivacyInfo.xcprivacy in Resources */,
 				BFC1F3A222AF0D0E003AC21A /* Main.storyboard in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -839,6 +878,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				3DC5D6A7D47918EED7C1EB8F /* CaptureLedgerTests.swift in Sources */,
+				D1E4B0A89C06E11B6A762E5E /* DiagnosticsScrubberTests.swift in Sources */,
 				A74074A1E5268DFBA7E2C657 /* ChangeCountGateTests.swift in Sources */,
 				13A013EEE4563B478F09A852 /* DatabaseStoreRaceTests.swift in Sources */,
 			);
@@ -869,6 +909,7 @@
 				BF1D5C7F22B02BF30062F474 /* PasteboardMonitor.swift in Sources */,
 				D1A2B3C4D5E6F708192A3B4C /* PasteboardDaemonReader.m in Sources */,
 				BFA714BA22C53F1700EE7236 /* ApplicationMonitor.swift in Sources */,
+				D83BE9D0FC5BD251B8D08123 /* CrashReporting.swift in Sources */,
 				BFDB5B1E22EF7B5000F74113 /* GradientView.swift in Sources */,
 				BFC1F39F22AF0D0E003AC21A /* HistoryViewController.swift in Sources */,
 				B608FEF343DED0D9CEEE0474 /* HistoryItemViews.swift in Sources */,
@@ -899,6 +940,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				78BB6840A2255515D3A40C06 /* CaptureLedger.swift in Sources */,
+				CEB95D3B57CB0647920BB927 /* DiagnosticsScrubber.swift in Sources */,
 				BF0BDE5E22B47D4900E1419D /* UserDefaults+App.swift in Sources */,
 				BFC9E67C22B2CA4400974663 /* CFNotification+PasteboardListener.swift in Sources */,
 				BFC9E66222B1B03900974663 /* DatabaseManager.swift in Sources */,
@@ -1242,6 +1284,7 @@
 		};
 		BFC1F3AC22AF0D0F003AC21A /* Debug */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = C4537C902A4696ED25A5B9EB /* Diagnostics.xcconfig */;
 			buildSettings = {
 				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
@@ -1268,6 +1311,7 @@
 		};
 		BFC1F3AD22AF0D0F003AC21A /* Release */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = C4537C902A4696ED25A5B9EB /* Diagnostics.xcconfig */;
 			buildSettings = {
 				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
@@ -1424,6 +1468,25 @@
 			versionGroupType = wrapper.xcdatamodel;
 		};
 /* End XCVersionGroup section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		B986392D7CEA0EDC9BB2E2A5 /* XCRemoteSwiftPackageReference "sentry-cocoa" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/getsentry/sentry-cocoa";
+			requirement = {
+				kind = exactVersion;
+				version = 9.31.0;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		29312F35BA0715E772778D82 /* Sentry */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = B986392D7CEA0EDC9BB2E2A5 /* XCRemoteSwiftPackageReference "sentry-cocoa" */;
+			productName = Sentry;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = BFC1F39122AF0D0E003AC21A /* Project object */;
 }

@@ -6,6 +6,8 @@
 	<array>
 		<string>group.com.oliverames.clipboard</string>
 	</array>
+	<key>ClipboardSentryDSN</key>
+	<string>$(CLIPBOARD_SENTRY_DSN)</string>
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
 	<key>CFBundleDisplayName</key>

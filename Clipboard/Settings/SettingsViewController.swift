@@ -50,6 +50,7 @@ struct SettingsView: View
     @State private var generateLinkPreviews = UserDefaults.shared.generateLinkPreviews
     @State private var allowsShortcutsHistory = UserDefaults.shared.allowsShortcutsHistory
     @State private var locationStatus = CLLocationManager().authorizationStatus
+    @AppStorage(CrashReporting.preferenceKey) private var shareCrashReports = true
 
     var body: some View {
         NavigationStack {
@@ -108,8 +109,19 @@ struct SettingsView: View
 
                 Section {
                     NavigationLink { DiagnosticsView() } label: { Label("Diagnostics", systemImage: "stethoscope") }
+
+                    // On unless turned off. A build without a DSN can't report, so the switch says so.
+                    Toggle(isOn: Binding(
+                        get: { CrashReporting.isConfigured && self.shareCrashReports },
+                        set: { self.shareCrashReports = $0; CrashReporting.setEnabled($0) }
+                    )) {
+                        Label("Share Crash Reports", systemImage: "ladybug")
+                    }
+                    .disabled(!CrashReporting.isConfigured)
                 } footer: {
-                    Text("A record of recent capture attempts, for troubleshooting.")
+                    Text(CrashReporting.isConfigured
+                        ? "Diagnostics is a record of recent capture attempts, for troubleshooting. Crash reports send crash, freeze and error details so problems can be fixed. They never include what you copied, your clippings' titles, links or file names, your location, or your IP address."
+                        : "Diagnostics is a record of recent capture attempts, for troubleshooting. This build doesn't include crash reporting.")
                 }
 
                 Section {

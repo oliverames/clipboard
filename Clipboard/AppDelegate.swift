@@ -18,6 +18,9 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
 
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool
     {
+        // First, so a crash anywhere in startup is caught. Off unless the build carries a DSN.
+        CrashReporting.start()
+
         // Override point for customization after application launch.
         print(RoxasVersionNumber)
         
@@ -37,6 +40,10 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
 
         DatabaseManager.shared.prepare() { result in
             printError(from: result, title: "Database Error:")
+            if case .failure(let error) = result
+            {
+                CrashReporting.report(.database, "Database failed to load", error: error)
+            }
 
             if case .success = result
             {

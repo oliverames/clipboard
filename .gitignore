@@ -30,3 +30,6 @@ xcuserdata
 *.hmap
 ## Design references (third-party screenshots, not committed)
 design-reference/
+
+# Sentry DSN for local and release builds (scripts/configure-diagnostics.py)
+Config/Diagnostics.local.xcconfig

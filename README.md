@@ -99,7 +99,7 @@ Long-press a home screen, tap **Edit**, then **Add Widget**, and pick **Clipboar
 ## Privacy
 
 - Clipboard history stays on your device, in an App Group container shared by the app and its extensions.
-- Clipboard has no accounts, no sync, and no analytics.
+- Clipboard has no accounts, no sync, and no analytics. It sends crash, freeze and error reports to Sentry, which never include what you copied, item titles, links, file names or locations, and you can turn them off in Settings. [PRIVACY.md](PRIVACY.md) lists what a report contains.
 - Location is used only to tag clippings. To show the town a clipping was copied in, Clipboard sends that clipping's coordinates to Apple Maps once and stores the name with the clipping, so it's deleted when the clipping is. The map screen loads Apple Maps tiles for the area around your tagged clippings.
 - Link previews contact the page you copied. For App Store icons, Clipboard searches Apple's iTunes Search API for the site's brand name, such as "github", and downloads the icon. Turn off link previews in Settings to stop these requests.
 
@@ -124,6 +124,14 @@ Then, in Xcode:
 1. Set your development team for the Clipboard, ClipboardKeyboard, ClipboardReader, and ClipboardKit targets.
 2. Replace the bundle identifier prefix `com.oliverames.clipboard` with one you own. Replace `group.com.oliverames.clipboard` in the `.entitlements` files and `Info.plist` files to match. All targets must share the same App Group.
 3. Run the Clipboard scheme on a physical iPhone.
+
+### Crash reporting
+
+The app reports crashes, freezes and non-fatal errors to the `clipboard` Sentry project through `sentry-cocoa`, pinned to 9.31.0 in the Xcode project. The widget and keyboard extensions don't load it, and it doesn't change how the clipboard is monitored. Reports carry no clipboard contents, item titles, links, file names, locations or IP address, and system exception messages are dropped unless they match a known technical format. People can turn reporting off with Share Crash Reports in Settings.
+
+The DSN stays out of Git. `python3 scripts/configure-diagnostics.py` writes it from 1Password (`op://Development/Clipboard Sentry DSN/credential`) into the ignored `Config/Diagnostics.local.xcconfig` without printing it. Run it before archiving a TestFlight build, then check the archive with `--verify-app PATH.app`; `--remove` deletes the local file. A build without the file, including a fork, has reporting off.
+
+Debug builds report only when launched with `-ClipboardCrashReports YES` or `-ClipboardSentryTest message` (also `error`, `exception`, `crash` or `hang`). The test argument sends a fixed check whose breadcrumb and exception carry made-up clipboard text, a link, a file path and coordinates, so the received event shows whether scrubbing worked.
 
 ## Architecture
 
