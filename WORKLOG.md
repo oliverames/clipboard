@@ -17,3 +17,10 @@
   removed afterward and its absence verified. The historical crash issue is closed;
   no production code change was needed. This was detail-construction verification,
   not a full copy, share or monitoring regression run.
+
+- NEW at wrap-up: [issue #8](https://github.com/oliverames/clipboard/issues/8)
+  records the long-list metadata label wrapping observed in the same synthetic
+  run. The value remained visible and no crash occurred, but `Lists` broke across
+  two lines. It remains separate from the resolved crash. Preserve the existing
+  accessibility-size stacked layout when correcting horizontal space allocation;
+  shared-device ownership had already passed to another active task.
