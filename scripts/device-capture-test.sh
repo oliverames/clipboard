@@ -48,15 +48,24 @@ echo
 
 pause() { read -r -p "$1" _; }
 
-launch_env() { # launch_env KEY=VALUE  — launch the app once with an env var, then background it
-  xcrun devicectl device process launch --terminate-existing \
-    --device "$DEVICE" --environment "$1=1" "$BUNDLE_ID" >/dev/null 2>&1
+launch_env() { # launch_env KEY — launch the app once with an env var, then background it
+  local output status
+  output=$(xcrun devicectl device process launch --terminate-existing \
+    --device "$DEVICE" --environment-variables "{\"$1\":\"1\"}" "$BUNDLE_ID" 2>&1)
+  status=$?
+  if [ "$status" -ne 0 ]; then
+    echo "Failed to launch $BUNDLE_ID with $1=1 (exit $status):" >&2
+    echo "$output" >&2
+    return 1
+  fi
 }
 
 pull_ledger() { # pull_ledger <label>
   local label="$1"
   echo "  Staging the ledger from the app (launching with CLIPBOARD_EXPORT_LEDGER=1)…"
-  launch_env CLIPBOARD_EXPORT_LEDGER
+  if ! launch_env CLIPBOARD_EXPORT_LEDGER; then
+    echo "  WARNING: the staging launch failed, so the ledger pulled below may be stale." >&2
+  fi
   sleep 3
   local dest="$OUT_DIR/ledger-$label.jsonl"
   if xcrun devicectl device copy from \

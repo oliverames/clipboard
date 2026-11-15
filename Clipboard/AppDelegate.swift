@@ -64,7 +64,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         #if DEBUG
         // Stages the capture ledger into the app's Documents directory so the device
         // test script can pull it off the phone with devicectl:
-        //   devicectl device process launch --environment CLIPBOARD_EXPORT_LEDGER=1 ...
+        //   devicectl device process launch --environment-variables '{"CLIPBOARD_EXPORT_LEDGER":"1"}' ...
         if ProcessInfo.processInfo.environment["CLIPBOARD_EXPORT_LEDGER"] == "1",
            let documents = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first
         {
